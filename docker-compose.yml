@@ -1,8 +1,8 @@
 version: "2.1"
 
 services:
-  catalog-service-db:
-    container_name: catalog-service-db
+  bookstore-db:
+    container_name: bookstore-db
     image: postgres:latest
     restart: always
     ports:
@@ -10,25 +10,9 @@ services:
     environment:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_USER=postgres
-      - POSTGRES_DB=catalog-service-db
+      - POSTGRES_DB=bookstore-db
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready", "-d", "catalog-service-db"]
-      interval: 30s
-      timeout: 60s
-      retries: 5
-
-  stock-service-db:
-    container_name: stock-service-db
-    image: postgres:latest
-    restart: always
-    ports:
-      - "172.25.141.121:5433:5432"
-    environment:
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_USER=postgres
-      - POSTGRES_DB=stock-service-db
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready", "-d", "stock-service-db"]
+      test: ["CMD-SHELL", "pg_isready", "-d", "bookstore-db"]
       interval: 30s
       timeout: 60s
       retries: 5
@@ -44,10 +28,10 @@ services:
       - "8080:8080"
       - "8081:8081"
     environment:
-      - POSTGRES_HOST=catalog-service-db
+      - POSTGRES_HOST=bookstore-db
       - POSTGRES_USER=postgres
     depends_on:
-      catalog-service-db:
+      bookstore-db:
         condition: service_healthy
     healthcheck:
       test: "exit 0"
@@ -64,10 +48,10 @@ services:
       - "10000:10000"
       - "8083:8083"
     environment:
-      - POSTGRES_HOST=stock-service-db
+      - POSTGRES_HOST=bookstore-db
       - POSTGRES_USER=postgres
     depends_on:
-      stock-service-db:
+      bookstore-db:
         condition: service_healthy
     healthcheck:
       test: "exit 0"
