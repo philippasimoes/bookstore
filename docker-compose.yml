@@ -1,0 +1,57 @@
+version: "2.1"
+
+services:
+  bookstore-db:
+    container_name: bookstore-db
+    image: postgres:latest
+    restart: always
+    ports:
+      - "172.25.141.121:5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=bookstore-db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready", "-d", "bookstore-service-db"]
+      interval: 30s
+      timeout: 60s
+      retries: 5
+
+  catalog-service:
+    build: .
+    restart: always
+    container_name: catalog-service
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    environment:
+      - POSTGRES_HOST=bookstore-db
+      - POSTGRES_USER=postgres
+      #- POSTGRES_PORT=5432
+    volumes:
+      - .m2:/root/.m2
+    depends_on:
+      bookstore-db:
+        condition: service_healthy
+    healthcheck:
+      test: "exit 0"
+      interval: 5s
+
+  stock-service:
+    build: .
+    restart: always
+    container_name: stock-service
+    ports:
+      - "8082:8082"
+      - "8083:8083"
+    environment:
+      - POSTGRES_HOST=bookstore-db
+      - POSTGRES_USER=postgres
+    volumes:
+      - .m2:/root/.m2
+    depends_on:
+      bookstore-db:
+        condition: service_healthy
+    healthcheck:
+      test: "exit 0"
+      interval: 5s
