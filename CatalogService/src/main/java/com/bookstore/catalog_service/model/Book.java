@@ -19,7 +19,7 @@ import java.util.Set;
 @Setter
 @Getter
 @Entity
-@Table(name = "book")
+@Table(name = "book", schema = "catalogservice")
 public class Book {
 
   @Id

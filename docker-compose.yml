@@ -1,8 +1,8 @@
 version: "2.1"
 
 services:
-  bookstore-db:
-    container_name: bookstore-db
+  catalog-service-db:
+    container_name: catalog-service-db
     image: postgres:latest
     restart: always
     ports:
@@ -10,47 +10,64 @@ services:
     environment:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_USER=postgres
-      - POSTGRES_DB=bookstore-db
+      - POSTGRES_DB=catalog-service-db
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready", "-d", "bookstore-service-db"]
+      test: ["CMD-SHELL", "pg_isready", "-d", "catalog-service-db"]
+      interval: 30s
+      timeout: 60s
+      retries: 5
+
+  stock-service-db:
+    container_name: stock-service-db
+    image: postgres:latest
+    restart: always
+    ports:
+      - "172.25.141.121:5433:5432"
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=stock-service-db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready", "-d", "stock-service-db"]
       interval: 30s
       timeout: 60s
       retries: 5
 
   catalog-service:
-    build: .
+    image: 'catalog-service:latest'
+    build:
+      context: ./CatalogService
+      dockerfile: Dockerfile
     restart: always
     container_name: catalog-service
     ports:
       - "8080:8080"
       - "8081:8081"
     environment:
-      - POSTGRES_HOST=bookstore-db
+      - POSTGRES_HOST=catalog-service-db
       - POSTGRES_USER=postgres
-      #- POSTGRES_PORT=5432
-    volumes:
-      - .m2:/root/.m2
     depends_on:
-      bookstore-db:
+      catalog-service-db:
         condition: service_healthy
     healthcheck:
       test: "exit 0"
       interval: 5s
 
   stock-service:
-    build: .
+    image: 'stock-service:latest'
+    build:
+      context: ./StockService
+      dockerfile: Dockerfile
     restart: always
     container_name: stock-service
     ports:
-      - "8082:8082"
+      - "10000:10000"
       - "8083:8083"
     environment:
-      - POSTGRES_HOST=bookstore-db
+      - POSTGRES_HOST=stock-service-db
       - POSTGRES_USER=postgres
-    volumes:
-      - .m2:/root/.m2
     depends_on:
-      bookstore-db:
+      stock-service-db:
         condition: service_healthy
     healthcheck:
       test: "exit 0"

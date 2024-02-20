@@ -14,7 +14,7 @@ import java.util.UUID;
 @Setter
 @Getter
 @Entity
-@Table(name = "language")
+@Table(name = "language", schema = "catalogservice")
 public class Language {
 
   @Id
