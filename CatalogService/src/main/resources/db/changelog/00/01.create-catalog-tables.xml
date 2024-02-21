@@ -15,7 +15,7 @@
 
     </changeSet>
     <changeSet id="01-create-book-table" author="fdsimoes">
-        <createTable tableName="catalogservice.book">
+        <createTable tableName="book" schemaName="catalogservice">
             <column name="id" type="INTEGER">
                 <constraints nullable="false" primaryKey="true" unique="true"/>
             </column>
@@ -42,7 +42,7 @@
     </changeSet>
 
     <changeSet id="01-create-author-table" author="fdsimoes">
-        <createTable tableName="catalogservice.author">
+        <createTable tableName="author" schemaName="catalogservice">
             <column name="id" type="INTEGER">
                 <constraints nullable="false" primaryKey="true" unique="true"/>
             </column>
@@ -57,7 +57,7 @@
     </changeSet>
 
     <changeSet id="01-create-book-sample-table" author="fdsimoes">
-        <createTable tableName="catalogservice.book_sample">
+        <createTable tableName="book_sample" schemaName="catalogservice">
             <column name="id" type="INTEGER">
                 <constraints nullable="false" primaryKey="true" unique="true"/>
             </column>
@@ -66,20 +66,8 @@
         </createTable>
     </changeSet>
 
-   <!-- <changeSet id="01-create-notification-table" author="fdsimoes">
-        <createTable tableName="notification">
-            <column name="id" type="UUID">
-                <constraints nullable="false" primaryKey="true" unique="true"/>
-            </column>
-            <column name="book_id" type="INTEGER"/>
-            <column name="customer_email" type="VARCHAR(50)"/>
-            <column name="creation_date" type="TIMESTAMP"/>
-            <column name="notification_date" type="TIMESTAMP"/>
-        </createTable>
-    </changeSet>-->
-
     <changeSet id="01-create-language-table" author="fdsimoes">
-        <createTable tableName="catalogservice.language">
+        <createTable tableName="language" schemaName="catalogservice">
             <column name="id" type="INTEGER">
                 <constraints nullable="false" primaryKey="true" unique="true"/>
             </column>
@@ -89,7 +77,7 @@
     </changeSet>
 
     <changeSet id="01-create-tag-table" author="fdsimoes">
-        <createTable tableName="catalogservice.tag">
+        <createTable tableName="tag" schemaName="catalogservice">
             <column name="id" type="INTEGER">
                 <constraints nullable="false" primaryKey="true" unique="true"/>
             </column>

@@ -15,7 +15,7 @@
     </changeSet>
 
     <changeSet id="01-create-stock-table" author="fdsimoes">
-        <createTable tableName="stockservice.stock">
+        <createTable tableName="stock" schemaName="stockservice">
             <column name="id" type="INTEGER">
                 <constraints nullable="false" primaryKey="true" unique="true"/>
             </column>

@@ -19,11 +19,12 @@ public interface BookRepository extends JpaRepository<Book, Integer>, JpaSpecifi
   Book findByIsbn(String isbn);
   List<Book> findBookBySeries(boolean series);
 
+  List<Book> findByPriceBetween(double startPrice, double endPrice);
+
   @Transactional
   @Modifying
   @Query("update Book a set a.availability = :availability where a.id = :id")
   void updateBookAvailability(
       @Param("id") int id, @Param("availability") Availability availability);
 
-  List<Book> findByPriceBetween(double startPrice, double endPrice);
 }
