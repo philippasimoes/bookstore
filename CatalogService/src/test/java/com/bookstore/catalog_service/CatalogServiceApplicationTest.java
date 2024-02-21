@@ -4,10 +4,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class CatalogServiceApplication {
+public class CatalogServiceApplicationTest {
 
 	@Test
-	void contextLoads() {
+	void whenContextIsLoaded_thenNoExceptions() {
 	}
 
 }

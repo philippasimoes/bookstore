@@ -16,85 +16,106 @@ import java.util.List;
 @RequestMapping(value = "/books")
 public class BookController {
 
-  @Autowired BookService bookService;
+    @Autowired
+    BookService bookService;
 
-  @PostMapping
-  public ResponseEntity<Book> addNewBook(@Validated @RequestBody BookDto bookDto) {
-    return ResponseEntity.status(HttpStatus.CREATED).body(bookService.addNewBook(bookDto));
-  }
+    @GetMapping
+    public ResponseEntity<List<BookDto>> getAllBooks() {
+        List<BookDto> books = bookService.getAllBooks();
 
-  @PatchMapping("/{id}")
-  public ResponseEntity<String> updateAvailability(
-      @PathVariable int id, @RequestParam Availability availability) {
-    return ResponseEntity.status(HttpStatus.OK)
-        .body(bookService.updateAvailability(id, availability));
-  }
+        if (!books.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.OK).body(books);
+        } else return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
 
-  @GetMapping("/availability/{availability}")
-  public ResponseEntity<List<BookDto>> getAvailableBooks(@RequestParam Availability availability) {
-    List<BookDto> books = bookService.getBooksByAvailability(availability);
+    @GetMapping("/{id}")
+    public ResponseEntity<BookDto> getBookById(@PathVariable int id) {
+        return ResponseEntity.status(HttpStatus.OK).body(bookService.getBookByID(id));
+    }
 
-    if (!books.isEmpty()) {
-      return ResponseEntity.status(HttpStatus.OK).body(books);
-    } else return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
-  }
+    @GetMapping("/availability/{availability}")
+    public ResponseEntity<List<BookDto>> getAvailableBooks(@RequestParam Availability availability) {
+        List<BookDto> books = bookService.getBooksByAvailability(availability);
 
-  @GetMapping("/genre")
-  public ResponseEntity<List<BookDto>> getBooksByGenre(@RequestParam String genre) {
-    List<BookDto> books = bookService.getBooksByGenre(genre);
+        if (!books.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.OK).body(books);
+        } else return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
 
-    if (!books.isEmpty()) {
-      return ResponseEntity.status(HttpStatus.OK).body(books);
-    } else return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
-  }
+    @GetMapping("/genre")
+    public ResponseEntity<List<BookDto>> getBooksByGenre(@RequestParam String genre) {
+        List<BookDto> books = bookService.getBooksByGenre(genre);
 
-  @GetMapping("/category")
-  public ResponseEntity<List<BookDto>> getBooksByCategory(@RequestParam String category) {
-    List<BookDto> books = bookService.getBooksByCategory(category);
+        if (!books.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.OK).body(books);
+        } else return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
 
-    if (!books.isEmpty()) {
-      return ResponseEntity.status(HttpStatus.OK).body(books);
-    } else return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
-  }
+    @GetMapping("/category")
+    public ResponseEntity<List<BookDto>> getBooksByCategory(@RequestParam String category) {
+        List<BookDto> books = bookService.getBooksByCategory(category);
 
-  @GetMapping("/collection")
-  public ResponseEntity<List<BookDto>> getBooksByCollection(@RequestParam String collection) {
-    List<BookDto> books = bookService.getBooksByCollection(collection);
+        if (!books.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.OK).body(books);
+        } else return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
 
-    if (!books.isEmpty()) {
-      return ResponseEntity.status(HttpStatus.OK).body(books);
-    } else return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
-  }
+    @GetMapping("/collection")
+    public ResponseEntity<List<BookDto>> getBooksByCollection(@RequestParam String collection) {
+        List<BookDto> books = bookService.getBooksByCollection(collection);
 
-  @GetMapping("/series")
-  public ResponseEntity<List<BookDto>> getBooksBySeries(@RequestParam boolean series) {
-    List<BookDto> books = bookService.getBooksBySeries(series);
+        if (!books.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.OK).body(books);
+        } else return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
 
-    if (!books.isEmpty()) {
-      return ResponseEntity.status(HttpStatus.OK).body(books);
-    } else return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
-  }
-  @GetMapping("/price")
-  public ResponseEntity<List<BookDto>> getBooksInPriceRange(@RequestParam double startPrice, @RequestParam double endPrice) {
-    List<BookDto> books = bookService.getBooksInPriceRange(startPrice, endPrice);
+    @GetMapping("/series")
+    public ResponseEntity<List<BookDto>> getBooksBySeries(@RequestParam boolean series) {
+        List<BookDto> books = bookService.getBooksBySeries(series);
 
-    if (!books.isEmpty()) {
-      return ResponseEntity.status(HttpStatus.OK).body(books);
-    } else return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
-  }
+        if (!books.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.OK).body(books);
+        } else return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
 
-  @GetMapping("/author/{author_id}")
-  public ResponseEntity<List<BookDto>> getAllBooksFromAuthor(@RequestParam int author_id) {
-    return ResponseEntity.status(HttpStatus.OK).body(bookService.getBooksByAuthor(author_id));
-  }
+    @GetMapping("/price")
+    public ResponseEntity<List<BookDto>> getBooksInPriceRange(@RequestParam double startPrice, @RequestParam double endPrice) {
+        List<BookDto> books = bookService.getBooksInPriceRange(startPrice, endPrice);
 
-  @GetMapping("/language/{language_id}")
-  public ResponseEntity<List<BookDto>> getAllBooksFromLanguage(@RequestParam int language_id) {
-    return ResponseEntity.status(HttpStatus.OK).body(bookService.getBooksByLanguage(language_id));
-  }
+        if (!books.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.OK).body(books);
+        } else return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
 
-  @GetMapping("/tag/{tag_id}")
-  public ResponseEntity<List<BookDto>> getAllBooksFromTag(@RequestParam int tag_id) {
-    return ResponseEntity.status(HttpStatus.OK).body(bookService.getBooksByTag(tag_id));
-  }
+    @GetMapping("/author/{authorId}")
+    public ResponseEntity<List<BookDto>> getAllBooksFromAuthor(@RequestParam int authorId) {
+        return ResponseEntity.status(HttpStatus.OK).body(bookService.getBooksByAuthor(authorId));
+    }
+
+    @GetMapping("/language/{languageId}")
+    public ResponseEntity<List<BookDto>> getAllBooksFromLanguage(@RequestParam int languageId) {
+        return ResponseEntity.status(HttpStatus.OK).body(bookService.getBooksByLanguage(languageId));
+    }
+
+    @GetMapping("/tag/{tagId}")
+    public ResponseEntity<List<BookDto>> getAllBooksFromTag(@RequestParam int tagId) {
+        return ResponseEntity.status(HttpStatus.OK).body(bookService.getBooksByTag(tagId));
+    }
+
+    @PostMapping
+    public ResponseEntity<Book> addNewBook(@Validated @RequestBody BookDto bookDto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(bookService.addNewBook(bookDto));
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<String> updateAvailability(
+            @PathVariable int id, @RequestParam Availability availability) {
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(bookService.updateAvailability(id, availability));
+    }
+
+    @PatchMapping("/sample/{bookId}")
+    public ResponseEntity<String> addBookSample(@PathVariable int bookId, @RequestBody String sample) {
+        return ResponseEntity.status(HttpStatus.OK).body(bookService.addBookSample(bookId, sample));
+    }
 }

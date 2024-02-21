@@ -10,6 +10,5 @@ import java.util.UUID;
 @Repository
 public interface LanguageRepository extends JpaRepository<Language, Integer> {
     boolean existsByCode(String code);
-
     Optional<Language> findByCode(String code);
 }

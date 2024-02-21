@@ -25,9 +25,5 @@ public interface BookRepository extends JpaRepository<Book, Integer>, JpaSpecifi
   void updateBookAvailability(
       @Param("id") int id, @Param("availability") Availability availability);
 
- /* @Query("select Book a where a.price between :start and :end")
-  List<Book> findBooksInPriceRange(
-          @Param("start") double start, @Param("end") double end);*/
-
   List<Book> findByPriceBetween(double startPrice, double endPrice);
 }

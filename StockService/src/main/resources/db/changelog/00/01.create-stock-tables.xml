@@ -7,14 +7,16 @@
       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd
       http://www.liquibase.org/xml/ns/pro
       http://www.liquibase.org/xml/ns/pro/liquibase-pro-4.1.xsd">
+
     <changeSet id="01.create-stock-schema" author="fdsimoes">
         <sql dbms="postgresql" endDelimiter=";">
             CREATE SCHEMA IF NOT EXISTS stockservice
         </sql>
     </changeSet>
+
     <changeSet id="01-create-stock-table" author="fdsimoes">
-        <createTable tableName="stock">
-            <column name="id" type="UUID">
+        <createTable tableName="stockservice.stock">
+            <column name="id" type="INTEGER">
                 <constraints nullable="false" primaryKey="true" unique="true"/>
             </column>
             <column name="book_id" type="INTEGER"/>

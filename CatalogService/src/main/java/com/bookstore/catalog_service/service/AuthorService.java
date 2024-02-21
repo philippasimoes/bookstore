@@ -2,21 +2,22 @@ package com.bookstore.catalog_service.service;
 
 import com.bookstore.catalog_service.dto.AuthorDto;
 import com.bookstore.catalog_service.exception.ResourceNotFoundException;
+import com.bookstore.catalog_service.mapper.AuthorMapper;
 import com.bookstore.catalog_service.model.Author;
 import com.bookstore.catalog_service.repository.AuthorRepository;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 public class AuthorService {
 
   @Autowired AuthorRepository authorRepository;
+
+  @Autowired
+  AuthorMapper authorMapper;
 
   public AuthorDto getAuthorByID(int id) {
     Author author =
@@ -24,23 +25,14 @@ public class AuthorService {
             .findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Author not found"));
 
-    AuthorDto authorDto = new AuthorDto();
-    BeanUtils.copyProperties(author, authorDto);
-    return authorDto;
+    return authorMapper.authorToAuthorDto(author);
   }
 
   public List<AuthorDto> getAuthorByName(String name) {
     List<Author> authors = authorRepository.findByName(name);
 
-    List<AuthorDto> authorDtos = new ArrayList<>();
-
     if (!authors.isEmpty()) {
-      for (Author author : authors) {
-        AuthorDto authorDto = new AuthorDto();
-        BeanUtils.copyProperties(author, authorDto);
-        authorDtos.add(authorDto);
-      }
-      return authorDtos;
+      return authorMapper.authorLisToAuthorDtoList(authors);
     } else throw new ResourceNotFoundException("No results");
   }
 
@@ -50,17 +42,13 @@ public class AuthorService {
 
   @Transactional
   public Author addNewAuthor(AuthorDto authorDto) {
-    Author author = new Author();
-    BeanUtils.copyProperties(authorDto, author);
-    return authorRepository.save(author); // falta proteção para erros -> try catch
+    return authorRepository.save(authorMapper.authorDtoToAuthor(authorDto)); // falta proteção para erros -> try catch
   }
 
   @Transactional
   public String updateAuthor(AuthorDto authorDto) {
     if (authorRepository.findById(authorDto.getId()).isPresent()) {
-      Author author = new Author();
-      BeanUtils.copyProperties(authorDto, author);
-      authorRepository.save(author);
+      authorRepository.save(authorMapper.authorDtoToAuthor(authorDto));
       return "Author with id " + authorDto.getId() + " updated";
     } else throw new ResourceNotFoundException("User not found");
   }

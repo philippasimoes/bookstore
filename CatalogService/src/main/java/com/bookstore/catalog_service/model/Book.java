@@ -2,6 +2,8 @@ package com.bookstore.catalog_service.model;
 
 import com.bookstore.catalog_service.dto.enums.Availability;
 import com.bookstore.catalog_service.dto.enums.Format;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,6 +22,9 @@ import java.util.Set;
 @Getter
 @Entity
 @Table(name = "book", schema = "catalogservice")
+@JsonIdentityInfo(
+        generator = ObjectIdGenerators.PropertyGenerator.class,
+        property = "id")
 public class Book {
 
   @Id
