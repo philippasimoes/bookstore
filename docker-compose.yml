@@ -16,6 +16,8 @@ services:
       interval: 30s
       timeout: 60s
       retries: 5
+    networks:
+      - bookstore-network
 
   catalog-service:
     image: 'catalog-service:latest'
@@ -30,12 +32,17 @@ services:
     environment:
       - POSTGRES_HOST=bookstore-db
       - POSTGRES_USER=postgres
+     # - AMQP_URL=amqp://rabbitmq?connection_attempts=5&retry_delay=5
     depends_on:
       bookstore-db:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     healthcheck:
       test: "exit 0"
       interval: 5s
+    networks:
+      - bookstore-network
 
   stock-service:
     image: 'stock-service:latest'
@@ -50,9 +57,28 @@ services:
     environment:
       - POSTGRES_HOST=bookstore-db
       - POSTGRES_USER=postgres
+     # - AMQP_URL=amqp://rabbitmq?connection_attempts=5&retry_delay=5
     depends_on:
       bookstore-db:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     healthcheck:
       test: "exit 0"
       interval: 5s
+    networks:
+      - bookstore-network
+
+  rabbitmq:
+    container_name: rabbitmq
+    image: 'rabbitmq:3.13.0-rc.5-management'
+    ports:
+      # The standard AMQP protocol port
+      - '172.25.141.121:5672:5672'
+      # HTTP management UI
+      - '15672:15672' #Management Port - default user:pass = guest:guest
+    networks:
+      - bookstore-network
+
+networks:
+  bookstore-network:
