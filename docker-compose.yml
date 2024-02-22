@@ -6,7 +6,7 @@ services:
     image: postgres:latest
     restart: always
     ports:
-      - "172.25.141.121:5432:5432"
+      - "5432:5432"
     environment:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_USER=postgres
@@ -72,7 +72,7 @@ services:
     image: 'rabbitmq:3.13.0-rc.5-management'
     ports:
       # The standard AMQP protocol port
-      - '172.25.141.121:5672:5672'
+      - '5672:5672'
       # HTTP management UI
       - '15672:15672' #Management Port - default user:pass = guest:guest
     networks:
