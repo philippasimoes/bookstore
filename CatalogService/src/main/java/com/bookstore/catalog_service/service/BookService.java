@@ -252,6 +252,10 @@ public class BookService {
 
     }
 
+    public boolean bookExistsById(int id){
+        return bookRepository.existsById(id);
+    }
+
     /**
      * Auxiliary method that get the authors from a book - if the author does not exist in database it
      * will be created.

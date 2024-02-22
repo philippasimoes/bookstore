@@ -8,22 +8,31 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.UUID;
-
 @Service
 public class StockService {
 
     @Autowired
     StockRepository stockRepository;
+    public String addStock(int bookId, int newStock) {
 
-    public StockDto getAuthorByID(int id) {
-        Stock author =
-                stockRepository
-                        .findById(id)
-                        .orElseThrow(() -> new ResourceNotFoundException("Author not found"));
+        if (stockIsPresent(bookId)) {
+            Stock stock = stockRepository.findByBookId(bookId).get();
+            stock.setAvailableStock(stock.getAvailableStock() + newStock);
+            stockRepository.save(stock);
+        } else {
+            Stock newStockEntry = new Stock();
+            newStockEntry.setAvailableStock(newStock);
+            newStockEntry.setBookId(bookId);
+            stockRepository.save(newStockEntry);
+        }
+        return "Stock updated";
+    }
 
-        StockDto authorDto = new StockDto();
-        BeanUtils.copyProperties(author, authorDto);
-        return authorDto;
+    public boolean stockIsPresent(int bookId) {
+        return stockRepository.findByBookId(bookId).isPresent();
+    }
+
+    public Stock getStockByBookId(int bookId) {
+        return stockRepository.findByBookId(bookId).orElseThrow(() -> new ResourceNotFoundException("Stock not found"));
     }
 }

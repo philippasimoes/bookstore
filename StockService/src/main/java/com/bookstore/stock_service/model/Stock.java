@@ -23,7 +23,7 @@ public class Stock {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    @Column(name="book_id")
+    @Column(name="book_id", unique = true)
     private int bookId;
 
     @Column(name = "available_stock")

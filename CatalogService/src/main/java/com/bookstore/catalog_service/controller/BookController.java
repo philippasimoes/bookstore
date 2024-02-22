@@ -118,4 +118,9 @@ public class BookController {
     public ResponseEntity<String> addBookSample(@PathVariable int bookId, @RequestBody String sample) {
         return ResponseEntity.status(HttpStatus.OK).body(bookService.addBookSample(bookId, sample));
     }
+
+    @GetMapping("/exists/{id}")
+    public ResponseEntity<Boolean> existsById(@PathVariable int id){
+        return ResponseEntity.status(HttpStatus.OK).body(bookService.bookExistsById(id));
+    }
 }
