@@ -17,6 +17,7 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -37,6 +38,7 @@ import static org.junit.Assert.assertEquals;
         locations = "classpath:application-test.properties")
 @ContextConfiguration(classes = CatalogServiceApplication.class)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class BookRepositoryTest {
 
     @Autowired
@@ -106,7 +108,6 @@ public class BookRepositoryTest {
         authorRepository.save(savedAuthor);
         savedLanguage.setBooks(bookList);
         languageRepository.save(savedLanguage);
-
     }
 
     /**
