@@ -1,7 +1,7 @@
 package com.bookstore.catalog_service.controller;
 
-import com.bookstore.catalog_service.dto.AuthorDto;
-import com.bookstore.catalog_service.model.Author;
+import com.bookstore.catalog_service.model.dto.AuthorDto;
+import com.bookstore.catalog_service.model.entity.Author;
 import com.bookstore.catalog_service.service.AuthorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

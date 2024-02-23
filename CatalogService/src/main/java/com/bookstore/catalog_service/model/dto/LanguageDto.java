@@ -1,0 +1,17 @@
+package com.bookstore.catalog_service.model.dto;
+
+import lombok.*;
+
+import java.util.List;
+
+
+@Setter
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+public class LanguageDto {
+
+    private int id;
+    private String code;
+    private List<BookDto> books;
+}

@@ -1,10 +1,10 @@
 package com.bookstore.catalog_service.specifications;
 
-import com.bookstore.catalog_service.dto.enums.Availability;
-import com.bookstore.catalog_service.model.Author;
-import com.bookstore.catalog_service.model.Book;
-import com.bookstore.catalog_service.model.Language;
-import com.bookstore.catalog_service.model.Tag;
+import com.bookstore.catalog_service.model.dto.enums.Availability;
+import com.bookstore.catalog_service.model.entity.Author;
+import com.bookstore.catalog_service.model.entity.Book;
+import com.bookstore.catalog_service.model.entity.Language;
+import com.bookstore.catalog_service.model.entity.Tag;
 import jakarta.persistence.criteria.Join;
 import org.springframework.data.jpa.domain.Specification;
 

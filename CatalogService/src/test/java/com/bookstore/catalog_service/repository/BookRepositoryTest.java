@@ -2,12 +2,12 @@ package com.bookstore.catalog_service.repository;
 
 
 import com.bookstore.catalog_service.CatalogServiceApplication;
-import com.bookstore.catalog_service.dto.enums.Availability;
-import com.bookstore.catalog_service.dto.enums.Format;
-import com.bookstore.catalog_service.model.Author;
-import com.bookstore.catalog_service.model.Book;
+import com.bookstore.catalog_service.model.dto.enums.Availability;
+import com.bookstore.catalog_service.model.dto.enums.Format;
+import com.bookstore.catalog_service.model.entity.Author;
+import com.bookstore.catalog_service.model.entity.Book;
 
-import com.bookstore.catalog_service.model.Language;
+import com.bookstore.catalog_service.model.entity.Language;
 import com.bookstore.catalog_service.specifications.BookSpecifications;
 import org.junit.Before;
 import org.junit.Test;

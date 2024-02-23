@@ -1,9 +1,9 @@
 package com.bookstore.catalog_service.service;
 
-import com.bookstore.catalog_service.dto.AuthorDto;
+import com.bookstore.catalog_service.model.dto.AuthorDto;
 import com.bookstore.catalog_service.exception.ResourceNotFoundException;
-import com.bookstore.catalog_service.mapper.AuthorMapper;
-import com.bookstore.catalog_service.model.Author;
+import com.bookstore.catalog_service.model.mapper.AuthorMapper;
+import com.bookstore.catalog_service.model.entity.Author;
 import com.bookstore.catalog_service.repository.AuthorRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
