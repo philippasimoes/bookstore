@@ -4,10 +4,12 @@ import com.bookstore.stock_service.exception.InsufficientStockException;
 import com.bookstore.stock_service.exception.ResourceNotFoundException;
 import com.bookstore.stock_service.model.entity.Stock;
 import com.bookstore.stock_service.repository.StockRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
+@Transactional
 public class StockService {
 
     @Autowired

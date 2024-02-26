@@ -25,6 +25,7 @@ import com.bookstore.catalog_service.repository.TagRepository;
 import com.bookstore.catalog_service.specifications.BookSpecifications;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.transaction.Transactional;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -44,6 +45,7 @@ import java.util.Set;
  * @author Filipa Simões
  */
 @Service
+@Transactional
 public class BookService {
 
     private final Logger LOGGER = LogManager.getLogger(BookService.class);
