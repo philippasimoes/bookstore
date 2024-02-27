@@ -33,6 +33,7 @@ public class StockController {
     RestTemplate restTemplate;
 
     public StockController() {
+
         restTemplate = new RestTemplate();
     }
 
@@ -51,7 +52,7 @@ public class StockController {
             if (bookExists(bookId)) {
                 if (stock > 0) {
                     int actualStock = stockService.addStock(bookId, stock);
-                    responseEntity = ResponseEntity.status(HttpStatus.OK).body("Stock updated");
+                    responseEntity = ResponseEntity.status(HttpStatus.OK).body("Stock updated"); // fora do if
 
                     producer.sendMessage(eventUpdatedQueue, buildMessage(bookId));
                     LOGGER.info(String.format("Stock updated - book with id %s have %s units", bookId, actualStock));
@@ -77,6 +78,12 @@ public class StockController {
             LOGGER.error("Error building message", e);
         }
         return responseEntity;
+    }
+
+    @GetMapping("/{bookId}")
+    public boolean stockIsAboveZero(@PathVariable("bookId") int bookId) {
+
+        return stockService.getStockByBookId(bookId).getAvailableStock() > 0;
     }
 
     private String buildMessage(int bookId) throws JsonProcessingException {

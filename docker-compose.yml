@@ -40,6 +40,8 @@ services:
     healthcheck:
       test: "exit 0"
       interval: 5s
+    volumes:
+      - ./CatalogService/log:\log
     networks:
       - bookstore-network
 
@@ -64,6 +66,35 @@ services:
     healthcheck:
       test: "exit 0"
       interval: 5s
+    volumes:
+      - .\StockService\log:/home/log
+    networks:
+      - bookstore-network
+
+  notification-service:
+    image: 'notification-service:latest'
+    build:
+      context: ./NotificationService
+      dockerfile: Dockerfile
+    restart: always
+    container_name: notification-service
+    ports:
+      - "10001:10001"
+      - "8084:8084" #debug
+      - "8000:8000"  #jobrnr dashboard
+    environment:
+      - POSTGRES_HOST=bookstore-db
+      - POSTGRES_USER=postgres
+    depends_on:
+      bookstore-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+    healthcheck:
+      test: "exit 0"
+      interval: 5s
+    volumes:
+      - ./NotificationService/log:\log
     networks:
       - bookstore-network
 

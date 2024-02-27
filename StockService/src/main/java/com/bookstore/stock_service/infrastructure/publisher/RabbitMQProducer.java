@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class RabbitMQProducer {
+
     private final Logger LOGGER = LoggerFactory.getLogger(RabbitMQProducer.class);
 
     @Value("${rabbitmq.exchange.name}")
@@ -24,7 +25,7 @@ public class RabbitMQProducer {
     public void sendMessage(String queueName, String message) {
 
         rabbitTemplate.convertAndSend(queueName, message);
-        LOGGER.info("Message sent");
+        LOGGER.info(String.format("Message sent: queue %s, message %s", queueName, message));
     }
 
 }
