@@ -7,6 +7,12 @@ import lombok.Setter;
 
 import java.sql.Timestamp;
 
+
+/**
+ * The Notification data transfer object.
+ *
+ * @author Filipa Simões
+ */
 @Setter
 @Getter
 @NoArgsConstructor

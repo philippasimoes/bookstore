@@ -41,7 +41,7 @@ services:
       test: "exit 0"
       interval: 5s
     volumes:
-      - ./CatalogService/log:\log
+      - ./CatalogService/log:/CatalogService/log
     networks:
       - bookstore-network
 
@@ -67,7 +67,7 @@ services:
       test: "exit 0"
       interval: 5s
     volumes:
-      - .\StockService\log:/home/log
+      - ./StockService/log:/StockService/log
     networks:
       - bookstore-network
 
@@ -94,7 +94,7 @@ services:
       test: "exit 0"
       interval: 5s
     volumes:
-      - ./NotificationService/log:\log
+      - ./NotificationService/log:/NotificationService/log
     networks:
       - bookstore-network
 

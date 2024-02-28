@@ -10,6 +10,11 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.sql.Timestamp;
 
+/**
+ * The Notification entity.
+ *
+ * @author Filipa Simões
+ */
 @NoArgsConstructor
 @Setter
 @Getter

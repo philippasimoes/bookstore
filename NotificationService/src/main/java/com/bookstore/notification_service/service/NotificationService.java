@@ -2,20 +2,18 @@ package com.bookstore.notification_service.service;
 
 import com.bookstore.notification_service.model.entity.Notification;
 import com.bookstore.notification_service.repository.NotificationRepository;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.jobrunr.jobs.annotations.Job;
 import org.jobrunr.jobs.context.JobRunrDashboardLogger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.util.Pair;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 /**
@@ -26,17 +24,30 @@ import java.util.List;
 @Service
 public class NotificationService {
 
+    /**
+     * Class logger.
+     */
     private static final Logger LOGGER = new JobRunrDashboardLogger(LoggerFactory.getLogger(NotificationService.class));
 
+
+    /**
+     * NotificationRepository injection to access the database.
+     */
     @Autowired
     NotificationRepository notificationRepository;
+
+    /**
+     * JavaMailSender injection.
+     */
     @Autowired
     JavaMailSender mailSender;
 
+
+    /**
+     * RestTemplate to communicate with other services.
+     */
     RestTemplate restTemplate = new RestTemplate();
 
-    @Autowired
-    ObjectMapper objectMapper;
 
     /**
      * Create a notification when requested by the user.
@@ -58,42 +69,44 @@ public class NotificationService {
         }
     }
 
-
     /**
-     * Update the existent notification - used when the book is available and the user needs to be notified.
+     * Update the notification and notify the user that the book is available.
      *
-     * @param argument a json string containing a pair of book identifier and notification identifier.
+     * @param bookId the book identifier.
+     * @param notificationId  the notification identifier.
      */
-    public void updateNotification(String argument) {
+    public void updateNotification(int bookId, int notificationId) {
 
-        try {
-            Pair<Integer, Integer> pair = objectMapper.readValue(argument, Pair.class);
 
-            if (verifyBookStock(pair.getFirst())) {
-                String message = "The book with id" + pair.getFirst() + " is available for purchase.";
-                Notification notification = notificationRepository.findById(pair.getSecond()).get();
-                notification.setMessage(message);
-                notification.setSent(true);
-                Notification notificationUpdated = notificationRepository.save(notification);
+        if (verifyBookStock(bookId)) {
+            String message = "The book with id" + bookId + " is available for purchase.";
+            Notification notification = notificationRepository.findById(notificationId).get();
+            notification.setMessage(message);
+            notification.setSent(true);
+            Notification notificationUpdated = notificationRepository.save(notification);
 
-                sendEmail(notificationUpdated.getCustomerEmail(), "Book Available for Purchase", notificationUpdated.getMessage());
+            sendEmail(notificationUpdated.getCustomerEmail(), "Book Available for Purchase", notificationUpdated.getMessage());
 
-            } else LOGGER.info("Book is not available");
-        } catch (JsonProcessingException e) {
-            LOGGER.error("Error reading the method argument: " + e.getMessage());
         }
-
     }
 
 
     /**
-     * Get all notifications from database.
-     *
-     * @return a list of Notification.
+     * Check which notifications have not yet been sent and update them.
      */
-    public List<Notification> findByAll() {
+    @Job(name = "Verify unsent notifications")
+    public void verifyUnsentNotifications() {
 
-        return notificationRepository.findAll();
+        List<Notification> notifications = notificationRepository.findAll();
+
+        List<Notification> filteredNotifications = notifications.stream()
+                .filter(notification -> !notification.isSent())
+                .collect(Collectors.toList());
+
+        for (Notification notification : filteredNotifications) {
+            updateNotification(notification.getBookId(), notification.getId());
+
+        }
     }
 
 
@@ -121,7 +134,7 @@ public class NotificationService {
      * @param bookId the book identifier.
      * @return true if the stock is above zero.
      */
-    public boolean verifyBookStock(@PathVariable int bookId) {
+    public boolean verifyBookStock(int bookId) {
 
         return Boolean.TRUE.equals(restTemplate.getForObject("http://stock-service:10000/stock/" + bookId, Boolean.class));
     }
