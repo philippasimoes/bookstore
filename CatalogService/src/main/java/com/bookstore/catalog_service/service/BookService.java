@@ -26,8 +26,8 @@ import com.bookstore.catalog_service.specifications.BookSpecifications;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
@@ -48,7 +48,7 @@ import java.util.Set;
 @Transactional
 public class BookService {
 
-    private final Logger LOGGER = LoggerFactory.getLogger(BookService.class);
+    private static final Logger LOGGER = LogManager.getLogger(BookService.class);
 
     @Autowired
     BookRepository bookRepository;

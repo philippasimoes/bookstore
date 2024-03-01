@@ -4,8 +4,8 @@ import com.bookstore.notification_service.service.NotificationService;
 import jakarta.annotation.PostConstruct;
 import org.jobrunr.scheduling.JobScheduler;
 import org.jobrunr.scheduling.cron.Cron;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,7 +27,7 @@ public class NotificationController {
     /**
      * Class logger.
      */
-    private final Logger LOGGER = LoggerFactory.getLogger(NotificationController.class);
+    private final Logger LOGGER = LogManager.getLogger(NotificationController.class);
 
     /**
      * Notification Service injection to access the service layer.

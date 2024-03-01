@@ -4,8 +4,8 @@ import com.bookstore.stock_service.infrastructure.publisher.RabbitMQProducer;
 import com.bookstore.stock_service.service.StockService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.util.Pair;
@@ -19,7 +19,7 @@ import org.springframework.web.client.RestTemplate;
 @RequestMapping(value = "/stock")
 public class StockController {
 
-    private final Logger LOGGER = LoggerFactory.getLogger(StockController.class);
+    private final Logger LOGGER = LogManager.getLogger(StockController.class);
 
     @Autowired
     StockService stockService;

@@ -4,8 +4,8 @@ import com.bookstore.notification_service.model.entity.Notification;
 import com.bookstore.notification_service.repository.NotificationRepository;
 import org.jobrunr.jobs.annotations.Job;
 import org.jobrunr.jobs.context.JobRunrDashboardLogger;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -27,7 +27,7 @@ public class NotificationService {
     /**
      * Class logger.
      */
-    private static final Logger LOGGER = new JobRunrDashboardLogger(LoggerFactory.getLogger(NotificationService.class));
+    private static final Logger LOGGER = LogManager.getLogger(NotificationService.class);
 
 
     /**
