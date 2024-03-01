@@ -7,7 +7,9 @@ import com.bookstore.catalog_service.service.BookService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,6 +29,7 @@ public class BookController {
     BookService bookService;
 
     @GetMapping
+    @PreAuthorize("hasAuthority('SCOPE_readbooks')")
     public ResponseEntity<List<BookDto>> getAllBooks() {
         List<BookDto> books = bookService.getAllBooks();
 
@@ -40,7 +43,7 @@ public class BookController {
         return ResponseEntity.status(HttpStatus.OK).body(bookService.getBookByID(id));
     }
 
-    @GetMapping("/availability/{availability}")
+    @GetMapping("/availability")
     public ResponseEntity<List<BookDto>> getAvailableBooks(@RequestParam Availability availability) {
         List<BookDto> books = bookService.getBooksByAvailability(availability);
 
@@ -94,27 +97,29 @@ public class BookController {
         } else return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
-    @GetMapping("/author/{authorId}")
+    @GetMapping("/author")
     public ResponseEntity<List<BookDto>> getAllBooksFromAuthor(@RequestParam int authorId) {
         return ResponseEntity.status(HttpStatus.OK).body(bookService.getBooksByAuthor(authorId));
     }
 
-    @GetMapping("/language/{languageId}")
+    @GetMapping("/language")
     public ResponseEntity<List<BookDto>> getAllBooksFromLanguage(@RequestParam int languageId) {
         return ResponseEntity.status(HttpStatus.OK).body(bookService.getBooksByLanguage(languageId));
     }
 
-    @GetMapping("/tag/{tagId}")
+    @GetMapping("/tag")
     public ResponseEntity<List<BookDto>> getAllBooksFromTag(@RequestParam int tagId) {
         return ResponseEntity.status(HttpStatus.OK).body(bookService.getBooksByTag(tagId));
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('SCOPE_createbooks')")
     public ResponseEntity<Book> addNewBook(@Validated @RequestBody BookDto bookDto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(bookService.addNewBook(bookDto));
     }
 
     @PatchMapping("/{id}")
+    @PreAuthorize("hasAuthority('SCOPE_createbooks')")
     public ResponseEntity<String> updateAvailability(
             @PathVariable int id, @RequestParam Availability availability) {
         return ResponseEntity.status(HttpStatus.OK)
@@ -122,6 +127,7 @@ public class BookController {
     }
 
     @PatchMapping("/sample/{bookId}")
+    @PreAuthorize("hasAuthority('SCOPE_createbooks')")
     public ResponseEntity<String> addBookSample(@PathVariable int bookId, @RequestBody String sample) {
         return ResponseEntity.status(HttpStatus.OK).body(bookService.addBookSample(bookId, sample));
     }

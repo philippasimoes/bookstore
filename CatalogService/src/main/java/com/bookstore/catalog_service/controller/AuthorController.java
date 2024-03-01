@@ -13,6 +13,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping(value = "/authors")
+@CrossOrigin(origins = "*")
 public class AuthorController {
 
   @Autowired

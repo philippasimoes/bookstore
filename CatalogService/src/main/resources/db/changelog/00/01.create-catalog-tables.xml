@@ -12,7 +12,6 @@
         <sql dbms="postgresql" endDelimiter=";">
             CREATE SCHEMA IF NOT EXISTS catalogservice
         </sql>
-
     </changeSet>
     <changeSet id="01-create-book-table" author="fdsimoes">
         <createTable tableName="book" schemaName="catalogservice">
