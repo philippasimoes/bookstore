@@ -7,6 +7,8 @@ import org.jobrunr.jobs.context.JobRunrDashboardLogger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
@@ -46,7 +48,8 @@ public class NotificationService {
     /**
      * RestTemplate to communicate with other services.
      */
-    RestTemplate restTemplate = new RestTemplate();
+    @Autowired
+    RestTemplate restTemplate;
 
 
     /**
@@ -136,7 +139,7 @@ public class NotificationService {
      */
     public boolean verifyBookStock(int bookId) {
 
-        return Boolean.TRUE.equals(restTemplate.getForObject("http://stock-service:10000/stock/" + bookId, Boolean.class));
+        return Boolean.TRUE.equals(restTemplate.getForObject("http://stock-service:10001/stock/" + bookId, Boolean.class));
     }
 
 }

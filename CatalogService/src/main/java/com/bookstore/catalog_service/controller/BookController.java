@@ -40,7 +40,7 @@ public class BookController {
         return ResponseEntity.status(HttpStatus.OK).body(bookService.getBookByID(id));
     }
 
-    @GetMapping("/availability/{availability}")
+    @GetMapping("/availability")
     public ResponseEntity<List<BookDto>> getAvailableBooks(@RequestParam Availability availability) {
         List<BookDto> books = bookService.getBooksByAvailability(availability);
 

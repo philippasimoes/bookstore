@@ -27,7 +27,7 @@ services:
     restart: always
     container_name: catalog-service
     ports:
-      - "8080:8080"
+      - "10000:10000"
       - "8081:8081"
     environment:
       - POSTGRES_HOST=bookstore-db
@@ -36,6 +36,8 @@ services:
       bookstore-db:
         condition: service_healthy
       rabbitmq:
+        condition: service_started
+      keycloak:
         condition: service_started
     healthcheck:
       test: "exit 0"
@@ -53,8 +55,8 @@ services:
     restart: always
     container_name: stock-service
     ports:
-      - "10000:10000"
-      - "8083:8083"
+      - "10001:10001"
+      - "8082:8082"
     environment:
       - POSTGRES_HOST=bookstore-db
       - POSTGRES_USER=postgres
@@ -79,8 +81,8 @@ services:
     restart: always
     container_name: notification-service
     ports:
-      - "10001:10001"
-      - "8084:8084" #debug
+      - "10002:10002"
+      - "8083:8083" #debug
       - "8000:8000"  #jobrnr dashboard
     environment:
       - POSTGRES_HOST=bookstore-db
@@ -106,6 +108,28 @@ services:
       - '172.25.141.121:5672:5672'
       # HTTP management UI
       - '15672:15672' #Management Port - default user:pass = guest:guest
+    networks:
+      - bookstore-network
+
+  keycloak:
+    container_name: keycloak
+    image: quay.io/keycloak/keycloak:23.0.7
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://bookstore-db:5432/bookstore-db
+      KC_DB_USERNAME: postgres
+      KC_DB_PASSWORD: postgres
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_HEALTH_ENABLED: "true"
+      KC_LOG_LEVEL: info
+    command: -v start-dev --import-realm
+    ports:
+      - "8080:8080"
+    depends_on:
+      - bookstore-db
+    volumes:
+      - ./utils/keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
     networks:
       - bookstore-network
 
