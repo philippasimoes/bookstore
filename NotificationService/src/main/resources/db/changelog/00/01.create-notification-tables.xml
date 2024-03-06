@@ -12,7 +12,11 @@
         <sql dbms="postgresql" endDelimiter=";">
             CREATE SCHEMA IF NOT EXISTS notificationservice
         </sql>
-
+    </changeSet>
+    <changeSet id="01.create-jobrunr-schema" author="fdsimoes">
+        <sql dbms="postgresql" endDelimiter=";">
+            CREATE SCHEMA IF NOT EXISTS jobrunr
+        </sql>
     </changeSet>
 
     <changeSet id="01-create-notification-table" author="fdsimoes">
