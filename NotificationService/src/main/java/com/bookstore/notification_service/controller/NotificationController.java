@@ -63,7 +63,7 @@ public class NotificationController {
     @PostConstruct
     public void verifyNotifications() {
 
-        jobScheduler.scheduleRecurrently(Cron.hourly(), () -> notificationService.verifyUnsentNotifications());
+        jobScheduler.scheduleRecurrently(Cron.minutely(), () -> notificationService.verifyUnsentNotifications());
         LOGGER.info("Notification job has started");
 
     }

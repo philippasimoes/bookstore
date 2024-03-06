@@ -1,4 +1,4 @@
-package com.bookstore.stock_service.infrastructure.publisher;
+package com.bookstore.stock_service.infrastructure.message.publisher;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

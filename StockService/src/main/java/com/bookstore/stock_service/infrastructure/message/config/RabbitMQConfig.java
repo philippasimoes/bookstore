@@ -1,4 +1,4 @@
-package com.bookstore.stock_service.infrastructure.config;
+package com.bookstore.stock_service.infrastructure.message.config;
 
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.core.Binding;

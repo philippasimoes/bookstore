@@ -1,4 +1,4 @@
-package com.bookstore.catalog_service.infrastructure.security;
+package com.bookstore.stock_service.infrastructure.security;
 
 import static org.springframework.security.config.Customizer.withDefaults;
 
@@ -36,16 +36,8 @@ public class SecurityConfig {
         .authorizeHttpRequests(
             authorize ->
                 authorize
-                    .requestMatchers(HttpMethod.POST, "/books")
+                    .requestMatchers(HttpMethod.POST, "/**")
                     .hasRole("ADMIN")
-                    .requestMatchers(HttpMethod.PATCH, "/books/**")
-                    .hasRole("ADMIN")
-                    .requestMatchers(HttpMethod.POST, "/authors/**")
-                    .hasRole("ADMIN")
-                    .requestMatchers(HttpMethod.PUT, "/authors/**")
-                    .hasRole("ADMIN")
-                    .requestMatchers(HttpMethod.GET, "/exists/**")
-                    .fullyAuthenticated()
                     .anyRequest()
                     .permitAll())
         .sessionManagement(c -> c.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
