@@ -9,11 +9,8 @@ import java.util.List;
 
 @Mapper
 public interface TagMapper {
-
-    @Mapping(target="books", ignore = true)
     TagDto tagToTagDto(Tag tag);
 
-    @Mapping(target="books", ignore = true)
     Tag tagDtoToTag(TagDto tagDto);
 
     List<TagDto> tagLisToTagDtoList(List<Tag> tagList);

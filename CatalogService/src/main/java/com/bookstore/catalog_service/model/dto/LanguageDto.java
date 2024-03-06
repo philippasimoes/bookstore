@@ -1,9 +1,11 @@
 package com.bookstore.catalog_service.model.dto;
 
-import lombok.*;
-
+import jakarta.validation.constraints.NotNull;
 import java.util.List;
-
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Setter
 @Getter
@@ -11,7 +13,7 @@ import java.util.List;
 @AllArgsConstructor
 public class LanguageDto {
 
-    private int id;
-    private String code;
-    private List<BookDto> books;
+  private int id;
+
+  @NotNull private String code;
 }

@@ -18,7 +18,7 @@ public class LanguageMapperTest {
 
   Language language = new Language(1, "PT", new ArrayList<>());
 
-    LanguageDto languageDto = new LanguageDto(2, "ENG", new ArrayList<>());
+    LanguageDto languageDto = new LanguageDto(2, "ENG");
 
     @Test
     public void testLanguageToLanguageDto() {

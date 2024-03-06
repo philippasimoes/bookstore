@@ -1,8 +1,12 @@
 package com.bookstore.catalog_service.model.dto;
 
-import lombok.*;
-
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Setter
 @Getter
@@ -10,8 +14,10 @@ import java.util.List;
 @AllArgsConstructor
 public class TagDto {
 
-    private int id;
-    private String value;
-    private List<BookDto> books;
+  private int id;
+
+  @NotNull
+  @Size(min = 0, max = 50)
+  private String value;
 
 }

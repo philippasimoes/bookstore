@@ -4,6 +4,7 @@ import com.bookstore.catalog_service.model.dto.BookDto;
 import com.bookstore.catalog_service.model.dto.enums.Availability;
 import com.bookstore.catalog_service.model.entity.Book;
 import com.bookstore.catalog_service.service.BookService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -109,11 +110,13 @@ public class BookController {
         return ResponseEntity.status(HttpStatus.OK).body(bookService.getBooksByTag(tagId));
     }
 
+    @SecurityRequirement(name = "admin-only")
     @PostMapping
     public ResponseEntity<Book> addNewBook(@Validated @RequestBody BookDto bookDto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(bookService.addNewBook(bookDto));
     }
 
+    @SecurityRequirement(name = "admin-only")
     @PatchMapping("/{id}")
     public ResponseEntity<String> updateAvailability(
             @PathVariable int id, @RequestParam Availability availability) {
@@ -121,12 +124,14 @@ public class BookController {
                 .body(bookService.updateAvailability(id, availability));
     }
 
+    @SecurityRequirement(name = "admin-only")
     @PatchMapping("/sample/{bookId}")
     public ResponseEntity<String> addBookSample(@PathVariable int bookId, @RequestBody String sample) {
         return ResponseEntity.status(HttpStatus.OK).body(bookService.addBookSample(bookId, sample));
     }
 
-    @GetMapping("/exists/{id}")
+    @SecurityRequirement(name = "admin-only")
+    @GetMapping("/confirmation/{id}")
     public ResponseEntity<Boolean> existsById(@PathVariable int id){
         return ResponseEntity.status(HttpStatus.OK).body(bookService.bookExistsById(id));
     }

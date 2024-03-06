@@ -44,7 +44,7 @@ public class SecurityConfig {
                     .hasRole("ADMIN")
                     .requestMatchers(HttpMethod.PUT, "/authors/**")
                     .hasRole("ADMIN")
-                    .requestMatchers(HttpMethod.GET, "/exists/**")
+                    .requestMatchers(HttpMethod.GET, "/confirmation/**")
                     .fullyAuthenticated()
                     .anyRequest()
                     .permitAll())

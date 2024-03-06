@@ -10,10 +10,8 @@ import java.util.List;
 @Mapper
 public interface AuthorMapper {
 
-    @Mapping(target="books", ignore = true)
     AuthorDto authorToAuthorDto(Author author);
 
-    @Mapping(target="books", ignore = true)
     Author authorDtoToAuthor(AuthorDto authorDto);
 
     List<AuthorDto> authorLisToAuthorDtoList(List<Author> authorList);

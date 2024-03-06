@@ -10,10 +10,8 @@ import java.util.List;
 @Mapper
 public interface LanguageMapper {
 
-    @Mapping(target="books", ignore = true)
     LanguageDto languageToLanguageDto(Language language);
 
-    @Mapping(target="books", ignore = true)
     Language languageDtoToLanguage(LanguageDto languageDto);
 
     List<LanguageDto> languageLisToLanguageDtoList(List<Language> languageList);

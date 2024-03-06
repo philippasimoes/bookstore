@@ -43,7 +43,7 @@ public class AuthorService {
 
   @Transactional
   public Author addNewAuthor(AuthorDto authorDto) {
-    return authorRepository.save(authorMapper.authorDtoToAuthor(authorDto)); // falta proteção para erros -> try catch
+    return authorRepository.save(authorMapper.authorDtoToAuthor(authorDto));
   }
 
   @Transactional

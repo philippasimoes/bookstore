@@ -4,6 +4,7 @@ import com.bookstore.stock_service.infrastructure.message.publisher.RabbitMQProd
 import com.bookstore.stock_service.service.StockService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,12 +16,8 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.jdbc.core.SqlReturnType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
-
-import java.net.http.HttpResponse;
-import java.util.Map;
 
 @RestController
 @RequestMapping(value = "/stock")
@@ -36,18 +33,27 @@ public class StockController {
 
   @Autowired RestTemplate restTemplate;
 
+  private static final String TOKEN_URL =
+      "http://keycloak:8080/realms/bookstore/protocol/openid-connect/token";
+
+  private static final String CATALOG_SERVICE_ID = "catalog-service";
+
+  private static final String CATALOG_SERVICE_SECRET = "FD3bZqrV67ZGFktuQnX02qaPMuE3V71v";
+
+  private static final String GRANT_TYPE = "client_credentials";
+
+  private static final String BOOK_CONFIRMATION_URL =
+      "http://catalog-service:10000/books/confirmation/";
+
   @Value("${rabbitmq.queue.event.updated.name}")
   private String eventUpdatedQueue;
 
   @Value("${rabbitmq.queue.event.soldout.name}")
   private String eventSoldOutQueue;
 
-
-
   @PostMapping("/book/{book_id}")
   public ResponseEntity<String> updateStock(
-      @PathVariable("book_id") int bookId,
-      @RequestParam("stock") int stock) {
+      @PathVariable("book_id") int bookId, @RequestParam("stock") int stock) {
 
     ResponseEntity<String> responseEntity;
     try {
@@ -105,36 +111,47 @@ public class StockController {
     return objectMapper.writeValueAsString(pair);
   }
 
-
-  public String authenticateAndGetJwtToken(){
-    String authUrl="http://keycloak:8080/realms/bookstore/protocol/openid-connect/token";
+  private String authenticateAndGetJwtToken() {
 
     HttpHeaders authHeaders = new HttpHeaders();
     authHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
-    String requestBody = "grant_type=client_credentials&client_id=catalog-service&client_secret=FD3bZqrV67ZGFktuQnX02qaPMuE3V71v";
+    String requestBody =
+        "grant_type="
+            + GRANT_TYPE
+            + "&client_id="
+            + CATALOG_SERVICE_ID
+            + "&client_secret="
+            + CATALOG_SERVICE_SECRET;
+
     HttpEntity<String> requestEntity = new HttpEntity<>(requestBody, authHeaders);
 
-    ResponseEntity<String> response = restTemplate.postForEntity(authUrl, requestEntity, String.class);
+    ResponseEntity<String> response =
+        restTemplate.postForEntity(TOKEN_URL, requestEntity, String.class);
 
-    if(response.getStatusCode().is2xxSuccessful()){
-        return response.getBody();
+    if (response.getStatusCode().is2xxSuccessful()) {
+      LOGGER.info("Authentication successful.");
+      return response.getBody();
     } else {
-      System.err.println("Authentication failure. Status: " + response.getStatusCode());
+      LOGGER.error(String.format("Authentication failure. Status: %s.", response.getStatusCode()));
       return null;
     }
   }
-  private boolean bookExists(int bookId) throws JsonProcessingException {
-   ObjectMapper objectMapper = new ObjectMapper();
 
-    Map jwtString = objectMapper.readValue(authenticateAndGetJwtToken(), Map.class);
+  private boolean bookExists(int bookId) throws JsonProcessingException {
 
     HttpHeaders headers = new HttpHeaders();
-    headers.set("Authorization", "Bearer "+ jwtString.get("access_token"));
+    headers.set(
+        "Authorization",
+        "Bearer "
+            + objectMapper.readValue(authenticateAndGetJwtToken(), Map.class).get("access_token"));
+
     HttpEntity<String> requestEntity = new HttpEntity<>(headers);
 
-    ResponseEntity<Boolean> response = restTemplate.exchange("http://catalog-service:10000/books/exists/" + bookId, HttpMethod.GET, requestEntity, Boolean.class);
+    ResponseEntity<Boolean> response =
+        restTemplate.exchange(
+            BOOK_CONFIRMATION_URL + bookId, HttpMethod.GET, requestEntity, Boolean.class);
 
-    return Boolean.TRUE.equals(response.getBody());
+    return response.getStatusCode().is2xxSuccessful();
   }
 }

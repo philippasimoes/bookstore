@@ -18,7 +18,7 @@ public class TagMapperTest {
 
   Tag tag = new Tag(1, "tag_1", new ArrayList<>());
 
-  TagDto tagDto = new TagDto(2, "tag_1", new ArrayList<>());
+  TagDto tagDto = new TagDto(2, "tag_1");
 
   @Test
   public void testTagToTagDto() {

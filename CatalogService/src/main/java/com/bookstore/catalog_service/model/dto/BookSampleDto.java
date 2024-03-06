@@ -1,16 +1,20 @@
 package com.bookstore.catalog_service.model.dto;
 
-import lombok.*;
-
-import java.util.UUID;
-
+import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Setter
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
 public class BookSampleDto {
-    private int id;
-    private int bookId;
-    private String sample;
+
+  private int id;
+
+  @NotNull private int bookId;
+
+  @NotNull private String sample;
 }
