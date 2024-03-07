@@ -4,11 +4,13 @@ import com.bookstore.catalog_service.model.dto.AuthorDto;
 import com.bookstore.catalog_service.model.entity.Author;
 import com.bookstore.catalog_service.service.AuthorService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,27 +26,32 @@ import java.util.List;
 
 @RestController
 @RequestMapping(value = "/authors")
+@Tag(name = "Author endpoints")
 public class AuthorController {
 
   @Autowired AuthorService authorService;
 
   @Operation(summary = "Get all authors.")
-  @ApiResponse(
-      responseCode = "200",
-      description =
-          "Show a list of authors. If no author is registered in database, an empty list is returned.",
-      content = {
-        @Content(mediaType = "application/json", schema = @Schema(implementation = List.class))
+  @ApiResponses(
+      value = {
+        @ApiResponse(
+            responseCode = "200",
+            description =
+                "Show a list of authors. If no author is registered in database, an empty list is returned.",
+            content = {
+              @Content(
+                  mediaType = "application/json",
+                  array = @ArraySchema(schema = @Schema(implementation = AuthorDto.class)))
+            }),
+        @ApiResponse(responseCode = "204", description = "No authors in database.")
       })
-  @GetMapping("/all")
-  public ResponseEntity<List<Author>> getAllAuthors() {
-    List<Author> authors = authorService.getAllAuthors();
+  @GetMapping
+  public ResponseEntity<List<AuthorDto>> getAllAuthors() {
+    List<AuthorDto> authors = authorService.getAllAuthors();
 
-    if (authors.isEmpty()) {
-      return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
-    } else {
+    if (!authors.isEmpty()) {
       return ResponseEntity.status(HttpStatus.OK).body(authorService.getAllAuthors());
-    }
+    } else return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
   }
 
   @Operation(summary = "Get an author by identifier.")
@@ -58,7 +65,14 @@ public class AuthorController {
                   mediaType = "application/json",
                   schema = @Schema(implementation = AuthorDto.class))
             }),
-        @ApiResponse(responseCode = "404", description = "Author not found.")
+        @ApiResponse(
+            responseCode = "404",
+            description = "Author not found.",
+            content = {
+              @Content(
+                  mediaType = "application/json",
+                  schema = @Schema(implementation = String.class))
+            })
       })
   @GetMapping("/{id}")
   public ResponseEntity<AuthorDto> getAuthorByID(@PathVariable int id) {
@@ -76,7 +90,14 @@ public class AuthorController {
                   mediaType = "application/json",
                   schema = @Schema(implementation = AuthorDto.class))
             }),
-        @ApiResponse(responseCode = "404", description = "Author not found.")
+        @ApiResponse(
+            responseCode = "404",
+            description = "Author not found.",
+            content = {
+              @Content(
+                  mediaType = "application/json",
+                  schema = @Schema(implementation = String.class))
+            })
       })
   @GetMapping("/name/{name}")
   public ResponseEntity<List<AuthorDto>> getAuthorByName(@PathVariable String name) {
@@ -87,17 +108,29 @@ public class AuthorController {
   @ApiResponses(
       value = {
         @ApiResponse(
-            responseCode = "200",
+            responseCode = "201",
             description = "Author added.",
             content = {
               @Content(
                   mediaType = "application/json",
                   schema = @Schema(implementation = AuthorDto.class))
             }),
-        @ApiResponse(responseCode = "401", description = "The user is not authenticated."),
+        @ApiResponse(
+            responseCode = "401",
+            description = "The user is not authenticated.",
+            content = {
+              @Content(
+                  mediaType = "application/json",
+                  schema = @Schema(implementation = String.class))
+            }),
         @ApiResponse(
             responseCode = "403",
-            description = "The user doesn't have permission to create authors.")
+            description = "The user doesn't have permission to create authors.",
+            content = {
+              @Content(
+                  mediaType = "application/json",
+                  schema = @Schema(implementation = String.class))
+            })
       })
   @SecurityRequirement(name = "admin-only")
   @PostMapping
@@ -116,10 +149,22 @@ public class AuthorController {
                   mediaType = "application/json",
                   schema = @Schema(implementation = AuthorDto.class))
             }),
-        @ApiResponse(responseCode = "401", description = "The user is not authenticated."),
+        @ApiResponse(
+            responseCode = "401",
+            description = "The user is not authenticated.",
+            content = {
+              @Content(
+                  mediaType = "application/json",
+                  schema = @Schema(implementation = String.class))
+            }),
         @ApiResponse(
             responseCode = "403",
-            description = "The user is not authorized to update the author.")
+            description = "The user is not authorized to update the author.",
+            content = {
+              @Content(
+                  mediaType = "application/json",
+                  schema = @Schema(implementation = String.class))
+            })
       })
   @SecurityRequirement(name = "admin-only")
   @PutMapping("/update")

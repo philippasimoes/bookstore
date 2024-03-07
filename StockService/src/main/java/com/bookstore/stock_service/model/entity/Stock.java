@@ -27,7 +27,7 @@ public class Stock {
     private int bookId;
 
     @Column(name = "available_stock")
-    private int availableStock;
+    private int units;
 
     @Column(name = "creation_date")
     @CreationTimestamp

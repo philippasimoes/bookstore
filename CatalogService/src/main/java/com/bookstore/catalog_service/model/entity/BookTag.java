@@ -16,18 +16,16 @@ import java.util.List;
 @Getter
 @Entity
 @Table(name = "tag", schema = "catalogservice")
-@JsonIdentityInfo(
-        generator = ObjectIdGenerators.PropertyGenerator.class,
-        property = "id")
-public class Tag {
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+public class BookTag {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private int id;
 
-  @Column private String value;
+  @Column(unique = true)
+  private String value;
 
-  @ManyToMany(fetch = FetchType.LAZY, mappedBy = "tags")
+  @ManyToMany(fetch = FetchType.LAZY, mappedBy = "bookTags")
   private List<Book> books;
-
 }

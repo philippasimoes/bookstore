@@ -1,157 +1,177 @@
 package com.bookstore.stock_service.controller;
 
-import com.bookstore.stock_service.infrastructure.message.publisher.RabbitMQProducer;
 import com.bookstore.stock_service.service.StockService;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.Map;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.bookstore.stock_service.utils.StockStatus;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.util.Pair;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate;
 
 @RestController
 @RequestMapping(value = "/stock")
+@Tag(name = "Stock endpoints")
 public class StockController {
-
-  private final Logger LOGGER = LogManager.getLogger(StockController.class);
 
   @Autowired StockService stockService;
 
-  @Autowired RabbitMQProducer producer;
-
-  @Autowired ObjectMapper objectMapper;
-
-  @Autowired RestTemplate restTemplate;
-
-  private static final String TOKEN_URL =
-      "http://keycloak:8080/realms/bookstore/protocol/openid-connect/token";
-
-  private static final String CATALOG_SERVICE_ID = "catalog-service";
-
-  private static final String CATALOG_SERVICE_SECRET = "FD3bZqrV67ZGFktuQnX02qaPMuE3V71v";
-
-  private static final String GRANT_TYPE = "client_credentials";
-
-  private static final String BOOK_CONFIRMATION_URL =
-      "http://catalog-service:10000/books/confirmation/";
-
-  @Value("${rabbitmq.queue.event.updated.name}")
-  private String eventUpdatedQueue;
-
-  @Value("${rabbitmq.queue.event.soldout.name}")
-  private String eventSoldOutQueue;
-
+  @Operation(summary = "Add a stock entry to database.")
+  @ApiResponses(
+      value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Stock entry added.",
+            content = {
+              @Content(
+                  mediaType = "application/json",
+                  schema = @Schema(implementation = String.class))
+            }),
+        @ApiResponse(
+            responseCode = "302",
+            description = "A stock entry for the book this book id already exists.",
+            content = {
+              @Content(
+                  mediaType = "application/json",
+                  schema = @Schema(implementation = String.class))
+            }),
+        @ApiResponse(
+            responseCode = "401",
+            description = "The user is not authenticated.",
+            content = {
+              @Content(
+                  mediaType = "application/json",
+                  schema = @Schema(implementation = String.class))
+            }),
+        @ApiResponse(
+            responseCode = "403",
+            description = "The user doesn't have permission to create stock.",
+            content = {
+              @Content(
+                  mediaType = "application/json",
+                  schema = @Schema(implementation = String.class))
+            })
+      })
+  @SecurityRequirement(name = "admin-only")
   @PostMapping("/book/{book_id}")
-  public ResponseEntity<String> updateStock(
-      @PathVariable("book_id") int bookId, @RequestParam("stock") int stock) {
+  public ResponseEntity<String> createStock(@PathVariable("book_id") int bookId) {
 
     ResponseEntity<String> responseEntity;
-    try {
-      if (bookExists(bookId)) {
-        if (stock > 0) {
-          int actualStock = stockService.addStock(bookId, stock);
-          responseEntity = ResponseEntity.status(HttpStatus.OK).body("Stock updated"); // fora do if
 
-          producer.sendMessage(eventUpdatedQueue, buildMessage(bookId));
-          LOGGER.info(
-              String.format("Stock updated - book with id %s have %s units", bookId, actualStock));
+    stockService.addStock(bookId);
+    responseEntity = ResponseEntity.status(HttpStatus.OK).body("Stock created");
 
-        } else {
-          int actualStock = stockService.decreaseStock(bookId, Math.abs(stock));
-          responseEntity = ResponseEntity.status(HttpStatus.OK).body("Stock updated");
+    return responseEntity;
+  }
 
-          if (actualStock > 0) {
-            producer.sendMessage(eventUpdatedQueue, buildMessage(bookId));
-            LOGGER.info(
-                String.format(
-                    "Stock updated - book with id %s have %s units", bookId, actualStock));
-          } else {
-            producer.sendMessage(eventSoldOutQueue, buildMessage(bookId));
-            LOGGER.info(String.format("Stock updated - book with id %s is sold out", bookId));
-          }
-        }
-      } else
-        responseEntity =
-            ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(
-                    "Book is not present in catalog. "
-                        + "Please insert the book in Catalog Service before adding stock.");
-    } catch (JsonProcessingException e) {
-      responseEntity =
-          ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-              .body(
-                  "Stock is updated but the "
-                      + "connection with catalog service was not made due to an error building the message.");
-      LOGGER.error("Error building message", e);
+  @Operation(summary = "Update a stock entry.")
+  @ApiResponses(
+      value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Stock entry updated.",
+            content = {
+              @Content(
+                  mediaType = "application/json",
+                  schema = @Schema(implementation = String.class))
+            }),
+        @ApiResponse(
+            responseCode = "401",
+            description = "The user is not authenticated.",
+            content = {
+              @Content(
+                  mediaType = "application/json",
+                  schema = @Schema(implementation = String.class))
+            }),
+        @ApiResponse(
+            responseCode = "403",
+            description = "The user doesn't have permission to create stock.",
+            content = {
+              @Content(
+                  mediaType = "application/json",
+                  schema = @Schema(implementation = String.class))
+            }),
+        @ApiResponse(
+            responseCode = "412",
+            description =
+                "The number of units sent in the request is greater than the available units. The request cannot be processed.",
+            content = {
+              @Content(
+                  mediaType = "application/json",
+                  schema = @Schema(implementation = String.class))
+            }),
+        @ApiResponse(
+            responseCode = "500",
+            description =
+                "Stock is updated but the connection with catalog service was not made due to an error building the message.",
+            content = {
+              @Content(
+                  mediaType = "application/json",
+                  schema = @Schema(implementation = String.class))
+            })
+      })
+  @SecurityRequirement(name = "admin-only")
+  @PutMapping("/book/{book_id}")
+  public ResponseEntity<String> updateStock(
+      @PathVariable("book_id") int bookId, @RequestParam("units") int units) {
+
+    StockStatus stockStatus = stockService.updateStock(bookId, units);
+
+    ResponseEntity<String> responseEntity;
+
+    switch (stockStatus) {
+      case UPDATED -> responseEntity = ResponseEntity.status(HttpStatus.OK).body("Stock updated");
+      case SOLD_OUT ->
+          responseEntity =
+              ResponseEntity.status(HttpStatus.OK).body("Stock updated - book sold out");
+      case INSUFFICIENT_STOCK ->
+          responseEntity =
+              ResponseEntity.status(HttpStatus.PRECONDITION_FAILED)
+                  .body("Insufficient stock - operation not permitted");
+      case BOOK_NOT_FOUND -> responseEntity = ResponseEntity.notFound().build();
+      case MESSAGE_ERROR ->
+          responseEntity =
+              ResponseEntity.internalServerError()
+                  .body(
+                      "Stock is updated but the "
+                          + "connection with catalog service was not made due to an error building the message.");
+      default -> responseEntity = ResponseEntity.internalServerError().build();
     }
     return responseEntity;
   }
 
+  @Operation(summary = "Update a stock entry.")
+  @ApiResponses(
+      value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Number of book units is above zero.",
+            content = {
+              @Content(
+                  mediaType = "application/json",
+                  schema = @Schema(implementation = Boolean.class))
+            }),
+        @ApiResponse(
+            responseCode = "302",
+            description = "Number of book units is zero.",
+            content = {
+              @Content(
+                  mediaType = "application/json",
+                  schema = @Schema(implementation = Boolean.class))
+            })
+      })
+  @SecurityRequirement(name = "admin-only")
   @GetMapping("/{bookId}")
-  public boolean stockIsAboveZero(@PathVariable("bookId") int bookId) {
+  public ResponseEntity<Boolean> stockIsAboveZero(@PathVariable("bookId") int bookId) {
 
-    return stockService.getStockByBookId(bookId).getAvailableStock() > 0;
-  }
-
-  private String buildMessage(int bookId) throws JsonProcessingException {
-
-    Pair<Integer, Integer> pair =
-        Pair.of(bookId, stockService.getStockByBookId(bookId).getAvailableStock());
-
-    return objectMapper.writeValueAsString(pair);
-  }
-
-  private String authenticateAndGetJwtToken() {
-
-    HttpHeaders authHeaders = new HttpHeaders();
-    authHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-
-    String requestBody =
-        "grant_type="
-            + GRANT_TYPE
-            + "&client_id="
-            + CATALOG_SERVICE_ID
-            + "&client_secret="
-            + CATALOG_SERVICE_SECRET;
-
-    HttpEntity<String> requestEntity = new HttpEntity<>(requestBody, authHeaders);
-
-    ResponseEntity<String> response =
-        restTemplate.postForEntity(TOKEN_URL, requestEntity, String.class);
-
-    if (response.getStatusCode().is2xxSuccessful()) {
-      LOGGER.info("Authentication successful.");
-      return response.getBody();
-    } else {
-      LOGGER.error(String.format("Authentication failure. Status: %s.", response.getStatusCode()));
-      return null;
-    }
-  }
-
-  private boolean bookExists(int bookId) throws JsonProcessingException {
-
-    HttpHeaders headers = new HttpHeaders();
-    headers.set(
-        "Authorization",
-        "Bearer "
-            + objectMapper.readValue(authenticateAndGetJwtToken(), Map.class).get("access_token"));
-
-    HttpEntity<String> requestEntity = new HttpEntity<>(headers);
-
-    ResponseEntity<Boolean> response =
-        restTemplate.exchange(
-            BOOK_CONFIRMATION_URL + bookId, HttpMethod.GET, requestEntity, Boolean.class);
-
-    return response.getStatusCode().is2xxSuccessful();
+    boolean isAboveZero = stockService.getStockByBookId(bookId).getUnits() > 0;
+    if (isAboveZero) {
+      return ResponseEntity.ok().body(true);
+    } else return ResponseEntity.status(HttpStatus.FOUND).build();
   }
 }

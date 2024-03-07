@@ -4,7 +4,7 @@ import com.bookstore.catalog_service.model.dto.enums.Availability;
 import com.bookstore.catalog_service.model.entity.Author;
 import com.bookstore.catalog_service.model.entity.Book;
 import com.bookstore.catalog_service.model.entity.Language;
-import com.bookstore.catalog_service.model.entity.Tag;
+import com.bookstore.catalog_service.model.entity.BookTag;
 import jakarta.persistence.criteria.Join;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -58,7 +58,7 @@ public class BookSpecifications {
    * @param language the author.
    * @return a specification to be used to get a list of books from the determined author.
    */
-  public static Specification<Book> allBooksFromTag(Tag language) {
+  public static Specification<Book> allBooksFromTag(BookTag language) {
     return (book, query, criteriaBuilder) -> {
       Join<Book, Language> languageBooks = book.join("languages");
       return criteriaBuilder.equal(languageBooks.get("id"), language.getId());

@@ -11,12 +11,12 @@ import java.util.List;
 public interface BookMapper {
 
     @Mapping(target="authors", ignore = true)
-    @Mapping(target="tags", ignore = true)
+    @Mapping(target="bookTags", ignore = true)
     @Mapping(target="languages", ignore = true)
     BookDto bookToBookDto(Book book);
 
     @Mapping(target="authors", ignore = true)
-    @Mapping(target="tags", ignore = true)
+    @Mapping(target="bookTags", ignore = true)
     @Mapping(target="languages", ignore = true)
     Book bookDtoToBook(BookDto bookDto);
 

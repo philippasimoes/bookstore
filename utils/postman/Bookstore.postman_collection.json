@@ -1,0 +1,1103 @@
+{
+	"info": {
+		"_postman_id": "ec6e1254-4166-4058-b731-7e04c9741c51",
+		"name": "Bookstore",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "17459241"
+	},
+	"item": [
+		{
+			"name": "CatalogService",
+			"item": [
+				{
+					"name": "Book",
+					"item": [
+						{
+							"name": "GetBooksPriceRange",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:10000/books/price/?startPrice={startPrice}&endPrice={endPrice}",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "10000",
+									"path": [
+										"books",
+										"price",
+										""
+									],
+									"query": [
+										{
+											"key": "startPrice",
+											"value": "{startPrice}"
+										},
+										{
+											"key": "endPrice",
+											"value": "{endPrice}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "GetAvailableBooks",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:10000/books?availability=available",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "10000",
+									"path": [
+										"books"
+									],
+									"query": [
+										{
+											"key": "availability",
+											"value": "available"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "ChangeAvailability",
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:10000/books/2?availability=AVAILABLE",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "10000",
+									"path": [
+										"books",
+										"2"
+									],
+									"query": [
+										{
+											"key": "availability",
+											"value": "AVAILABLE"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Add Book Sample",
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "\"Test sample\"",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:10000/books/sample/1",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "10000",
+									"path": [
+										"books",
+										"sample",
+										"1"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Add book",
+							"request": {
+								"auth": {
+									"type": "oauth2",
+									"oauth2": [
+										{
+											"key": "tokenName",
+											"value": "CatalogToken",
+											"type": "string"
+										},
+										{
+											"key": "password",
+											"value": "Pulse1!!",
+											"type": "string"
+										},
+										{
+											"key": "username",
+											"value": "fdsimoes",
+											"type": "string"
+										},
+										{
+											"key": "scope",
+											"value": "",
+											"type": "string"
+										},
+										{
+											"key": "grant_type",
+											"value": "password_credentials",
+											"type": "string"
+										},
+										{
+											"key": "clientSecret",
+											"value": "FD3bZqrV67ZGFktuQnX02qaPMuE3V71v",
+											"type": "string"
+										},
+										{
+											"key": "client_authentication",
+											"value": "body",
+											"type": "string"
+										},
+										{
+											"key": "clientId",
+											"value": "catalog-service",
+											"type": "string"
+										},
+										{
+											"key": "accessTokenUrl",
+											"value": "http://localhost:8080/realms/bookstore/protocol/openid-connect/token",
+											"type": "string"
+										},
+										{
+											"key": "tokenRequestParams",
+											"value": [
+												{
+													"key": "audience",
+													"value": "http://localhost:8080",
+													"enabled": false,
+													"send_as": "request_body"
+												},
+												{
+													"key": "user_id",
+													"value": "google-oauth2|109191243742423268149",
+													"enabled": false,
+													"send_as": "request_body"
+												}
+											],
+											"type": "any"
+										},
+										{
+											"key": "refreshTokenUrl",
+											"value": "",
+											"type": "string"
+										},
+										{
+											"key": "authUrl",
+											"value": "https://dev-7rdbxrfm0hk13388.us.auth0.com/authorize",
+											"type": "string"
+										},
+										{
+											"key": "redirect_uri",
+											"value": "http://localhost:8080/callback",
+											"type": "string"
+										},
+										{
+											"key": "addTokenTo",
+											"value": "header",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"isbn\": \"111111111111111111\",\r\n    \"title\": \"teste_1\",\r\n    \"originalTitle\": \"test_1\",\r\n    \"releaseDate\": \"2024-02-21T11:31:15.972+00:00\",\r\n    \"editionDate\": \"2024-02-21T11:31:15.972+00:00\",\r\n    \"genre\": \"test_genre\",\r\n    \"edition\": \"test_edition\",\r\n    \"series\": true,\r\n    \"availability\": \"AVAILABLE\",\r\n    \"price\": 10.50,\r\n    \"promotionalPrice\": 0.0,\r\n    \"category\": \"test_category\",\r\n    \"collection\": \"test_collection\",\r\n    \"synopsis\": \"synopsis\",\r\n    \"format\": \"HARDCOVER\",\r\n    \"publisher\": \"test_publisher\",\r\n    \"stockAvailable\": 0,\r\n    \"authors\": [\r\n        {\r\n            \"name\": \"test_author\",\r\n            \"originalFullName\": \"test_author\",\r\n            \"dateOfBirth\": \"2024-02-21T11:31:15.972+00:00\",\r\n            \"placeOfBirth\": \"Coimbra\",\r\n            \"dateOfDeath\": null,\r\n            \"placeOfDeath\": null\r\n        }\r\n    ],\r\n    \"languages\": [\r\n        {\r\n            \"code\": \"ENG\"\r\n        }\r\n    ],\r\n    \"bookTags\": [\r\n        {\r\n            \"value\": \"tag_1\"\r\n        }\r\n    ]\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:10000/books",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "10000",
+									"path": [
+										"books"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Author",
+					"item": [
+						{
+							"name": "Add Author",
+							"request": {
+								"auth": {
+									"type": "oauth2",
+									"oauth2": [
+										{
+											"key": "tokenName",
+											"value": "CatalogToken",
+											"type": "string"
+										},
+										{
+											"key": "clientSecret",
+											"value": "FD3bZqrV67ZGFktuQnX02qaPMuE3V71v",
+											"type": "string"
+										},
+										{
+											"key": "clientId",
+											"value": "catalog-service",
+											"type": "string"
+										},
+										{
+											"key": "password",
+											"value": "Pulse1!!",
+											"type": "string"
+										},
+										{
+											"key": "username",
+											"value": "fdsimoes",
+											"type": "string"
+										},
+										{
+											"key": "grant_type",
+											"value": "password_credentials",
+											"type": "string"
+										},
+										{
+											"key": "redirect_uri",
+											"value": "http://localhost:10001/callback",
+											"type": "string"
+										},
+										{
+											"key": "authUrl",
+											"value": "http://localhost:8080/realms/bookstore/protocol/openid-connect/auth",
+											"type": "string"
+										},
+										{
+											"key": "scope",
+											"value": "",
+											"type": "string"
+										},
+										{
+											"key": "client_authentication",
+											"value": "body",
+											"type": "string"
+										},
+										{
+											"key": "accessTokenUrl",
+											"value": "http://localhost:8080/realms/bookstore/protocol/openid-connect/token",
+											"type": "string"
+										},
+										{
+											"key": "tokenRequestParams",
+											"value": [
+												{
+													"key": "audience",
+													"value": "http://localhost:8080",
+													"enabled": false,
+													"send_as": "request_body"
+												},
+												{
+													"key": "user_id",
+													"value": "google-oauth2|109191243742423268149",
+													"enabled": false,
+													"send_as": "request_body"
+												}
+											],
+											"type": "any"
+										},
+										{
+											"key": "refreshTokenUrl",
+											"value": "",
+											"type": "string"
+										},
+										{
+											"key": "addTokenTo",
+											"value": "header",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"name\": \"test_author\",\r\n    \"originalFullName\": null,\r\n    \"dateOfBirth\": null,\r\n    \"placeOfBirth\": null,\r\n    \"dateOfDeath\": null,\r\n    \"placeOfDeath\": null\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:10000/authors",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "10000",
+									"path": [
+										"authors"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Lang",
+					"item": [
+						{
+							"name": "Get Languages",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:10000/lang",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "10000",
+									"path": [
+										"lang"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Add Language",
+							"request": {
+								"auth": {
+									"type": "oauth2",
+									"oauth2": [
+										{
+											"key": "clientSecret",
+											"value": "FD3bZqrV67ZGFktuQnX02qaPMuE3V71v",
+											"type": "string"
+										},
+										{
+											"key": "clientId",
+											"value": "catalog-service",
+											"type": "string"
+										},
+										{
+											"key": "grant_type",
+											"value": "password_credentials",
+											"type": "string"
+										},
+										{
+											"key": "tokenName",
+											"value": "CatalogToken",
+											"type": "string"
+										},
+										{
+											"key": "password",
+											"value": "Pulse1!!",
+											"type": "string"
+										},
+										{
+											"key": "username",
+											"value": "fdsimoes",
+											"type": "string"
+										},
+										{
+											"key": "redirect_uri",
+											"value": "http://localhost:10001/callback",
+											"type": "string"
+										},
+										{
+											"key": "authUrl",
+											"value": "http://localhost:8080/realms/bookstore/protocol/openid-connect/auth",
+											"type": "string"
+										},
+										{
+											"key": "scope",
+											"value": "",
+											"type": "string"
+										},
+										{
+											"key": "client_authentication",
+											"value": "body",
+											"type": "string"
+										},
+										{
+											"key": "accessTokenUrl",
+											"value": "http://localhost:8080/realms/bookstore/protocol/openid-connect/token",
+											"type": "string"
+										},
+										{
+											"key": "tokenRequestParams",
+											"value": [
+												{
+													"key": "audience",
+													"value": "http://localhost:8080",
+													"enabled": false,
+													"send_as": "request_body"
+												},
+												{
+													"key": "user_id",
+													"value": "google-oauth2|109191243742423268149",
+													"enabled": false,
+													"send_as": "request_body"
+												}
+											],
+											"type": "any"
+										},
+										{
+											"key": "refreshTokenUrl",
+											"value": "",
+											"type": "string"
+										},
+										{
+											"key": "addTokenTo",
+											"value": "header",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"code\":\"PT\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:10000/lang",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "10000",
+									"path": [
+										"lang"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Tag",
+					"item": [
+						{
+							"name": "Get Tags",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:10000/tags",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "10000",
+									"path": [
+										"tags"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Add Tag",
+							"request": {
+								"auth": {
+									"type": "oauth2",
+									"oauth2": [
+										{
+											"key": "clientSecret",
+											"value": "FD3bZqrV67ZGFktuQnX02qaPMuE3V71v",
+											"type": "string"
+										},
+										{
+											"key": "clientId",
+											"value": "catalog-service",
+											"type": "string"
+										},
+										{
+											"key": "grant_type",
+											"value": "password_credentials",
+											"type": "string"
+										},
+										{
+											"key": "tokenName",
+											"value": "CatalogToken",
+											"type": "string"
+										},
+										{
+											"key": "password",
+											"value": "Pulse1!!",
+											"type": "string"
+										},
+										{
+											"key": "username",
+											"value": "fdsimoes",
+											"type": "string"
+										},
+										{
+											"key": "redirect_uri",
+											"value": "http://localhost:10001/callback",
+											"type": "string"
+										},
+										{
+											"key": "authUrl",
+											"value": "http://localhost:8080/realms/bookstore/protocol/openid-connect/auth",
+											"type": "string"
+										},
+										{
+											"key": "scope",
+											"value": "",
+											"type": "string"
+										},
+										{
+											"key": "client_authentication",
+											"value": "body",
+											"type": "string"
+										},
+										{
+											"key": "accessTokenUrl",
+											"value": "http://localhost:8080/realms/bookstore/protocol/openid-connect/token",
+											"type": "string"
+										},
+										{
+											"key": "tokenRequestParams",
+											"value": [
+												{
+													"key": "audience",
+													"value": "http://localhost:8080",
+													"enabled": false,
+													"send_as": "request_body"
+												},
+												{
+													"key": "user_id",
+													"value": "google-oauth2|109191243742423268149",
+													"enabled": false,
+													"send_as": "request_body"
+												}
+											],
+											"type": "any"
+										},
+										{
+											"key": "refreshTokenUrl",
+											"value": "",
+											"type": "string"
+										},
+										{
+											"key": "addTokenTo",
+											"value": "header",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"value\":\"Adventure\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:10000/tags",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "10000",
+									"path": [
+										"tags"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "StockService",
+			"item": [
+				{
+					"name": "GetStock",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "default"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:10001/stock/{ID}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "10001",
+							"path": [
+								"stock",
+								"{ID}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create stock",
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "password",
+									"value": "stock-service",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "stock-service",
+									"type": "string"
+								},
+								{
+									"key": "grant_type",
+									"value": "password_credentials",
+									"type": "string"
+								},
+								{
+									"key": "clientSecret",
+									"value": "vzFYf3wn4yItcZ35vKJZf63VmYC4TOSx",
+									"type": "string"
+								},
+								{
+									"key": "clientId",
+									"value": "stock-service",
+									"type": "string"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "http://localhost:10001/callback",
+									"type": "string"
+								},
+								{
+									"key": "tokenName",
+									"value": "Stock Token",
+									"type": "string"
+								},
+								{
+									"key": "authUrl",
+									"value": "http://localhost:8080/realms/bookstore/protocol/openid-connect/auth",
+									"type": "string"
+								},
+								{
+									"key": "scope",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "client_authentication",
+									"value": "body",
+									"type": "string"
+								},
+								{
+									"key": "accessTokenUrl",
+									"value": "http://localhost:8080/realms/bookstore/protocol/openid-connect/token",
+									"type": "string"
+								},
+								{
+									"key": "tokenRequestParams",
+									"value": [
+										{
+											"key": "audience",
+											"value": "http://localhost:8080",
+											"enabled": false,
+											"send_as": "request_body"
+										},
+										{
+											"key": "user_id",
+											"value": "google-oauth2|109191243742423268149",
+											"enabled": false,
+											"send_as": "request_body"
+										}
+									],
+									"type": "any"
+								},
+								{
+									"key": "refreshTokenUrl",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:10001/stock/book/{book_id}?stock={units}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "10001",
+							"path": [
+								"stock",
+								"book",
+								"{book_id}"
+							],
+							"query": [
+								{
+									"key": "stock",
+									"value": "{units}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create stock",
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "tokenName",
+									"value": "StockTokenClient",
+									"type": "string"
+								},
+								{
+									"key": "clientSecret",
+									"value": "vzFYf3wn4yItcZ35vKJZf63VmYC4TOSx",
+									"type": "string"
+								},
+								{
+									"key": "clientId",
+									"value": "stock-service",
+									"type": "string"
+								},
+								{
+									"key": "grant_type",
+									"value": "client_credentials",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "Pulse1!!",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "fdsimoes",
+									"type": "string"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "http://localhost:10001/callback",
+									"type": "string"
+								},
+								{
+									"key": "authUrl",
+									"value": "http://localhost:8080/realms/bookstore/protocol/openid-connect/auth",
+									"type": "string"
+								},
+								{
+									"key": "scope",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "client_authentication",
+									"value": "body",
+									"type": "string"
+								},
+								{
+									"key": "accessTokenUrl",
+									"value": "http://localhost:8080/realms/bookstore/protocol/openid-connect/token",
+									"type": "string"
+								},
+								{
+									"key": "tokenRequestParams",
+									"value": [
+										{
+											"key": "audience",
+											"value": "http://localhost:8080",
+											"enabled": false,
+											"send_as": "request_body"
+										},
+										{
+											"key": "user_id",
+											"value": "google-oauth2|109191243742423268149",
+											"enabled": false,
+											"send_as": "request_body"
+										}
+									],
+									"type": "any"
+								},
+								{
+									"key": "refreshTokenUrl",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:10001/stock/book/{book_id}?units={units_number}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "10001",
+							"path": [
+								"stock",
+								"book",
+								"{book_id}"
+							],
+							"query": [
+								{
+									"key": "units",
+									"value": "{units_number}"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "NotificationService",
+			"item": [
+				{
+					"name": "Create notification",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:10002/notification/{book_id}?customer_email={email}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "10002",
+							"path": [
+								"notification",
+								"{book_id}"
+							],
+							"query": [
+								{
+									"key": "customer_email",
+									"value": "{email}"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Security",
+			"item": [
+				{
+					"name": "http://localhost:8080/realms/Bookstore/protocol/openid-connect/auth",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "client_id",
+									"value": "catalog-service",
+									"type": "text"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "http://localhost:8180/*",
+									"type": "text"
+								},
+								{
+									"key": "scope",
+									"value": "openid",
+									"type": "text"
+								},
+								{
+									"key": "response_type",
+									"value": "code",
+									"type": "text"
+								},
+								{
+									"key": "username",
+									"value": "fdsimoes",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "Pulse1!!",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:8080/realms/bookstore/protocol/openid-connect/auth",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"realms",
+								"bookstore",
+								"protocol",
+								"openid-connect",
+								"auth"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "http://localhost:8080/realms/bookstore/protocol/openid-connect/token",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "content-type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "client_id",
+									"value": "catalog-service",
+									"type": "text"
+								},
+								{
+									"key": "client_secret",
+									"value": "FD3bZqrV67ZGFktuQnX02qaPMuE3V71v",
+									"type": "text"
+								},
+								{
+									"key": "username",
+									"value": "fdsimoes",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "password",
+									"value": "Pulse1!!",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "grant_type",
+									"value": "client_credentials",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:8080/realms/bookstore/protocol/openid-connect/token",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"realms",
+								"bookstore",
+								"protocol",
+								"openid-connect",
+								"token"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

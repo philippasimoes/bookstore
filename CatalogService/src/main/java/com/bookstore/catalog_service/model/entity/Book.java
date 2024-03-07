@@ -97,7 +97,7 @@ public class Book {
       name = "book_tag",
       joinColumns = @JoinColumn(name = "book_id"),
       inverseJoinColumns = @JoinColumn(name = "tag_id"))
-  private Set<Tag> tags;
+  private Set<BookTag> bookTags;
 
   @Column(name = "stock_available", nullable = false)
   private int stockAvailable;

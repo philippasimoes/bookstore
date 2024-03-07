@@ -75,7 +75,7 @@ public class BookDto {
 
   private Set<AuthorDto> authors;
 
-  private Set<TagDto> tags;
+  private Set<BookTagDto> bookTags;
 
   @PositiveOrZero private int stockAvailable;
 }

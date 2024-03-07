@@ -75,8 +75,8 @@
         </createTable>
     </changeSet>
 
-    <changeSet id="01-create-tag-table" author="fdsimoes">
-        <createTable tableName="tag" schemaName="catalogservice">
+    <changeSet id="01-create-bookTag-table" author="fdsimoes">
+        <createTable tableName="bookTag" schemaName="catalogservice">
             <column name="id" type="INTEGER">
                 <constraints nullable="false" primaryKey="true" unique="true"/>
             </column>

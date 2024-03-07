@@ -37,8 +37,8 @@ public class AuthorService {
     } else throw new ResourceNotFoundException("No results");
   }
 
-  public List<Author> getAllAuthors() {
-    return authorRepository.findAll();
+  public List<AuthorDto> getAllAuthors() {
+    return authorMapper.authorLisToAuthorDtoList(authorRepository.findAll());
   }
 
   @Transactional
