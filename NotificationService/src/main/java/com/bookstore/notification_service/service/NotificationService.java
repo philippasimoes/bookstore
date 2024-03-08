@@ -2,19 +2,18 @@ package com.bookstore.notification_service.service;
 
 import com.bookstore.notification_service.model.entity.Notification;
 import com.bookstore.notification_service.repository.NotificationRepository;
-import org.jobrunr.jobs.annotations.Job;
+import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jobrunr.jobs.annotations.Job;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.client.circuitbreaker.CircuitBreaker;
+import org.springframework.cloud.client.circuitbreaker.CircuitBreakerFactory;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Notification Service class.
@@ -37,6 +36,8 @@ public class NotificationService {
 
   /** RestTemplate to communicate with other services. */
   @Autowired RestTemplate restTemplate;
+
+  @Autowired CircuitBreakerFactory circuitBreakerFactory;
 
   /**
    * Create a notification when requested by the user.
@@ -66,7 +67,7 @@ public class NotificationService {
    */
   public void updateNotification(int bookId, int notificationId) {
 
-    if (verifyBookStock(bookId)) {
+    if (verifyBookStock(bookId) > 0) {
       String message = "The book with id" + bookId + " is available for purchase.";
       Notification notification = notificationRepository.findById(notificationId).get();
       notification.setMessage(message);
@@ -116,13 +117,19 @@ public class NotificationService {
    * Validates if the book available stock is above zero.
    *
    * @param bookId the book identifier.
-   * @return true if the stock is above zero.
+   * @return the units available.
    */
-  public boolean verifyBookStock(int bookId) {
+  public Integer verifyBookStock(int bookId) {
+    CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreaker");
 
-    ResponseEntity<Boolean> response =
-        restTemplate.exchange(STOCK_URL + bookId, HttpMethod.GET, null, Boolean.class);
-
-    return response.getStatusCode().is2xxSuccessful();
+    return circuitBreaker.run(
+        () ->
+            restTemplate
+                .exchange(STOCK_URL + bookId, HttpMethod.GET, null, Integer.class)
+                .getBody(),
+        throwable -> {
+          LOGGER.warn("Error connecting to stock service.", throwable);
+          return 0;
+        });
   }
 }

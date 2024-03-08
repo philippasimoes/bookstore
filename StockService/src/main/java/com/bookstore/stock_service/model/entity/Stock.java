@@ -26,7 +26,7 @@ public class Stock {
     @Column(name="book_id", unique = true)
     private int bookId;
 
-    @Column(name = "available_stock")
+    @Column(name = "units")
     private int units;
 
     @Column(name = "creation_date")

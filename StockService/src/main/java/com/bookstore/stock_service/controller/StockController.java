@@ -124,7 +124,7 @@ public class StockController {
 
     ResponseEntity<String> responseEntity;
 
-    switch (stockStatus) {
+    switch (stockStatus) { // método privado
       case UPDATED -> responseEntity = ResponseEntity.status(HttpStatus.OK).body("Stock updated");
       case SOLD_OUT ->
           responseEntity =
@@ -167,11 +167,8 @@ public class StockController {
       })
   @SecurityRequirement(name = "admin-only")
   @GetMapping("/{bookId}")
-  public ResponseEntity<Boolean> stockIsAboveZero(@PathVariable("bookId") int bookId) {
+  public ResponseEntity<Integer> stockIsAboveZero(@PathVariable("bookId") int bookId) {
 
-    boolean isAboveZero = stockService.getStockByBookId(bookId).getUnits() > 0;
-    if (isAboveZero) {
-      return ResponseEntity.ok().body(true);
-    } else return ResponseEntity.status(HttpStatus.FOUND).build();
+    return ResponseEntity.ok(stockService.getStockByBookId(bookId).getUnits());
   }
 }

@@ -3,8 +3,8 @@ package com.bookstore.catalog_service.specifications;
 import com.bookstore.catalog_service.model.dto.enums.Availability;
 import com.bookstore.catalog_service.model.entity.Author;
 import com.bookstore.catalog_service.model.entity.Book;
-import com.bookstore.catalog_service.model.entity.Language;
 import com.bookstore.catalog_service.model.entity.BookTag;
+import com.bookstore.catalog_service.model.entity.Language;
 import jakarta.persistence.criteria.Join;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -21,9 +21,9 @@ public class BookSpecifications {
         criteriaBuilder.equal(book.get("availability"), availability);
   }
 
-  public static Specification<Book> hasPredicate(String columnName, String predicate) {
+  public static Specification<Book> hasValue(String columnName, String value) {
     return (book, query, criteriaBuilder) ->
-            criteriaBuilder.equal(book.get(columnName), predicate);
+            criteriaBuilder.equal(book.get(columnName), value);
   }
 
   /**

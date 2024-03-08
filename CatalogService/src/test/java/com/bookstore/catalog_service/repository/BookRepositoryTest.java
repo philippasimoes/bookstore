@@ -156,7 +156,7 @@ public class BookRepositoryTest {
     @Test
     public void testHasPredicate() {
         //Act
-        List<Book> books = bookRepository.findAll(Specification.where(BookSpecifications.hasPredicate("genre", "Adventure")));
+        List<Book> books = bookRepository.findAll(Specification.where(BookSpecifications.hasValue("genre", "Adventure")));
 
         //Assert
         assertEquals(1, books.size());

@@ -27,7 +27,9 @@
         <liquibase.version>4.26.0</liquibase.version>
         <h2.version>2.2.224</h2.version>
         <junit.version>4.13.2</junit.version>
-        <jobrunr.version>6.2.3</jobrunr.version>
+        <jobrunr.version>6.3.5</jobrunr.version>
+        <keycloak.version>24.0.0</keycloak.version>
+        <circuitbreaker-reactor-resilience4j.version>3.1.0</circuitbreaker-reactor-resilience4j.version>
     </properties>
 
     <dependencyManagement>
@@ -116,7 +118,12 @@
             <dependency>
                 <groupId>org.keycloak</groupId>
                 <artifactId>keycloak-spring-boot-starter</artifactId>
-                <version>24.0.0</version>
+                <version>${keycloak.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-starter-circuitbreaker-reactor-resilience4j</artifactId>
+                <version>${circuitbreaker-reactor-resilience4j.version}</version>
             </dependency>
             <!-- Test dependencies -->
             <dependency>

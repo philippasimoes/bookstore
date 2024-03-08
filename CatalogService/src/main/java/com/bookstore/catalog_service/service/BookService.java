@@ -164,7 +164,7 @@ public class BookService {
 
     return bookMapper.bookListToBookDtoList(
         bookRepository.findAll(
-            Specification.where(BookSpecifications.hasPredicate("genre", genre))));
+            Specification.where(BookSpecifications.hasValue("genre", genre))));
   }
 
   /**
@@ -177,7 +177,7 @@ public class BookService {
 
     return bookMapper.bookListToBookDtoList(
         bookRepository.findAll(
-            Specification.where(BookSpecifications.hasPredicate("category", category))));
+            Specification.where(BookSpecifications.hasValue("category", category))));
   }
 
   /**
@@ -190,7 +190,7 @@ public class BookService {
 
     return bookMapper.bookListToBookDtoList(
         bookRepository.findAll(
-            Specification.where(BookSpecifications.hasPredicate("collection", collection))));
+            Specification.where(BookSpecifications.hasValue("collection", collection))));
   }
 
   /**

@@ -232,7 +232,7 @@ public class BookController {
             }),
         @ApiResponse(responseCode = "204", description = "No books by this author in database.")
       })
-  @GetMapping("/author/{authorId}")
+  @GetMapping("/author")
   public ResponseEntity<List<BookDto>> getAllBooksFromAuthor(@RequestParam int authorId) {
     List<BookDto> books = bookService.getBooksByAuthor(authorId);
 
@@ -254,7 +254,7 @@ public class BookController {
             }),
         @ApiResponse(responseCode = "204", description = "No books with this language in database.")
       })
-  @GetMapping("/language/{languageId}")
+  @GetMapping("/language")
   public ResponseEntity<List<BookDto>> getAllBooksFromLanguage(@RequestParam int languageId) {
 
     List<BookDto> books = bookService.getBooksByLanguage(languageId);
@@ -277,7 +277,7 @@ public class BookController {
             }),
         @ApiResponse(responseCode = "204", description = "No books with this tag in database.")
       })
-  @GetMapping("/tag/{tagId}")
+  @GetMapping("/tag")
   public ResponseEntity<List<BookDto>> getAllBooksFromTag(@RequestParam int tagId) {
 
     List<BookDto> books = bookService.getBooksByTag(tagId);
@@ -330,7 +330,7 @@ public class BookController {
       })
   @SecurityRequirement(name = "admin-only")
   @PutMapping("/update")
-  public ResponseEntity<Book> updateBook(@Validated @RequestBody BookDto bookDto) {
+  public ResponseEntity<Book> updateBook(@RequestBody BookDto bookDto) {
     return ResponseEntity.status(HttpStatus.OK).body(bookService.updateBook(bookDto));
   }
 
@@ -399,7 +399,7 @@ public class BookController {
       })
   @SecurityRequirement(name = "admin-only")
   @GetMapping("/confirmation/{id}")
-  public ResponseEntity existsById(@PathVariable int id) {
-    return ResponseEntity.status(HttpStatus.OK).build();
+  public ResponseEntity<Integer> existsById(@PathVariable int id) {
+    return ResponseEntity.status(HttpStatus.OK).body(bookService.getBookByID(id).getId());
   }
 }
