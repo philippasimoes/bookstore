@@ -1,14 +1,16 @@
 package com.bookstore.catalog_service.model.entity;
 
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import jakarta.persistence.*;
-
-import java.util.UUID;
-
+/**
+ * Book Sample JPA entity.
+ *
+ * @author Filipa Simões
+ */
 @NoArgsConstructor
 @AllArgsConstructor
 @Setter
@@ -17,13 +19,12 @@ import java.util.UUID;
 @Table(name = "book_sample", schema = "catalogservice")
 public class BookSample {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private int id;
 
-    @Column(name="book_id")
-    private int bookId;
+  @Column(name = "book_id")
+  private int bookId;
 
-    @Column
-    private String sample;
+  @Column private String sample;
 }

@@ -5,6 +5,11 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+/**
+ * Stock repository class.
+ *
+ * @author Filipa Simões
+ */
 @Repository
 public interface StockRepository extends JpaRepository<Stock, Integer> {
 

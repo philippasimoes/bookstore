@@ -1,8 +1,10 @@
 package com.bookstore.notification_service.service;
 
+import com.bookstore.notification_service.exception.NotificationNotFoundException;
 import com.bookstore.notification_service.model.entity.Notification;
 import com.bookstore.notification_service.repository.NotificationRepository;
 import java.util.List;
+import java.util.Optional;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jobrunr.jobs.annotations.Job;
@@ -68,16 +70,20 @@ public class NotificationService {
   public void updateNotification(int bookId, int notificationId) {
 
     if (verifyBookStock(bookId) > 0) {
-      String message = "The book with id" + bookId + " is available for purchase.";
-      Notification notification = notificationRepository.findById(notificationId).get();
-      notification.setMessage(message);
-      notification.setSent(true);
-      Notification notificationUpdated = notificationRepository.save(notification);
+      Optional<Notification> notification = notificationRepository.findById(notificationId);
 
-      sendEmail(
-          notificationUpdated.getCustomerEmail(),
-          "Book Available for Purchase",
-          notificationUpdated.getMessage());
+      if (notification.isPresent()) {
+        Notification foundNotification = notification.get();
+        String message = "The book with id" + bookId + " is available for purchase.";
+        foundNotification.setMessage(message);
+        foundNotification.setSent(true);
+        Notification notificationUpdated = notificationRepository.save(foundNotification);
+
+        sendEmail(
+            notificationUpdated.getCustomerEmail(),
+            "Book Available for Purchase",
+            notificationUpdated.getMessage());
+      } else throw new NotificationNotFoundException();
     }
   }
 

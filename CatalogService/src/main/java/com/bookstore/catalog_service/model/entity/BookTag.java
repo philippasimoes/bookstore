@@ -2,14 +2,18 @@ package com.bookstore.catalog_service.model.entity;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import jakarta.persistence.*;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import jakarta.persistence.*;
-import java.util.List;
-
+/**
+ * Book Tag JPA entity.
+ *
+ * @author Filipa Simões
+ */
 @NoArgsConstructor
 @AllArgsConstructor
 @Setter

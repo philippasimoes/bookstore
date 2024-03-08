@@ -12,16 +12,17 @@ import org.springframework.web.client.RestTemplate;
 @SpringBootApplication
 @EnableTransactionManagement
 @EnableScheduling
-@OpenAPIDefinition(info = @Info(title = "Notification Service API", description = "Notification Service API"))
+@OpenAPIDefinition(
+    info = @Info(title = "Notification Service API", description = "Notification Service API"))
 public class NotificationServiceApplication {
 
-    public static void main(String[] args) {
+  public static void main(String[] args) {
 
-        SpringApplication.run(NotificationServiceApplication.class, args);
-    }
+    SpringApplication.run(NotificationServiceApplication.class, args);
+  }
 
-    @Bean
-    public RestTemplate getRestTemplate() {
-        return new RestTemplate();
-    }
+  @Bean
+  public RestTemplate getRestTemplate() {
+    return new RestTemplate();
+  }
 }

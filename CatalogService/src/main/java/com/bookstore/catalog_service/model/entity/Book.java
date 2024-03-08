@@ -4,27 +4,28 @@ import com.bookstore.catalog_service.model.dto.enums.Availability;
 import com.bookstore.catalog_service.model.dto.enums.Format;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import jakarta.persistence.*;
+import java.sql.Timestamp;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.sql.Timestamp;
-import java.util.Set;
-
+/**
+ * Book JPA entity.
+ *
+ * @author Filipa Simões
+ */
 @NoArgsConstructor
 @AllArgsConstructor
 @Setter
 @Getter
 @Entity
 @Table(name = "book", schema = "catalogservice")
-@JsonIdentityInfo(
-        generator = ObjectIdGenerators.PropertyGenerator.class,
-        property = "id")
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Book {
 
   @Id

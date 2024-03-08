@@ -2,19 +2,21 @@ package com.bookstore.catalog_service.model.entity;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
-import lombok.*;
-
 import jakarta.persistence.*;
 import java.util.List;
+import lombok.*;
 
+/**
+ * Author JPA entity.
+ *
+ * @author Filipa Simões
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "author", schema = "catalogservice")
-@JsonIdentityInfo(
-        generator = ObjectIdGenerators.PropertyGenerator.class,
-        property = "id")
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Author {
 
   @Id

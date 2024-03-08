@@ -13,6 +13,11 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * Class to handle rest exceptions.
+ *
+ * @author Filipa Simões
+ */
 @RestController
 @ControllerAdvice
 public class RestExceptionHandler {

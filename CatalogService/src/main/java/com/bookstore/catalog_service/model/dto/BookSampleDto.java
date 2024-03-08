@@ -6,6 +6,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * BookSample data transfer object.
+ *
+ * @author Filipa Simões
+ */
 @Setter
 @Getter
 @NoArgsConstructor

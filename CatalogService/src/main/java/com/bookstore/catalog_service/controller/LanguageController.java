@@ -1,9 +1,7 @@
 package com.bookstore.catalog_service.controller;
 
 import com.bookstore.catalog_service.model.dto.AuthorDto;
-import com.bookstore.catalog_service.model.dto.BookTagDto;
 import com.bookstore.catalog_service.model.dto.LanguageDto;
-import com.bookstore.catalog_service.model.entity.BookTag;
 import com.bookstore.catalog_service.model.entity.Language;
 import com.bookstore.catalog_service.service.LanguageService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -24,6 +22,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * Rest Controller for Language Service.
+ *
+ * @author Filipa Simões
+ */
 @RestController
 @RequestMapping("/lang")
 @Tag(name = "Language endpoints")

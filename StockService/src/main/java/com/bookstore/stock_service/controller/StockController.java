@@ -14,6 +14,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * Stock controller class.
+ *
+ * @author Filipa Simões
+ */
 @RestController
 @RequestMapping(value = "/stock")
 @Tag(name = "Stock endpoints")
@@ -21,6 +26,13 @@ public class StockController {
 
   @Autowired StockService stockService;
 
+  /**
+   * Create a stock entry in the database. This method is to be used by Catalog Service when
+   * creating the book.
+   *
+   * @param bookId the book identifier.
+   * @return a response entity with the appropriated code and message.
+   */
   @Operation(summary = "Add a stock entry to database.")
   @ApiResponses(
       value = {
@@ -69,6 +81,13 @@ public class StockController {
     return responseEntity;
   }
 
+  /**
+   * Update the book available units in the stock.
+   *
+   * @param bookId the book identifier.
+   * @param units the units to be added/subtracted to the existent value.
+   * @return a response entity with the appropriated code and message.
+   */
   @Operation(summary = "Update a stock entry.")
   @ApiResponses(
       value = {
@@ -120,11 +139,53 @@ public class StockController {
   public ResponseEntity<String> updateStock(
       @PathVariable("book_id") int bookId, @RequestParam("units") int units) {
 
-    StockStatus stockStatus = stockService.updateStock(bookId, units);
+    return validateStockStatus(stockService.updateStock(bookId, units));
+  }
 
+  /**
+   * To be called by an external service (ex: Notification Service).
+   *
+   * @param bookId the book identifier.
+   * @return a response entity with status 200 and the available book units in the stock (if the
+   *     book units is 0 a 302 response code is retrieved).
+   */
+  @Operation(summary = "Update a stock entry.")
+  @ApiResponses(
+      value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Number of book units is above zero.",
+            content = {
+              @Content(
+                  mediaType = "application/json",
+                  schema = @Schema(implementation = Integer.class))
+            }),
+        @ApiResponse(
+            responseCode = "302",
+            description = "Number of book units is zero.",
+            content = {
+              @Content(
+                  mediaType = "application/json",
+                  schema = @Schema(implementation = Integer.class))
+            })
+      })
+  @SecurityRequirement(name = "admin-only")
+  @GetMapping("/{bookId}")
+  public ResponseEntity<Integer> stockIsAboveZero(@PathVariable("bookId") int bookId) {
+
+    return ResponseEntity.ok(stockService.getStockByBookId(bookId).getUnits());
+  }
+
+  /**
+   * Validate stock status enum and return an adequate response entity.
+   *
+   * @param stockStatus the stock status {@link StockStatus}
+   * @return a response entity.
+   */
+  private ResponseEntity<String> validateStockStatus(StockStatus stockStatus) {
     ResponseEntity<String> responseEntity;
 
-    switch (stockStatus) { // método privado
+    switch (stockStatus) {
       case UPDATED -> responseEntity = ResponseEntity.status(HttpStatus.OK).body("Stock updated");
       case SOLD_OUT ->
           responseEntity =
@@ -142,33 +203,7 @@ public class StockController {
                           + "connection with catalog service was not made due to an error building the message.");
       default -> responseEntity = ResponseEntity.internalServerError().build();
     }
+
     return responseEntity;
-  }
-
-  @Operation(summary = "Update a stock entry.")
-  @ApiResponses(
-      value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Number of book units is above zero.",
-            content = {
-              @Content(
-                  mediaType = "application/json",
-                  schema = @Schema(implementation = Boolean.class))
-            }),
-        @ApiResponse(
-            responseCode = "302",
-            description = "Number of book units is zero.",
-            content = {
-              @Content(
-                  mediaType = "application/json",
-                  schema = @Schema(implementation = Boolean.class))
-            })
-      })
-  @SecurityRequirement(name = "admin-only")
-  @GetMapping("/{bookId}")
-  public ResponseEntity<Integer> stockIsAboveZero(@PathVariable("bookId") int bookId) {
-
-    return ResponseEntity.ok(stockService.getStockByBookId(bookId).getUnits());
   }
 }

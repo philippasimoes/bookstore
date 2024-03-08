@@ -7,6 +7,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * BookTag data transfer object.
+ *
+ * @author Filipa Simões
+ */
 @Setter
 @Getter
 @NoArgsConstructor
@@ -18,5 +23,4 @@ public class BookTagDto {
   @NotNull
   @Size(min = 0, max = 50)
   private String value;
-
 }

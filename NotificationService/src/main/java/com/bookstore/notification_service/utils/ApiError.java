@@ -1,12 +1,11 @@
-package com.bookstore.stock_service.utils;
+package com.bookstore.notification_service.utils;
 
-import com.bookstore.stock_service.controller.exception_handler.RestExceptionHandler;
+import com.bookstore.notification_service.controller.exception_handler.RestExceptionHandler;
+import java.util.Date;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.util.Date;
 
 /**
  * API error class - used by {@link RestExceptionHandler}.
@@ -19,7 +18,7 @@ import java.util.Date;
 @Setter
 public class ApiError {
 
-    private int errorCode;
-    private String description;
-    private Date date;
+  private int errorCode;
+  private String description;
+  private Date date;
 }

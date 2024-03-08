@@ -1,12 +1,16 @@
 package com.bookstore.catalog_service.model.dto;
 
 import jakarta.validation.constraints.NotNull;
-import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Language data transfer object.
+ *
+ * @author Filipa Simões
+ */
 @Setter
 @Getter
 @NoArgsConstructor

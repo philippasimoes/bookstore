@@ -10,68 +10,75 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.converter.MappingJackson2MessageConverter;
 import org.springframework.messaging.handler.annotation.support.DefaultMessageHandlerMethodFactory;
 
+/**
+ * RabbitMQ configuration class.
+ *
+ * @author Filipa Simões
+ */
 @Configuration
 public class RabbitMQConfig implements RabbitListenerConfigurer {
 
-    @Value("${rabbitmq.queue.event.updated.name}")
-    private String eventUpdatedQueue;
-    @Value("${rabbitmq.queue.event.soldout.name}")
-    private String eventSoldOutQueue;
-    @Value("${rabbitmq.exchange.name}")
-    private String exchange;
-    @Value("${rabbitmq.routing.key}")
-    private String routingKey;
+  @Value("${rabbitmq.queue.event.updated.name}")
+  private String eventUpdatedQueue;
 
+  @Value("${rabbitmq.queue.event.soldout.name}")
+  private String eventSoldOutQueue;
 
-    @Bean
-    public Queue eventUpdatedQueue(){
-        return new Queue(eventUpdatedQueue);
-    }
-    @Bean
-    public Queue eventSoldOutQueue(){
-        return new Queue(eventSoldOutQueue);
-    }
+  @Value("${rabbitmq.exchange.name}")
+  private String exchange;
 
-    @Bean
-    public TopicExchange exchange(){
-        return new TopicExchange(exchange);
-    }
+  @Value("${rabbitmq.routing.key}")
+  private String routingKey;
 
-    @Bean
-    public Binding updatedBinding(@Qualifier("eventUpdatedQueue") Queue queue, TopicExchange exchange){
-        return BindingBuilder.bind(queue)
-                .to(exchange)
-                .with(routingKey);
-    }
+  @Bean
+  public Queue eventUpdatedQueue() {
+    return new Queue(eventUpdatedQueue);
+  }
 
-    @Bean
-    public Binding soldOutBinding(@Qualifier("eventSoldOutQueue") Queue queue, TopicExchange exchange){
-        return BindingBuilder.bind(queue)
-                .to(exchange)
-                .with(routingKey);
-    }
+  @Bean
+  public Queue eventSoldOutQueue() {
+    return new Queue(eventSoldOutQueue);
+  }
 
-    @Bean
-    MappingJackson2MessageConverter jackson2Converter() {
-        MappingJackson2MessageConverter converter = new MappingJackson2MessageConverter();
-        return converter;
-    }
+  @Bean
+  public TopicExchange exchange() {
+    return new TopicExchange(exchange);
+  }
 
-    /**
-     * give Jackson ObjetMapper to RabbitMq for JSON Mapping
-     *
-     * @return
-     */
-    @Bean
-    DefaultMessageHandlerMethodFactory jsonMessageHandlerMethod() {
-        DefaultMessageHandlerMethodFactory factory = new DefaultMessageHandlerMethodFactory();
-        factory.setMessageConverter(jackson2Converter());
+  @Bean
+  public Binding updatedBinding(
+      @Qualifier("eventUpdatedQueue") Queue queue, TopicExchange exchange) {
+    return BindingBuilder.bind(queue).to(exchange).with(routingKey);
+  }
 
-        return factory;
-    }
+  @Bean
+  public Binding soldOutBinding(
+      @Qualifier("eventSoldOutQueue") Queue queue, TopicExchange exchange) {
+    return BindingBuilder.bind(queue).to(exchange).with(routingKey);
+  }
 
-    @Override
-    public void configureRabbitListeners(RabbitListenerEndpointRegistrar rabbitListenerEndpointRegistrar) {
-        rabbitListenerEndpointRegistrar.setMessageHandlerMethodFactory(jsonMessageHandlerMethod());
-    }
+  @Bean
+  MappingJackson2MessageConverter jackson2Converter() {
+    MappingJackson2MessageConverter converter = new MappingJackson2MessageConverter();
+    return converter;
+  }
+
+  /**
+   * give Jackson ObjetMapper to RabbitMq for JSON Mapping
+   *
+   * @return
+   */
+  @Bean
+  DefaultMessageHandlerMethodFactory jsonMessageHandlerMethod() {
+    DefaultMessageHandlerMethodFactory factory = new DefaultMessageHandlerMethodFactory();
+    factory.setMessageConverter(jackson2Converter());
+
+    return factory;
+  }
+
+  @Override
+  public void configureRabbitListeners(
+      RabbitListenerEndpointRegistrar rabbitListenerEndpointRegistrar) {
+    rabbitListenerEndpointRegistrar.setMessageHandlerMethodFactory(jsonMessageHandlerMethod());
+  }
 }

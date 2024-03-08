@@ -1,24 +1,27 @@
 package com.bookstore.catalog_service.service;
 
-import com.bookstore.catalog_service.model.dto.AuthorDto;
 import com.bookstore.catalog_service.exception.ResourceNotFoundException;
-import com.bookstore.catalog_service.model.mapper.AuthorMapper;
+import com.bookstore.catalog_service.model.dto.AuthorDto;
 import com.bookstore.catalog_service.model.entity.Author;
+import com.bookstore.catalog_service.model.mapper.AuthorMapper;
 import com.bookstore.catalog_service.repository.AuthorRepository;
 import jakarta.transaction.Transactional;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
+/**
+ * Author service class.
+ *
+ * @author Filipa Simões
+ */
 @Service
 @Transactional
 public class AuthorService {
 
   @Autowired AuthorRepository authorRepository;
 
-  @Autowired
-  AuthorMapper authorMapper;
+  @Autowired AuthorMapper authorMapper;
 
   public AuthorDto getAuthorByID(int id) {
     Author author =

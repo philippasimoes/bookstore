@@ -8,6 +8,11 @@ import com.bookstore.catalog_service.model.entity.Language;
 import jakarta.persistence.criteria.Join;
 import org.springframework.data.jpa.domain.Specification;
 
+/**
+ * Specification class for book entity.
+ *
+ * @author Filipa Simões
+ */
 public class BookSpecifications {
 
   /**
@@ -22,8 +27,7 @@ public class BookSpecifications {
   }
 
   public static Specification<Book> hasValue(String columnName, String value) {
-    return (book, query, criteriaBuilder) ->
-            criteriaBuilder.equal(book.get(columnName), value);
+    return (book, query, criteriaBuilder) -> criteriaBuilder.equal(book.get(columnName), value);
   }
 
   /**
@@ -40,7 +44,8 @@ public class BookSpecifications {
   }
 
   /**
-   * Used to get all the books from a determined language (it will query the join table book_language).
+   * Used to get all the books from a determined language (it will query the join table
+   * book_language).
    *
    * @param language the author.
    * @return a specification to be used to get a list of books from the determined author.
@@ -53,7 +58,8 @@ public class BookSpecifications {
   }
 
   /**
-   * Used to get all the books from a determined language (it will query the join table book_language).
+   * Used to get all the books from a determined language (it will query the join table
+   * book_language).
    *
    * @param language the author.
    * @return a specification to be used to get a list of books from the determined author.

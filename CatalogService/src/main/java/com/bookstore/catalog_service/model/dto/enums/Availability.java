@@ -1,11 +1,12 @@
 package com.bookstore.catalog_service.model.dto.enums;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonValue;
 
-import java.util.stream.Stream;
-
+/**
+ * Book availability status.
+ *
+ * @author Filipa Simões
+ */
 @JsonFormat(shape = JsonFormat.Shape.OBJECT)
 public enum Availability {
   TO_BE_LAUNCHED,

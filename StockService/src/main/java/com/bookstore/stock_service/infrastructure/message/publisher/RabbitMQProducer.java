@@ -7,25 +7,27 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-
+/**
+ * RabbitMQ producer class.
+ *
+ * @author Filipa Simões
+ */
 @Service
 public class RabbitMQProducer {
 
-    private final Logger LOGGER = LogManager.getLogger(RabbitMQProducer.class);
+  private final Logger LOGGER = LogManager.getLogger(RabbitMQProducer.class);
 
-    @Value("${rabbitmq.exchange.name}")
-    private String exchange;
+  @Value("${rabbitmq.exchange.name}")
+  private String exchange;
 
-    @Value("${rabbitmq.routing.key}")
-    private String routingKey;
+  @Value("${rabbitmq.routing.key}")
+  private String routingKey;
 
-    @Autowired
-    public RabbitTemplate rabbitTemplate;
+  @Autowired public RabbitTemplate rabbitTemplate;
 
-    public void sendMessage(String queueName, String message) {
+  public void sendMessage(String queueName, String message) {
 
-        rabbitTemplate.convertAndSend(queueName, message);
-        LOGGER.info(String.format("Message sent: queue %s, message %s", queueName, message));
-    }
-
+    rabbitTemplate.convertAndSend(queueName, message);
+    LOGGER.info(String.format("Message sent: queue %s, message %s", queueName, message));
+  }
 }

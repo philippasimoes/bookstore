@@ -2,12 +2,14 @@ package com.bookstore.catalog_service.model.mapper;
 
 import com.bookstore.catalog_service.model.dto.BookSampleDto;
 import com.bookstore.catalog_service.model.entity.BookSample;
+import java.util.List;
 import org.mapstruct.Mapper;
 
-
-import java.util.List;
-
-
+/**
+ * Class to map BookSampleDto to BookSample and BookSample to BookSampleDto.
+ *
+ * @author Filipa Simões
+ */
 @Mapper
 public interface BookSampleMapper {
 

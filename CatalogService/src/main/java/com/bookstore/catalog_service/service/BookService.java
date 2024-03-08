@@ -15,13 +15,13 @@ import com.bookstore.catalog_service.model.entity.BookTag;
 import com.bookstore.catalog_service.model.entity.Language;
 import com.bookstore.catalog_service.model.mapper.AuthorMapper;
 import com.bookstore.catalog_service.model.mapper.BookMapper;
-import com.bookstore.catalog_service.model.mapper.LanguageMapper;
 import com.bookstore.catalog_service.model.mapper.BookTagMapper;
+import com.bookstore.catalog_service.model.mapper.LanguageMapper;
 import com.bookstore.catalog_service.repository.AuthorRepository;
 import com.bookstore.catalog_service.repository.BookRepository;
 import com.bookstore.catalog_service.repository.BookSampleRepository;
-import com.bookstore.catalog_service.repository.LanguageRepository;
 import com.bookstore.catalog_service.repository.BookTagRepository;
+import com.bookstore.catalog_service.repository.LanguageRepository;
 import com.bookstore.catalog_service.specifications.BookSpecifications;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -58,12 +58,10 @@ public class BookService {
 
   @Autowired BookRepository bookRepository;
   @Autowired LanguageRepository languageRepository;
-  @Autowired
-  BookTagRepository bookTagRepository;
+  @Autowired BookTagRepository bookTagRepository;
   @Autowired AuthorRepository authorRepository;
   @Autowired BookSampleRepository bookSampleRepository;
-  @Autowired
-  BookTagMapper bookTagMapper;
+  @Autowired BookTagMapper bookTagMapper;
   @Autowired AuthorMapper authorMapper;
   @Autowired LanguageMapper languageMapper;
   @Autowired BookMapper bookMapper;
@@ -163,8 +161,7 @@ public class BookService {
   public List<BookDto> getBooksByGenre(String genre) {
 
     return bookMapper.bookListToBookDtoList(
-        bookRepository.findAll(
-            Specification.where(BookSpecifications.hasValue("genre", genre))));
+        bookRepository.findAll(Specification.where(BookSpecifications.hasValue("genre", genre))));
   }
 
   /**
@@ -389,7 +386,8 @@ public class BookService {
     Set<BookTag> bookTagSet = new HashSet<>();
     for (BookTagDto bookTagDto : bookDto.getBookTags()) {
       if (!bookTagRepository.existsByValue(bookTagDto.getValue())) {
-        BookTag savedBookTag = bookTagRepository.save(bookTagMapper.bookTagDtoToBookTag(bookTagDto));
+        BookTag savedBookTag =
+            bookTagRepository.save(bookTagMapper.bookTagDtoToBookTag(bookTagDto));
         bookTagSet.add(savedBookTag);
       } else if (bookTagRepository.findByValue(bookTagDto.getValue()).isPresent()) {
         bookTagSet.add(bookTagRepository.findByValue(bookTagDto.getValue()).get());

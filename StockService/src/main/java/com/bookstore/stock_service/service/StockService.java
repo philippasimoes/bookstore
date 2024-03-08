@@ -24,6 +24,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+/**
+ * Stock service class.
+ *
+ * @author Filipa Simões
+ */
 @Service
 @Transactional
 public class StockService {

@@ -12,6 +12,11 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+/**
+ * Book Tag service class.
+ *
+ * @author Filipa Simões
+ */
 @Service
 public class BookTagService {
 
