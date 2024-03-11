@@ -10,9 +10,9 @@ services:
     environment:
         POSTGRES_PASSWORD: postgres
         POSTGRES_USER: postgres
-        POSTGRES_MULTIPLE_DATABASES: bookstore, keycloak
+        POSTGRES_MULTIPLE_DATABASES: catalog, stock, notification, keycloak
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready", "-d", "bookstore"]
+      test: ["CMD-SHELL", "pg_isready", "-d", "catalog"]
       interval: 30s
       timeout: 60s
       retries: 5
@@ -32,8 +32,9 @@ services:
       - "10000:10000"
       - "8081:8081"
     environment:
-      - POSTGRES_HOST=bookstore
+      - POSTGRES_HOST=catalog
       - POSTGRES_USER=postgres
+      - SPRINGPROFILES=dev,actuator
     depends_on:
       postgres:
         condition: service_healthy
@@ -42,8 +43,10 @@ services:
       keycloak:
         condition: service_healthy
     healthcheck:
-      test: "exit 0"
-      interval: 5s
+      test: "curl --fail --silent http://localhost:10000/actuator/health | grep UP || exit 1"
+      interval: 60s
+      timeout: 5s
+      retries: 5
     volumes:
       - ./CatalogService/log:/CatalogService/log
     networks:
@@ -60,8 +63,9 @@ services:
       - "10001:10001"
       - "8082:8082"
     environment:
-      - POSTGRES_HOST=bookstore
+      - POSTGRES_HOST=stock
       - POSTGRES_USER=postgres
+      - SPRINGPROFILES=dev,actuator
     depends_on:
       postgres:
         condition: service_healthy
@@ -69,9 +73,13 @@ services:
         condition: service_started
       keycloak:
         condition: service_healthy
+      catalog-service:
+        condition: service_healthy
     healthcheck:
-      test: "exit 0"
-      interval: 5s
+      test: "curl --fail --silent http://localhost:10001/actuator/health | grep UP || exit 1"
+      interval: 60s
+      timeout: 5s
+      retries: 5
     volumes:
       - ./StockService/log:/StockService/log
     networks:
@@ -89,14 +97,19 @@ services:
       - "8083:8083" #debug
       - "8000:8000"  #jobrnr dashboard
     environment:
-      - POSTGRES_HOST=bookstore
+      - POSTGRES_HOST=notification
       - POSTGRES_USER=postgres
+      - SPRINGPROFILES=dev,actuator
     depends_on:
       postgres:
         condition: service_healthy
+      stock-service:
+        condition: service_healthy
     healthcheck:
-      test: "exit 0"
-      interval: 5s
+      test: "curl --fail --silent http://localhost:10002/actuator/health | grep UP || exit 1"
+      interval: 60s
+      timeout: 5s
+      retries: 5
     volumes:
       - ./NotificationService/log:/NotificationService/log
     networks:
