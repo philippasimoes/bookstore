@@ -7,13 +7,15 @@ import com.bookstore.catalog_service.model.entity.Book;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.sql.Timestamp;
 import java.util.HashSet;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@SpringBootTest(classes = {BookMapperImpl.class})
+@SpringBootTest(classes = {BookMapperImpl.class}, properties="spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguration")
+@ActiveProfiles(value = "test")
 public class BookMapperTest {
   @Autowired
   BookMapper bookMapper;

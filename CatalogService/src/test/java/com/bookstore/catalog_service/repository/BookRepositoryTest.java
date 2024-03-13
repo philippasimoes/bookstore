@@ -8,6 +8,7 @@ import com.bookstore.catalog_service.model.entity.Author;
 import com.bookstore.catalog_service.model.entity.Book;
 
 import com.bookstore.catalog_service.model.entity.Language;
+import com.bookstore.catalog_service.model.mapper.BookTagMapperImpl;
 import com.bookstore.catalog_service.specifications.BookSpecifications;
 import org.junit.Before;
 import org.junit.Test;
@@ -16,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
@@ -39,6 +41,7 @@ import static org.junit.Assert.assertEquals;
 @ContextConfiguration(classes = CatalogServiceApplication.class)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+@SpringBootTest(classes = {BookRepository.class}, properties="spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguration")
 public class BookRepositoryTest {
 
     @Autowired

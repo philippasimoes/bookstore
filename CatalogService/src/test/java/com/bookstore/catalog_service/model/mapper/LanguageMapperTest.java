@@ -5,12 +5,14 @@ import com.bookstore.catalog_service.model.entity.Language;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@SpringBootTest(classes = {LanguageMapperImpl.class})
+@SpringBootTest(classes = {LanguageMapperImpl.class}, properties="spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguration")
+@ActiveProfiles(value = "test")
 public class LanguageMapperTest {
     
     @Autowired
