@@ -14,7 +14,7 @@ import java.util.HashSet;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@SpringBootTest(classes = {BookMapperImpl.class}, properties="spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguration")
+@SpringBootTest(classes = {BookMapperImpl.class})
 @ActiveProfiles(value = "test")
 public class BookMapperTest {
   @Autowired

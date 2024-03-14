@@ -10,7 +10,7 @@ import org.springframework.test.context.ActiveProfiles;
 import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-@SpringBootTest(classes = {BookTagMapperImpl.class}, properties="spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguration")
+@SpringBootTest(classes = {BookTagMapperImpl.class})
 @ActiveProfiles(value = "test")
 public class BookBookTagMapperTest {
 

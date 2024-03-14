@@ -11,7 +11,7 @@ import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@SpringBootTest(classes = {LanguageMapperImpl.class}, properties="spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguration")
+@SpringBootTest(classes = {LanguageMapperImpl.class})
 @ActiveProfiles(value = "test")
 public class LanguageMapperTest {
     

@@ -41,7 +41,7 @@ import static org.junit.Assert.assertEquals;
 @ContextConfiguration(classes = CatalogServiceApplication.class)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-@SpringBootTest(classes = {BookRepository.class}, properties="spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguration")
+@SpringBootTest(classes = {BookRepository.class})
 public class BookRepositoryTest {
 
     @Autowired
