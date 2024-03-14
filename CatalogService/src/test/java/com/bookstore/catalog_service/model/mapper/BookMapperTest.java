@@ -1,27 +1,23 @@
 package com.bookstore.catalog_service.model.mapper;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import com.bookstore.catalog_service.model.dto.BookDto;
 import com.bookstore.catalog_service.model.dto.enums.Availability;
 import com.bookstore.catalog_service.model.dto.enums.Format;
 import com.bookstore.catalog_service.model.entity.Book;
+import java.sql.Timestamp;
+import java.util.HashSet;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.sql.Timestamp;
-import java.util.HashSet;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 @SpringBootTest(classes = {BookMapperImpl.class})
 @ActiveProfiles(value = "test")
 public class BookMapperTest {
-  @Autowired
-  BookMapper bookMapper;
+  @Autowired BookMapper bookMapper;
 
-
-  //jfixture, add mvn dependency (generate mocked objects)
   Book book =
       new Book(
           1,
@@ -77,10 +73,10 @@ public class BookMapperTest {
   @Test
   public void testBookModelToBookDto() {
 
-    //Arrange && Act
+    // Arrange && Act
     BookDto bookDto = bookMapper.bookToBookDto(book);
 
-    //Assert
+    // Assert
     assertEquals(book.getId(), bookDto.getId());
     assertEquals(book.getIsbn(), bookDto.getIsbn());
     assertEquals(book.getTitle(), bookDto.getTitle());
@@ -90,10 +86,10 @@ public class BookMapperTest {
   @Test
   public void testBookDtoToBook() {
 
-    //Arrange && Act
+    // Arrange && Act
     Book book = bookMapper.bookDtoToBook(bookDto);
 
-    //Assert
+    // Assert
     assertEquals(bookDto.getId(), book.getId());
     assertEquals(bookDto.getAvailability(), book.getAvailability());
     assertEquals(bookDto.getReleaseDate(), book.getReleaseDate());

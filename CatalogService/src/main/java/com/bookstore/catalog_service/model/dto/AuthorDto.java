@@ -22,6 +22,10 @@ public class AuthorDto {
 
   @NotBlank
   @Size(min = 0, max = 512)
+  private String isni;
+
+  @NotBlank
+  @Size(min = 0, max = 512)
   private String name;
 
   @Size(min = 0, max = 512)

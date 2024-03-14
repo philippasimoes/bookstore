@@ -2,7 +2,9 @@ package com.bookstore.catalog_service.model.mapper;
 
 import com.bookstore.catalog_service.model.dto.LanguageDto;
 import com.bookstore.catalog_service.model.entity.Language;
-import java.util.List;
+
+import java.util.Set;
+
 import org.mapstruct.Mapper;
 
 /**
@@ -17,7 +19,7 @@ public interface LanguageMapper {
 
   Language languageDtoToLanguage(LanguageDto languageDto);
 
-  List<LanguageDto> languageListToLanguageDtoList(List<Language> languageList);
+  Set<LanguageDto> languageSetToLanguageDtoSet(Set<Language> languageSet);
 
-  List<Language> languageDtoListToLanguageList(List<LanguageDto> languageDtoList);
+  Set<Language> languageDtoSetToLanguageSet(Set<LanguageDto> languageDtoSet);
 }

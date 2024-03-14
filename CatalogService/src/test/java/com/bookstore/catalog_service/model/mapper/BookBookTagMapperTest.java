@@ -1,23 +1,22 @@
 package com.bookstore.catalog_service.model.mapper;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import com.bookstore.catalog_service.model.dto.BookTagDto;
 import com.bookstore.catalog_service.model.entity.BookTag;
+import java.util.HashSet;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.util.ArrayList;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 @SpringBootTest(classes = {BookTagMapperImpl.class})
 @ActiveProfiles(value = "test")
 public class BookBookTagMapperTest {
 
-  @Autowired
-  BookTagMapper bookTagMapper;
+  @Autowired BookTagMapper bookTagMapper;
 
-  BookTag bookTag = new BookTag(1, "tag_1", new ArrayList<>());
+  BookTag bookTag = new BookTag(1, "tag_1", new HashSet<>());
 
   BookTagDto bookTagDto = new BookTagDto(2, "tag_1");
 

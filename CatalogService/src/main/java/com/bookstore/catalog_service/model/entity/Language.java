@@ -3,7 +3,7 @@ package com.bookstore.catalog_service.model.entity;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
-import java.util.List;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -31,5 +31,5 @@ public class Language {
   private String code;
 
   @ManyToMany(fetch = FetchType.LAZY, mappedBy = "languages")
-  private List<Book> books;
+  private Set<Book> books;
 }

@@ -13,6 +13,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
+import java.util.Set;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -48,8 +50,8 @@ public class BookTagController {
         @ApiResponse(responseCode = "204", description = "No tags in database.")
       })
   @GetMapping
-  public ResponseEntity<List<BookTagDto>> getAllTags() {
-    List<BookTagDto> languages = bookTagService.getAllBookTags();
+  public ResponseEntity<Set<BookTagDto>> getAllTags() {
+    Set<BookTagDto> languages = bookTagService.getAllBookTags();
 
     if (!languages.isEmpty()) {
       return ResponseEntity.ok(languages);

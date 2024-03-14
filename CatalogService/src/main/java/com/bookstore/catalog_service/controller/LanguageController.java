@@ -12,7 +12,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.List;
+import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -48,8 +48,8 @@ public class LanguageController {
         @ApiResponse(responseCode = "204", description = "No languages in database.")
       })
   @GetMapping
-  public ResponseEntity<List<LanguageDto>> getAllLanguages() {
-    List<LanguageDto> languages = languageService.getAllLanguages();
+  public ResponseEntity<Set<LanguageDto>> getAllLanguages() {
+    Set<LanguageDto> languages = languageService.getAllLanguages();
 
     if (!languages.isEmpty()) {
       return ResponseEntity.ok(languages);

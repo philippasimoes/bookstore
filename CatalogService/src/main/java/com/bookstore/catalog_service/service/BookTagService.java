@@ -6,7 +6,10 @@ import com.bookstore.catalog_service.model.entity.BookTag;
 import com.bookstore.catalog_service.model.mapper.BookTagMapper;
 import com.bookstore.catalog_service.repository.BookTagRepository;
 import jakarta.transaction.Transactional;
-import java.util.List;
+
+import java.util.HashSet;
+import java.util.Set;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,8 +28,8 @@ public class BookTagService {
 
   @Autowired BookTagMapper bookTagMapper;
 
-  public List<BookTagDto> getAllBookTags() {
-    return bookTagMapper.tagLisToTagDtoList(bookTagRepository.findAll());
+  public Set<BookTagDto> getAllBookTags() {
+    return bookTagMapper.bookTagSetToBookTagDtoSet(new HashSet<>(bookTagRepository.findAll()));
   }
 
   @Transactional

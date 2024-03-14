@@ -17,4 +17,6 @@ public interface AuthorRepository
 
   // tem de ser com query (like)
   List<Author> findByName(String name);
+
+  Author findByIsni(String isni);
 }

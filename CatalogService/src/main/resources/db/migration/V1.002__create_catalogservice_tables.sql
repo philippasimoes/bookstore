@@ -23,6 +23,7 @@ CREATE TABLE catalogservice.book (
 
 CREATE TABLE catalogservice.author (
     id INT2 NOT NULL PRIMARY KEY,
+    isni VARCHAR(512),
     name VARCHAR(512),
     original_full_name VARCHAR(512),
     date_of_birth VARCHAR(10),

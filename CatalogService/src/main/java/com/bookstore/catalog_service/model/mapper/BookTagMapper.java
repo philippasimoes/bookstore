@@ -2,7 +2,9 @@ package com.bookstore.catalog_service.model.mapper;
 
 import com.bookstore.catalog_service.model.dto.BookTagDto;
 import com.bookstore.catalog_service.model.entity.BookTag;
-import java.util.List;
+
+import java.util.Set;
+
 import org.mapstruct.Mapper;
 
 /**
@@ -16,7 +18,7 @@ public interface BookTagMapper {
 
   BookTag bookTagDtoToBookTag(BookTagDto bookTagDto);
 
-  List<BookTagDto> tagLisToTagDtoList(List<BookTag> bookTagList);
+  Set<BookTagDto> bookTagSetToBookTagDtoSet(Set<BookTag> bookTagSet);
 
-  List<BookTag> bookTagDtoLisToBookTagList(List<BookTagDto> bookTagDtoList);
+  Set<BookTag> bookTagDtoSetToBookTagSet(Set<BookTagDto> bookTagDtoSet);
 }

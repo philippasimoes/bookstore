@@ -26,6 +26,8 @@ import com.bookstore.catalog_service.specifications.BookSpecifications;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
+
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -86,7 +88,17 @@ public class BookService {
    */
   public List<BookDto> getAllBooks() {
 
-    return bookMapper.bookListToBookDtoList(bookRepository.findAll());
+    List<BookDto> bookDtos = new ArrayList<>();
+
+    for (Book book : bookRepository.findAll()) {
+      BookDto bookDto = bookMapper.bookToBookDto(book);
+      bookDto.setBookTags(bookTagMapper.bookTagSetToBookTagDtoSet(book.getBookTags()));
+      bookDto.setAuthors(authorMapper.authorSetToAuthorDtoSet(book.getAuthors()));
+      bookDto.setLanguages(languageMapper.languageSetToLanguageDtoSet(book.getLanguages()));
+
+      bookDtos.add(bookDto);
+    }
+    return bookDtos;
   }
 
   /**
@@ -363,14 +375,19 @@ public class BookService {
   private Set<Author> getAuthorsFromBook(BookDto bookDto) {
 
     Set<Author> authorSet = new HashSet<>();
+
     for (AuthorDto authorDto : bookDto.getAuthors()) {
-      if (!authorRepository.existsById(authorDto.getId())) {
+
+      if (authorRepository.findByIsni(authorDto.getIsni()) != null) {
+
+        authorSet.add(authorRepository.findByIsni(authorDto.getIsni()));
+
+      } else {
         Author savedAuthor = authorRepository.save(authorMapper.authorDtoToAuthor(authorDto));
         authorSet.add(savedAuthor);
-      } else if (authorRepository.findById(authorDto.getId()).isPresent()) {
-        authorSet.add(authorRepository.findById(authorDto.getId()).get());
-      } else throw new ResourceNotFoundException("Author not found");
+      }
     }
+
     return authorSet;
   }
 

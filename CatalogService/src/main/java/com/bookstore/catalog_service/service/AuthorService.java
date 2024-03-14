@@ -6,7 +6,11 @@ import com.bookstore.catalog_service.model.entity.Author;
 import com.bookstore.catalog_service.model.mapper.AuthorMapper;
 import com.bookstore.catalog_service.repository.AuthorRepository;
 import jakarta.transaction.Transactional;
+
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -32,16 +36,16 @@ public class AuthorService {
     return authorMapper.authorToAuthorDto(author);
   }
 
-  public List<AuthorDto> getAuthorByName(String name) {
-    List<Author> authors = authorRepository.findByName(name);
+  public Set<AuthorDto> getAuthorByName(String name) {
+    Set<Author> authors = new HashSet<>(authorRepository.findByName(name));
 
     if (!authors.isEmpty()) {
-      return authorMapper.authorLisToAuthorDtoList(authors);
+      return authorMapper.authorSetToAuthorDtoSet(authors);
     } else throw new ResourceNotFoundException("No results");
   }
 
-  public List<AuthorDto> getAllAuthors() {
-    return authorMapper.authorLisToAuthorDtoList(authorRepository.findAll());
+  public Set<AuthorDto> getAllAuthors() {
+    return authorMapper.authorSetToAuthorDtoSet(new HashSet<>(authorRepository.findAll()));
   }
 
   @Transactional

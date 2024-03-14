@@ -2,7 +2,9 @@ package com.bookstore.catalog_service.model.mapper;
 
 import com.bookstore.catalog_service.model.dto.AuthorDto;
 import com.bookstore.catalog_service.model.entity.Author;
-import java.util.List;
+
+import java.util.Set;
+
 import org.mapstruct.Mapper;
 
 /**
@@ -17,7 +19,7 @@ public interface AuthorMapper {
 
   Author authorDtoToAuthor(AuthorDto authorDto);
 
-  List<AuthorDto> authorLisToAuthorDtoList(List<Author> authorList);
+  Set<AuthorDto> authorSetToAuthorDtoSet(Set<Author> authorSet);
 
-  List<Author> authorDtoLisToAuthorList(List<AuthorDto> authorDtoList);
+  Set<Author> authorDtoSetToAuthorSet(Set<AuthorDto> authorDtoSet);
 }

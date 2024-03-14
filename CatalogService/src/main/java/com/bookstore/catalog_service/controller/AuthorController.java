@@ -12,6 +12,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
+import java.util.Set;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -50,8 +52,8 @@ public class AuthorController {
         @ApiResponse(responseCode = "204", description = "No authors in database.")
       })
   @GetMapping
-  public ResponseEntity<List<AuthorDto>> getAllAuthors() {
-    List<AuthorDto> authors = authorService.getAllAuthors();
+  public ResponseEntity<Set<AuthorDto>> getAllAuthors() {
+    Set<AuthorDto> authors = authorService.getAllAuthors();
 
     if (!authors.isEmpty()) {
       return ResponseEntity.status(HttpStatus.OK).body(authorService.getAllAuthors());
@@ -104,7 +106,7 @@ public class AuthorController {
             })
       })
   @GetMapping("/name/{name}")
-  public ResponseEntity<List<AuthorDto>> getAuthorByName(@PathVariable String name) {
+  public ResponseEntity<Set<AuthorDto>> getAuthorByName(@PathVariable String name) {
     return ResponseEntity.status(HttpStatus.OK).body(authorService.getAuthorByName(name));
   }
 

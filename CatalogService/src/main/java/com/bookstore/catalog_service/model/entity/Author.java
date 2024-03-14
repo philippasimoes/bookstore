@@ -3,7 +3,7 @@ package com.bookstore.catalog_service.model.entity;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
-import java.util.List;
+import java.util.Set;
 import lombok.*;
 
 /**
@@ -22,6 +22,9 @@ public class Author {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private int id;
+
+  @Column(unique = true)
+  private String isni;
 
   @Column(nullable = false)
   private String name;
@@ -44,5 +47,5 @@ public class Author {
   @Column private String about;
 
   @ManyToMany(fetch = FetchType.LAZY, mappedBy = "authors")
-  private List<Book> books;
+  private Set<Book> books;
 }
