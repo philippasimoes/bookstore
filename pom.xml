@@ -31,6 +31,7 @@
         <keycloak.version>24.0.0</keycloak.version>
         <circuitbreaker-reactor-resilience4j.version>3.1.0</circuitbreaker-reactor-resilience4j.version>
         <flyway.version>10.8.1</flyway.version>
+        <java-jwt.version>4.4.0</java-jwt.version>
     </properties>
 
     <dependencyManagement>
@@ -113,6 +114,11 @@
                 <version>${spring-boot.version}</version>
             </dependency>
             <dependency>
+                <groupId>com.auth0</groupId>
+                <artifactId>java-jwt</artifactId>
+                <version>${java-jwt.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
                 <version>${spring-boot.version}</version>
@@ -185,5 +191,10 @@
         <module>CatalogService</module>
         <module>NotificationService</module>
         <module>StockService</module>
+        <module>UserService</module>
+        <module>OrderService</module>
+        <module>PaymentService</module>
+        <module>ReturnService</module>
+        <module>ShippingService</module>
     </modules>
 </project>
