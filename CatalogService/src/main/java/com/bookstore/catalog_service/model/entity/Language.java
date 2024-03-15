@@ -21,11 +21,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "language", schema = "catalogservice")
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
-public class Language {
-
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private int id;
+public class Language extends BaseEntity {
 
   @Column(unique = true)
   private String code;

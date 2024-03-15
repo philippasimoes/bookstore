@@ -17,11 +17,7 @@ import lombok.Setter;
 @Getter
 @Entity
 @Table(name = "book_sample", schema = "catalogservice")
-public class BookSample {
-
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private int id;
+public class BookSample extends BaseEntity {
 
   @Column(name = "book_id")
   private int bookId;

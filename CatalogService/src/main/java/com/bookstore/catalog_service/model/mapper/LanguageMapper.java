@@ -15,11 +15,11 @@ import org.mapstruct.Mapper;
 @Mapper
 public interface LanguageMapper {
 
-  LanguageDto languageToLanguageDto(Language language);
+  LanguageDto toEntity(Language language);
 
-  Language languageDtoToLanguage(LanguageDto languageDto);
+  Language toDto(LanguageDto languageDto);
 
-  Set<LanguageDto> languageSetToLanguageDtoSet(Set<Language> languageSet);
+  Set<LanguageDto> toDtoSet(Set<Language> languageSet);
 
-  Set<Language> languageDtoSetToLanguageSet(Set<LanguageDto> languageDtoSet);
+  Set<Language> toEntitySet(Set<LanguageDto> languageDtoSet);
 }

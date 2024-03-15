@@ -33,30 +33,30 @@ public class AuthorService {
             .findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Author not found"));
 
-    return authorMapper.authorToAuthorDto(author);
+    return authorMapper.toDto(author);
   }
 
-  public Set<AuthorDto> getAuthorByName(String name) {
-    Set<Author> authors = new HashSet<>(authorRepository.findByName(name));
+  public List<AuthorDto> getAuthorByName(String name) {
+    List<Author> authors = authorRepository.findByNameLike(name);
 
     if (!authors.isEmpty()) {
-      return authorMapper.authorSetToAuthorDtoSet(authors);
+      return authorMapper.toDtoList(authors);
     } else throw new ResourceNotFoundException("No results");
   }
 
   public Set<AuthorDto> getAllAuthors() {
-    return authorMapper.authorSetToAuthorDtoSet(new HashSet<>(authorRepository.findAll()));
+    return authorMapper.toDtoSet(new HashSet<>(authorRepository.findAll()));
   }
 
   @Transactional
   public Author addNewAuthor(AuthorDto authorDto) {
-    return authorRepository.save(authorMapper.authorDtoToAuthor(authorDto));
+    return authorRepository.save(authorMapper.toEntity(authorDto));
   }
 
   @Transactional
   public String updateAuthor(AuthorDto authorDto) {
     if (authorRepository.findById(authorDto.getId()).isPresent()) {
-      authorRepository.save(authorMapper.authorDtoToAuthor(authorDto));
+      authorRepository.save(authorMapper.toEntity(authorDto));
       return "Author with id " + authorDto.getId() + " updated";
     } else throw new ResourceNotFoundException("User not found");
   }

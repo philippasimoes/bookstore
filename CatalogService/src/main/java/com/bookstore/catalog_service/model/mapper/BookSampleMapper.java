@@ -13,11 +13,7 @@ import org.mapstruct.Mapper;
 @Mapper
 public interface BookSampleMapper {
 
-    BookSampleDto bookToBookSampleDto(BookSample bookSample);
+    BookSampleDto toDto(BookSample bookSample);
 
-    BookSample bookSampleDtoToBookSample(BookSampleDto bookSampleDto);
-
-    List<BookSampleDto> bookSampleListToBookSampleDtoList(List<BookSample> bookSampleList);
-
-    List<BookSample> bookSampleDtoListToBookSampleList(List<BookSampleDto> bookDtoList);
+    BookSample toEntity(BookSampleDto bookSampleDto);
 }

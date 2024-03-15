@@ -16,14 +16,14 @@ public class LanguageMapperTest {
 
   @Autowired LanguageMapper languageMapper;
 
-  Language language = new Language(1, "PT", new HashSet<>());
+  Language language = new Language("PT", new HashSet<>());
 
   LanguageDto languageDto = new LanguageDto(2, "ENG");
 
   @Test
   public void testLanguageToLanguageDto() {
 
-    LanguageDto languageDto1 = languageMapper.languageToLanguageDto(language);
+    LanguageDto languageDto1 = languageMapper.toEntity(language);
 
     assertEquals(language.getId(), languageDto1.getId());
     assertEquals(language.getCode(), languageDto1.getCode());
@@ -32,7 +32,7 @@ public class LanguageMapperTest {
   @Test
   public void testTagDtoToTag() {
 
-    Language language1 = languageMapper.languageDtoToLanguage(languageDto);
+    Language language1 = languageMapper.toDto(languageDto);
 
     assertEquals(languageDto.getId(), language1.getId());
     assertEquals(languageDto.getCode(), language1.getCode());

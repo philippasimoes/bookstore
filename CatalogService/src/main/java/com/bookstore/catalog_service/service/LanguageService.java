@@ -27,7 +27,7 @@ public class LanguageService {
   @Autowired LanguageMapper languageMapper;
 
   public Set<LanguageDto> getAllLanguages() {
-    return languageMapper.languageSetToLanguageDtoSet(new HashSet<>(languageRepository.findAll()));
+    return languageMapper.toDtoSet(new HashSet<>(languageRepository.findAll()));
   }
 
   @Transactional
@@ -36,6 +36,6 @@ public class LanguageService {
       LOGGER.error(
           String.format("Language with code %s is already in database.", languageDto.getCode()));
       throw new DuplicatedResourceException("Language already exists.");
-    } else return languageRepository.save(languageMapper.languageDtoToLanguage(languageDto));
+    } else return languageRepository.save(languageMapper.toDto(languageDto));
   }
 }

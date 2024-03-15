@@ -12,11 +12,9 @@ import org.springframework.stereotype.Repository;
  * @author Filipa Simões
  */
 @Repository
-public interface AuthorRepository
-    extends JpaRepository<Author, Integer>, JpaSpecificationExecutor<Author> {
+public interface AuthorRepository extends JpaRepository<Author, Integer> {
 
-  // tem de ser com query (like)
-  List<Author> findByName(String name);
+  List<Author> findByNameLike(String name);
 
   Author findByIsni(String isni);
 }

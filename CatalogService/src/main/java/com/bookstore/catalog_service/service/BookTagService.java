@@ -29,7 +29,7 @@ public class BookTagService {
   @Autowired BookTagMapper bookTagMapper;
 
   public Set<BookTagDto> getAllBookTags() {
-    return bookTagMapper.bookTagSetToBookTagDtoSet(new HashSet<>(bookTagRepository.findAll()));
+    return bookTagMapper.toDtoSet(new HashSet<>(bookTagRepository.findAll()));
   }
 
   @Transactional
@@ -37,6 +37,6 @@ public class BookTagService {
     if (bookTagRepository.existsByValue(bookTagDto.getValue())) {
       LOGGER.error(String.format("Tag %s already exists in database", bookTagDto.getValue()));
       throw new DuplicatedResourceException("Tag already exists.");
-    } else return bookTagRepository.save(bookTagMapper.bookTagDtoToBookTag(bookTagDto));
+    } else return bookTagRepository.save(bookTagMapper.toEntity(bookTagDto));
   }
 }

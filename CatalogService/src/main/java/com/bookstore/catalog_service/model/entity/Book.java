@@ -5,14 +5,11 @@ import com.bookstore.catalog_service.model.dto.enums.Format;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
-import java.sql.Timestamp;
 import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
 /**
  * Book JPA entity.
@@ -26,11 +23,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 @Entity
 @Table(name = "book", schema = "catalogservice")
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
-public class Book {
-
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private int id;
+public class Book extends BaseEntity {
 
   @Column private String title;
 
@@ -60,14 +53,6 @@ public class Book {
 
   @Column(name = "promotional_price")
   private double promotionalPrice;
-
-  @Column(name = "creation_date")
-  @CreationTimestamp
-  private Timestamp creationDate;
-
-  @Column(name = "update_date")
-  @UpdateTimestamp
-  private Timestamp updateDate;
 
   @Column private String collection;
 

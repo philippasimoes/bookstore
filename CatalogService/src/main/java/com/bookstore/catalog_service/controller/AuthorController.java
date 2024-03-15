@@ -106,7 +106,7 @@ public class AuthorController {
             })
       })
   @GetMapping("/name/{name}")
-  public ResponseEntity<Set<AuthorDto>> getAuthorByName(@PathVariable String name) {
+  public ResponseEntity<List<AuthorDto>> getAuthorByName(@PathVariable String name) {
     return ResponseEntity.status(HttpStatus.OK).body(authorService.getAuthorByName(name));
   }
 

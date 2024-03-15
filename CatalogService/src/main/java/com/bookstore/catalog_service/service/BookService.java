@@ -91,10 +91,10 @@ public class BookService {
     List<BookDto> bookDtos = new ArrayList<>();
 
     for (Book book : bookRepository.findAll()) {
-      BookDto bookDto = bookMapper.bookToBookDto(book);
-      bookDto.setBookTags(bookTagMapper.bookTagSetToBookTagDtoSet(book.getBookTags()));
-      bookDto.setAuthors(authorMapper.authorSetToAuthorDtoSet(book.getAuthors()));
-      bookDto.setLanguages(languageMapper.languageSetToLanguageDtoSet(book.getLanguages()));
+      BookDto bookDto = bookMapper.toEntity(book);
+      bookDto.setBookTags(bookTagMapper.toDtoSet(book.getBookTags()));
+      bookDto.setAuthors(authorMapper.toDtoSet(book.getAuthors()));
+      bookDto.setLanguages(languageMapper.toDtoSet(book.getLanguages()));
 
       bookDtos.add(bookDto);
     }
@@ -108,7 +108,7 @@ public class BookService {
    */
   public List<BookDto> getBooksByAvailability(Availability availability) {
 
-    return bookMapper.bookListToBookDtoList(
+    return bookMapper.toDtoList(
         bookRepository.findAll(
             Specification.where(BookSpecifications.hasAvailability(availability))));
   }
@@ -124,7 +124,7 @@ public class BookService {
     Optional<Author> author = authorRepository.findById(author_id);
 
     if (author.isPresent()) {
-      return bookMapper.bookListToBookDtoList(
+      return bookMapper.toDtoList(
           bookRepository.findAll(
               Specification.where(BookSpecifications.allBooksFromAuthor(author.get()))));
     } else throw new ResourceNotFoundException("Author not found");
@@ -141,7 +141,7 @@ public class BookService {
     Optional<Language> language = languageRepository.findById(language_id);
 
     if (language.isPresent()) {
-      return bookMapper.bookListToBookDtoList(
+      return bookMapper.toDtoList(
           bookRepository.findAll(
               Specification.where(BookSpecifications.allBooksFromLanguage(language.get()))));
     } else throw new ResourceNotFoundException("Author not found");
@@ -158,7 +158,7 @@ public class BookService {
     Optional<BookTag> bookTag = bookTagRepository.findById(bookTagId);
 
     if (bookTag.isPresent()) {
-      return bookMapper.bookListToBookDtoList(
+      return bookMapper.toDtoList(
           bookRepository.findAll(
               Specification.where(BookSpecifications.allBooksFromTag(bookTag.get()))));
     } else throw new ResourceNotFoundException("Author not found");
@@ -172,7 +172,7 @@ public class BookService {
    */
   public List<BookDto> getBooksByGenre(String genre) {
 
-    return bookMapper.bookListToBookDtoList(
+    return bookMapper.toDtoList(
         bookRepository.findAll(Specification.where(BookSpecifications.hasValue("genre", genre))));
   }
 
@@ -184,7 +184,7 @@ public class BookService {
    */
   public List<BookDto> getBooksByCategory(String category) {
 
-    return bookMapper.bookListToBookDtoList(
+    return bookMapper.toDtoList(
         bookRepository.findAll(
             Specification.where(BookSpecifications.hasValue("category", category))));
   }
@@ -197,7 +197,7 @@ public class BookService {
    */
   public List<BookDto> getBooksByCollection(String collection) {
 
-    return bookMapper.bookListToBookDtoList(
+    return bookMapper.toDtoList(
         bookRepository.findAll(
             Specification.where(BookSpecifications.hasValue("collection", collection))));
   }
@@ -210,7 +210,7 @@ public class BookService {
    */
   public List<BookDto> getBooksBySeries(boolean isInASeries) {
 
-    return bookMapper.bookListToBookDtoList(bookRepository.findBookBySeries(isInASeries));
+    return bookMapper.toDtoList(bookRepository.findBookBySeries(isInASeries));
   }
 
   /**
@@ -223,7 +223,7 @@ public class BookService {
   public List<BookDto> getBooksInPriceRange(double startPrice, double endPrice) {
 
     if (endPrice > startPrice) {
-      return bookMapper.bookListToBookDtoList(
+      return bookMapper.toDtoList(
           bookRepository.findByPriceBetween(startPrice, endPrice));
     } else
       throw new InputNotAcceptedException("The start price should bw lower than the end price");
@@ -242,7 +242,7 @@ public class BookService {
             .findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Book not found"));
 
-    return bookMapper.bookToBookDto(book);
+    return bookMapper.toEntity(book);
   }
 
   /**
@@ -258,7 +258,7 @@ public class BookService {
           "Book with ISBN " + bookDto.getIsbn() + "already exists.");
     } else {
 
-      Book createdBook = bookRepository.save(bookMapper.bookDtoToBook(bookDto));
+      Book createdBook = bookRepository.save(bookMapper.toDto(bookDto));
 
       Set<Language> languageSet = getLanguageFromBook(bookDto);
       Set<BookTag> bookTagSet = getTagsFromBook(bookDto);
@@ -285,7 +285,7 @@ public class BookService {
 
     if (bookRepository.findById(bookDto.getId()).isPresent()) {
 
-      Book updatedBook = bookRepository.save(bookMapper.bookDtoToBook(bookDto));
+      Book updatedBook = bookRepository.save(bookMapper.toDto(bookDto));
 
       if (!getLanguageFromBook(bookDto).isEmpty()) {
         updatedBook.setLanguages(getLanguageFromBook(bookDto));
@@ -383,7 +383,7 @@ public class BookService {
         authorSet.add(authorRepository.findByIsni(authorDto.getIsni()));
 
       } else {
-        Author savedAuthor = authorRepository.save(authorMapper.authorDtoToAuthor(authorDto));
+        Author savedAuthor = authorRepository.save(authorMapper.toEntity(authorDto));
         authorSet.add(savedAuthor);
       }
     }
@@ -404,7 +404,7 @@ public class BookService {
     for (BookTagDto bookTagDto : bookDto.getBookTags()) {
       if (!bookTagRepository.existsByValue(bookTagDto.getValue())) {
         BookTag savedBookTag =
-            bookTagRepository.save(bookTagMapper.bookTagDtoToBookTag(bookTagDto));
+            bookTagRepository.save(bookTagMapper.toEntity(bookTagDto));
         bookTagSet.add(savedBookTag);
       } else if (bookTagRepository.findByValue(bookTagDto.getValue()).isPresent()) {
         bookTagSet.add(bookTagRepository.findByValue(bookTagDto.getValue()).get());
@@ -427,7 +427,7 @@ public class BookService {
     for (LanguageDto language : bookDto.getLanguages()) {
       if (!languageRepository.existsByCode(language.getCode())) {
         Language savedLanguage =
-            languageRepository.save(languageMapper.languageDtoToLanguage(language));
+            languageRepository.save(languageMapper.toDto(language));
         languageSet.add(savedLanguage);
       } else if (languageRepository.findByCode(language.getCode()).isPresent()) {
         languageSet.add(languageRepository.findByCode(language.getCode()).get());

@@ -16,14 +16,14 @@ public class BookBookTagMapperTest {
 
   @Autowired BookTagMapper bookTagMapper;
 
-  BookTag bookTag = new BookTag(1, "tag_1", new HashSet<>());
+  BookTag bookTag = new BookTag( "tag_1", new HashSet<>());
 
   BookTagDto bookTagDto = new BookTagDto(2, "tag_1");
 
   @Test
   public void testTagToTagDto() {
 
-    BookTagDto bookTagDto_2 = bookTagMapper.bookTagToBookTagDto(bookTag);
+    BookTagDto bookTagDto_2 = bookTagMapper.toDto(bookTag);
 
     assertEquals(bookTag.getId(), bookTagDto_2.getId());
     assertEquals(bookTag.getValue(), bookTagDto_2.getValue());
@@ -32,7 +32,7 @@ public class BookBookTagMapperTest {
   @Test
   public void testTagDtoToTag() {
 
-    BookTag bookTag2 = bookTagMapper.bookTagDtoToBookTag(bookTagDto);
+    BookTag bookTag2 = bookTagMapper.toEntity(bookTagDto);
 
     assertEquals(bookTagDto.getId(), bookTag2.getId());
     assertEquals(bookTagDto.getValue(), bookTag2.getValue());

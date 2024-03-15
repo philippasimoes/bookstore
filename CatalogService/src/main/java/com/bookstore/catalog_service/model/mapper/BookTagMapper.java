@@ -14,11 +14,11 @@ import org.mapstruct.Mapper;
  */
 @Mapper
 public interface BookTagMapper {
-  BookTagDto bookTagToBookTagDto(BookTag bookTag);
+  BookTagDto toDto(BookTag bookTag);
 
-  BookTag bookTagDtoToBookTag(BookTagDto bookTagDto);
+  BookTag toEntity(BookTagDto bookTagDto);
 
-  Set<BookTagDto> bookTagSetToBookTagDtoSet(Set<BookTag> bookTagSet);
+  Set<BookTagDto> toDtoSet(Set<BookTag> bookTagSet);
 
-  Set<BookTag> bookTagDtoSetToBookTagSet(Set<BookTagDto> bookTagDtoSet);
+  Set<BookTag> toEntitySet(Set<BookTagDto> bookTagDtoSet);
 }

@@ -20,7 +20,6 @@ public class BookMapperTest {
 
   Book book =
       new Book(
-          1,
           "title",
           "original_title",
           "isbn_1",
@@ -33,8 +32,6 @@ public class BookMapperTest {
           "synopsis_1",
           10.50,
           10.00,
-          new Timestamp(System.currentTimeMillis()),
-          null,
           "collection_1",
           "category_1",
           Availability.AVAILABLE,
@@ -74,7 +71,7 @@ public class BookMapperTest {
   public void testBookModelToBookDto() {
 
     // Arrange && Act
-    BookDto bookDto = bookMapper.bookToBookDto(book);
+    BookDto bookDto = bookMapper.toEntity(book);
 
     // Assert
     assertEquals(book.getId(), bookDto.getId());
@@ -87,7 +84,7 @@ public class BookMapperTest {
   public void testBookDtoToBook() {
 
     // Arrange && Act
-    Book book = bookMapper.bookDtoToBook(bookDto);
+    Book book = bookMapper.toDto(bookDto);
 
     // Assert
     assertEquals(bookDto.getId(), book.getId());
