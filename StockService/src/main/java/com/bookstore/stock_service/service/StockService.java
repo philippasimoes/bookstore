@@ -2,7 +2,6 @@ package com.bookstore.stock_service.service;
 
 import com.bookstore.stock_service.exception.InsufficientStockException;
 import com.bookstore.stock_service.exception.StockFoundException;
-import com.bookstore.stock_service.exception.StockNotFoundException;
 import com.bookstore.stock_service.infrastructure.message.publisher.RabbitMQProducer;
 import com.bookstore.stock_service.model.entity.Stock;
 import com.bookstore.stock_service.repository.StockRepository;

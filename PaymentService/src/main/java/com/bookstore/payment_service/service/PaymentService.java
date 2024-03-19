@@ -10,7 +10,7 @@ public class PaymentService {
 
   @Autowired PaymentRepository paymentRepository;
 
-  public int createBasicPaymentEntry(int orderId, int customerId, double price) {
+  public void createBasicPaymentEntry(int orderId, int customerId, double price) {
 
     Payment payment = new Payment();
 
@@ -18,8 +18,6 @@ public class PaymentService {
     payment.setCustomerId(customerId);
     payment.setPaymentAmount(price);
 
-    Payment savedPayment = paymentRepository.save(payment);
-
-    return savedPayment.getId();
+    paymentRepository.save(payment);
   }
 }

@@ -4,7 +4,6 @@ import com.bookstore.order_service.model.dto.OrderDto;
 import com.bookstore.order_service.model.entity.Order;
 import java.util.List;
 import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 import org.mapstruct.ReportingPolicy;
 

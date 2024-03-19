@@ -28,34 +28,34 @@ public class BookDto {
 
   @NotNull
   @NotBlank
-  @Size(min = 0, max = 512)
+  @Size(max = 512)
   private String title;
 
-  @Size(min = 0, max = 512)
+  @Size(max = 512)
   private String originalTitle;
 
   @NotNull
-  @Size(min = 0, max = 20)
+  @Size(max = 20)
   private String isbn;
 
-  @Size(min = 0, max = 8, message = "YYYYmmdd")
+  @Size(max = 8, message = "YYYYmmdd")
   private String releaseDate;
 
-  @Size(min = 0, max = 8, message = "YYYYmmdd")
+  @Size(max = 8, message = "YYYYmmdd")
   private String editionDate;
 
-  @Size(min = 0, max = 50)
+  @Size(max = 50)
   private String genre;
 
-  @Size(min = 0, max = 50)
+  @Size(max = 50)
   private String edition;
 
   private boolean series;
 
-  @Size(min = 0, max = 50)
+  @Size(max = 50)
   private String publisher;
 
-  @Size(min = 0, max = 1024)
+  @Size(max = 1024)
   private String synopsis;
 
   @PositiveOrZero private double price;
@@ -66,10 +66,10 @@ public class BookDto {
 
   private Timestamp updateDate;
 
-  @Size(min = 0, max = 50)
+  @Size(max = 50)
   private String collection;
 
-  @Size(min = 0, max = 50)
+  @Size(max = 50)
   private String category;
 
   private Availability availability;
