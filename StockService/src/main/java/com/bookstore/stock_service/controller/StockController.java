@@ -173,7 +173,7 @@ public class StockController {
   @GetMapping("/{bookId}")
   public ResponseEntity<Integer> stockIsAboveZero(@PathVariable("bookId") int bookId) {
 
-    return ResponseEntity.ok(stockService.getStockByBookId(bookId).getUnits());
+    return ResponseEntity.ok(stockService.getStockByBookId(bookId));
   }
 
   /**

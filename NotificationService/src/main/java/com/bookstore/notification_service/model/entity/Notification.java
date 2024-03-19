@@ -1,7 +1,10 @@
 package com.bookstore.notification_service.model.entity;
 
+import com.bookstore.notification_service.model.dto.enums.NotificationType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -46,4 +49,7 @@ public class Notification {
   @Column private String message;
 
   @Column private boolean sent;
+
+  @Enumerated(EnumType.STRING)
+  private NotificationType notificationType;
 }

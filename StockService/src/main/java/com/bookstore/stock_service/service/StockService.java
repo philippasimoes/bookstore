@@ -134,14 +134,16 @@ public class StockService {
     } else throw new InsufficientStockException();
   }
 
-  public Stock getStockByBookId(int bookId) {
+  public int getStockByBookId(int bookId) {
 
-    return stockRepository.findByBookId(bookId).orElseThrow(StockNotFoundException::new);
+    if(stockRepository.findByBookId(bookId).isPresent()){
+      return stockRepository.findByBookId(bookId).get().getUnits();
+    } else throw new StockFoundException();
   }
 
   private String buildMessage(int bookId) throws JsonProcessingException {
 
-    Pair<Integer, Integer> pair = Pair.of(bookId, getStockByBookId(bookId).getUnits());
+    Pair<Integer, Integer> pair = Pair.of(bookId, getStockByBookId(bookId));
 
     return objectMapper.writeValueAsString(pair);
   }

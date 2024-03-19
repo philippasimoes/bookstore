@@ -16,6 +16,7 @@ import java.sql.Timestamp;
 public class PaymentDto {
     private int id;
     private int orderId;
+    private int customerId;
     private PaymentMethod paymentMethod;
     private PaymentStatus paymentStatus;
     private Timestamp paymentDate;

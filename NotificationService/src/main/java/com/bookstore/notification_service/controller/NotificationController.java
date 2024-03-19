@@ -1,6 +1,6 @@
 package com.bookstore.notification_service.controller;
 
-import com.bookstore.notification_service.service.NotificationService;
+import com.bookstore.notification_service.service.StockNotificationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -9,7 +9,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.PostConstruct;
-import jakarta.validation.constraints.Email;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jobrunr.scheduling.JobScheduler;
@@ -37,7 +36,8 @@ public class NotificationController {
   private final Logger LOGGER = LogManager.getLogger(NotificationController.class);
 
   /** Notification Service injection to access the service layer. */
-  @Autowired NotificationService notificationService;
+  @Autowired
+  StockNotificationService stockNotificationService;
 
   /** Job Scheduler injection to run background jobs. */
   @Autowired JobScheduler jobScheduler;
@@ -49,7 +49,7 @@ public class NotificationController {
    * @param customerEmail the customer e-mail.
    * @return a message stating that the notification was created.
    */
-  @Operation(summary = "Add a notification to database.")
+  @Operation(summary = "Add a stock notification to database.")
   @ApiResponses(
       value = {
         @ApiResponse(
@@ -61,8 +61,8 @@ public class NotificationController {
                   schema = @Schema(implementation = String.class))
             })
       })
-  @PostMapping("/{book_id}")
-  public ResponseEntity<String> createNotification(
+  @PostMapping("/stock/{book_id}")
+  public ResponseEntity<String> createStockNotification(
       @Parameter(description = "Book identifier.", required = true) @PathVariable("book_id")
           int bookId,
       @Parameter(
@@ -72,7 +72,7 @@ public class NotificationController {
           @RequestParam("customer_email")
           String customerEmail) {
 
-    notificationService.createNotification(bookId, customerEmail);
+    stockNotificationService.createNotification(bookId, customerEmail);
 
     return ResponseEntity.status(HttpStatus.OK).body("Notification created " + customerEmail);
   }
@@ -82,7 +82,7 @@ public class NotificationController {
   public void verifyNotifications() {
 
     jobScheduler.scheduleRecurrently(
-        Cron.minutely(), () -> notificationService.verifyUnsentNotifications());
+        Cron.minutely(), () -> stockNotificationService.verifyUnsentNotifications());
     LOGGER.info("Notification job has started");
   }
 }

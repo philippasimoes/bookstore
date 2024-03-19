@@ -312,7 +312,7 @@ public class BookController {
       })
   @SecurityRequirement(name = "admin-only")
   @PostMapping
-  public ResponseEntity<Book> addNewBook(@Validated @RequestBody BookDto bookDto) {
+  public ResponseEntity<BookDto> addNewBook(@Validated @RequestBody BookDto bookDto) {
     return ResponseEntity.status(HttpStatus.CREATED).body(bookService.addNewBook(bookDto));
   }
 

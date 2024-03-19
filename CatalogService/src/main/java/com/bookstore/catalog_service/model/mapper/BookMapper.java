@@ -18,12 +18,12 @@ public interface BookMapper {
     @Mapping(target="authors", ignore = true)
     @Mapping(target="bookTags", ignore = true)
     @Mapping(target="languages", ignore = true)
-    BookDto toEntity(Book book);
+    BookDto toDto(Book book);
 
     @Mapping(target="authors", ignore = true)
     @Mapping(target="bookTags", ignore = true)
     @Mapping(target="languages", ignore = true)
-    Book toDto(BookDto bookDto);
+    Book toEntity(BookDto bookDto);
 
     List<BookDto> toDtoList(List<Book> bookList);
 }

@@ -87,4 +87,6 @@ public class Book extends BaseEntity {
 
   @Column(name = "stock_available", nullable = false)
   private int stockAvailable;
+
+  @Column double weight;
 }

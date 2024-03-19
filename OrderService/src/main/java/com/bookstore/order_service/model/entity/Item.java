@@ -1,5 +1,7 @@
 package com.bookstore.order_service.model.entity;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
@@ -18,15 +20,18 @@ import org.hibernate.annotations.SoftDelete;
 @SoftDelete
 @Entity
 @Table(name = "item", schema = "orderservice")
-public class OrderItem extends BaseEntity {
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+public class Item extends BaseEntity {
 
   @ManyToOne
   @JoinColumn(name = "order_id", insertable = false, updatable = false)
   private Order order;
 
-  @Column(name = "book_id")
+  @Column(name = "book_id", updatable = false)
   private int bookId;
 
   @Column private int quantity;
-  @Column private double unitPrice;
+
+  @Column(updatable = false)
+  private double unitPrice;
 }

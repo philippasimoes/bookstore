@@ -31,8 +31,11 @@ public class Payment {
   @Column(name = "id", nullable = false)
   private int id;
 
-  @Column(name = "order_id")
+  @Column(name = "order_id", updatable = false)
   private int orderId;
+
+  @Column(name = "customer_id", updatable = false)
+  private int customerId;
 
   @Enumerated(EnumType.STRING)
   private PaymentMethod paymentMethod;

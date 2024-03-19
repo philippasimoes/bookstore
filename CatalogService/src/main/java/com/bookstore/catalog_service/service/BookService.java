@@ -91,7 +91,7 @@ public class BookService {
     List<BookDto> bookDtos = new ArrayList<>();
 
     for (Book book : bookRepository.findAll()) {
-      BookDto bookDto = bookMapper.toEntity(book);
+      BookDto bookDto = bookMapper.toDto(book);
       bookDto.setBookTags(bookTagMapper.toDtoSet(book.getBookTags()));
       bookDto.setAuthors(authorMapper.toDtoSet(book.getAuthors()));
       bookDto.setLanguages(languageMapper.toDtoSet(book.getLanguages()));
@@ -242,7 +242,7 @@ public class BookService {
             .findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Book not found"));
 
-    return bookMapper.toEntity(book);
+    return bookMapper.toDto(book);
   }
 
   /**
@@ -251,14 +251,14 @@ public class BookService {
    * @param bookDto the book (data transfer object) sent in request.
    * @return the persisted book (entity).
    */
-  public Book addNewBook(BookDto bookDto) {
+  public BookDto addNewBook(BookDto bookDto) {
 
     if (bookRepository.findByIsbn(bookDto.getIsbn()) != null) {
       throw new DuplicatedResourceException(
           "Book with ISBN " + bookDto.getIsbn() + "already exists.");
     } else {
 
-      Book createdBook = bookRepository.save(bookMapper.toDto(bookDto));
+      Book createdBook = bookRepository.save(bookMapper.toEntity(bookDto));
 
       Set<Language> languageSet = getLanguageFromBook(bookDto);
       Set<BookTag> bookTagSet = getTagsFromBook(bookDto);
@@ -271,7 +271,7 @@ public class BookService {
       Book bookWithLists = bookRepository.save(createdBook);
       createStock(bookWithLists.getId());
 
-      return bookWithLists;
+      return bookMapper.toDto(bookWithLists);
     }
   }
 
@@ -285,7 +285,7 @@ public class BookService {
 
     if (bookRepository.findById(bookDto.getId()).isPresent()) {
 
-      Book updatedBook = bookRepository.save(bookMapper.toDto(bookDto));
+      Book updatedBook = bookRepository.save(bookMapper.toEntity(bookDto));
 
       if (!getLanguageFromBook(bookDto).isEmpty()) {
         updatedBook.setLanguages(getLanguageFromBook(bookDto));

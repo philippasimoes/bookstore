@@ -83,4 +83,6 @@ public class BookDto {
   private Set<BookTagDto> bookTags;
 
   @PositiveOrZero private int stockAvailable;
+
+  double weight;
 }

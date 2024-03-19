@@ -1,6 +1,8 @@
 package com.bookstore.order_service.model.entity;
 
 import com.bookstore.order_service.model.dto.enums.OrderStatus;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -10,7 +12,6 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.sql.Timestamp;
 import java.util.List;
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -24,13 +25,11 @@ import org.hibernate.annotations.SoftDelete;
 @SoftDelete
 @Entity
 @Table(name = "order", schema = "orderservice")
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Order extends BaseEntity {
 
-  @Column(name = "cutomer_id")
+  @Column(name = "customer_id", updatable = false)
   private int customerId;
-
-  @Column(name = "publisher_id")
-  private int publisherId;
 
   @Column(name = "shipment_date")
   private Timestamp shipmentDate;
@@ -41,7 +40,10 @@ public class Order extends BaseEntity {
   @Enumerated(EnumType.STRING)
   private OrderStatus status;
 
+  @Column
+  private boolean editable;
+
   @OneToMany
-  @JoinColumn(name = "item_id")
-  private List<OrderItem> orderItemList;
+  @JoinColumn(name="order_id")
+  private List<Item> items;
 }

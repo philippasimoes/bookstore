@@ -39,7 +39,8 @@ public class BookMapperTest {
           new HashSet<>(),
           new HashSet<>(),
           new HashSet<>(),
-          0);
+          0,
+          0.0);
 
   BookDto bookDto =
       new BookDto(
@@ -65,13 +66,14 @@ public class BookMapperTest {
           new HashSet<>(),
           new HashSet<>(),
           new HashSet<>(),
-          0);
+          0,
+          0.0);
 
   @Test
   public void testBookModelToBookDto() {
 
     // Arrange && Act
-    BookDto bookDto = bookMapper.toEntity(book);
+    BookDto bookDto = bookMapper.toDto(book);
 
     // Assert
     assertEquals(book.getId(), bookDto.getId());
@@ -84,7 +86,7 @@ public class BookMapperTest {
   public void testBookDtoToBook() {
 
     // Arrange && Act
-    Book book = bookMapper.toDto(bookDto);
+    Book book = bookMapper.toEntity(bookDto);
 
     // Assert
     assertEquals(bookDto.getId(), book.getId());

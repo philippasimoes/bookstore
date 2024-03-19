@@ -10,7 +10,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class OrderItemDto {
+public class ItemDto {
 
   private int id;
   private Order order;
