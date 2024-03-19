@@ -1,1 +1,0 @@
-ALTER TABLE catalogservice.book ADD COLUMN weight NUMERIC;

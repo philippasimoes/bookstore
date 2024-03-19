@@ -19,8 +19,10 @@ import lombok.Setter;
 @Table(name = "book_sample", schema = "catalogservice")
 public class BookSample extends BaseEntity {
 
-  @Column(name = "book_id")
-  private int bookId;
+
+  @OneToOne
+  @JoinColumn(name = "book_id")
+  private Book book;
 
   @Column private String sample;
 }

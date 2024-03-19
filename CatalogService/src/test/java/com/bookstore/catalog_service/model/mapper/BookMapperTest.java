@@ -3,11 +3,15 @@ package com.bookstore.catalog_service.model.mapper;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.bookstore.catalog_service.model.dto.BookDto;
+import com.bookstore.catalog_service.model.dto.PublisherDto;
 import com.bookstore.catalog_service.model.dto.enums.Availability;
 import com.bookstore.catalog_service.model.dto.enums.Format;
 import com.bookstore.catalog_service.model.entity.Book;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.HashSet;
+
+import com.bookstore.catalog_service.model.entity.Publisher;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -18,6 +22,11 @@ import org.springframework.test.context.ActiveProfiles;
 public class BookMapperTest {
   @Autowired BookMapper bookMapper;
 
+  Publisher publisher =
+      new Publisher("publisher-name", "publisher@publisher.com", "123456789");
+
+  PublisherDto publisherDto =
+          new PublisherDto(1,"publisher-name", "publisher@publisher.com", "123456789");
   Book book =
       new Book(
           "title",
@@ -28,7 +37,7 @@ public class BookMapperTest {
           "genre_1",
           "edition_1",
           true,
-          "publisher_1",
+          publisher,
           "synopsis_1",
           10.50,
           10.00,
@@ -53,12 +62,10 @@ public class BookMapperTest {
           "genre_2",
           "edition_2",
           false,
-          "publisher_2",
+          publisherDto,
           "synopsis_2",
           12.50,
           10.00,
-          new Timestamp(System.currentTimeMillis()),
-          null,
           "collection_2",
           "category_2",
           Availability.AVAILABLE,

@@ -3,6 +3,7 @@ package com.bookstore.catalog_service.model.entity;
 import com.bookstore.catalog_service.model.dto.enums.Availability;
 import com.bookstore.catalog_service.model.dto.enums.Format;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import java.util.Set;
@@ -21,7 +22,10 @@ import lombok.Setter;
 @Setter
 @Getter
 @Entity
-@Table(name = "book", schema = "catalogservice")
+@Table(
+    name = "book",
+    schema = "catalogservice",
+    indexes = {@Index(name = "idx_book_id_creation_date", columnList = "id, creation_date")})
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Book extends BaseEntity {
 
@@ -45,7 +49,10 @@ public class Book extends BaseEntity {
 
   @Column private boolean series;
 
-  @Column private String publisher;
+  @ManyToOne
+  @JoinColumn(
+      name = "publisher_id")
+  private Publisher publisher;
 
   @Column private String synopsis;
 

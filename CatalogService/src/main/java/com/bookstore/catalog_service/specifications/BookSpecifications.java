@@ -5,6 +5,7 @@ import com.bookstore.catalog_service.model.entity.Author;
 import com.bookstore.catalog_service.model.entity.Book;
 import com.bookstore.catalog_service.model.entity.BookTag;
 import com.bookstore.catalog_service.model.entity.Language;
+import com.bookstore.catalog_service.model.entity.Publisher;
 import jakarta.persistence.criteria.Join;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -40,6 +41,19 @@ public class BookSpecifications {
     return (book, query, criteriaBuilder) -> {
       Join<Book, Author> authorsBooks = book.join("authors");
       return criteriaBuilder.equal(authorsBooks.get("id"), author.getId());
+    };
+  }
+
+  /**
+   * Used to get all the books from a determined publisher.
+   *
+   * @param publisher the publisher.
+   * @return a specification to be used to get a list of books from the determined publisher.
+   */
+  public static Specification<Book> allBooksFromPublisher(Publisher publisher) {
+    return (book, query, criteriaBuilder) -> {
+      Join<Book, Publisher> publisherBooks = book.join("publishers");
+      return criteriaBuilder.equal(publisherBooks.get("id"), publisher.getId());
     };
   }
 

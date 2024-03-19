@@ -58,7 +58,7 @@ public class BookController {
     List<BookDto> books = bookService.getAllBooks();
 
     if (!books.isEmpty()) {
-      return ResponseEntity.status(HttpStatus.OK).body(books);
+      return ResponseEntity.ok(books);
     } else return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
   }
 
@@ -98,7 +98,7 @@ public class BookController {
     List<BookDto> books = bookService.getBooksByAvailability(availability);
 
     if (!books.isEmpty()) {
-      return ResponseEntity.status(HttpStatus.OK).body(books);
+      return ResponseEntity.ok(books);
     } else return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
   }
 
@@ -122,7 +122,7 @@ public class BookController {
     List<BookDto> books = bookService.getBooksByGenre(genre);
 
     if (!books.isEmpty()) {
-      return ResponseEntity.status(HttpStatus.OK).body(books);
+      return ResponseEntity.ok(books);
     } else return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
   }
 
@@ -146,7 +146,7 @@ public class BookController {
     List<BookDto> books = bookService.getBooksByCategory(category);
 
     if (!books.isEmpty()) {
-      return ResponseEntity.status(HttpStatus.OK).body(books);
+      return ResponseEntity.ok(books);
     } else return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
   }
 
@@ -170,7 +170,7 @@ public class BookController {
     List<BookDto> books = bookService.getBooksByCollection(collection);
 
     if (!books.isEmpty()) {
-      return ResponseEntity.status(HttpStatus.OK).body(books);
+      return ResponseEntity.ok(books);
     } else return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
   }
 
@@ -194,7 +194,7 @@ public class BookController {
     List<BookDto> books = bookService.getBooksBySeries(series);
 
     if (!books.isEmpty()) {
-      return ResponseEntity.status(HttpStatus.OK).body(books);
+      return ResponseEntity.ok(books);
     } else return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
   }
 
@@ -219,7 +219,7 @@ public class BookController {
     List<BookDto> books = bookService.getBooksInPriceRange(startPrice, endPrice);
 
     if (!books.isEmpty()) {
-      return ResponseEntity.status(HttpStatus.OK).body(books);
+      return ResponseEntity.ok(books);
     } else return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
   }
 
@@ -241,7 +241,7 @@ public class BookController {
     List<BookDto> books = bookService.getBooksByAuthor(authorId);
 
     if (!books.isEmpty()) {
-      return ResponseEntity.status(HttpStatus.OK).body(books);
+      return ResponseEntity.ok(books);
     } else return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
   }
 
@@ -264,7 +264,7 @@ public class BookController {
     List<BookDto> books = bookService.getBooksByLanguage(languageId);
 
     if (!books.isEmpty()) {
-      return ResponseEntity.status(HttpStatus.OK).body(books);
+      return ResponseEntity.ok(books);
     } else return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
   }
 
@@ -287,8 +287,32 @@ public class BookController {
     List<BookDto> books = bookService.getBooksByTag(tagId);
 
     if (!books.isEmpty()) {
-      return ResponseEntity.status(HttpStatus.OK).body(books);
+      return ResponseEntity.ok(books);
     } else return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+  }
+
+  @Operation(summary = "Get books by publisher.")
+  @ApiResponses(
+      value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Show a list of books.",
+            content = {
+              @Content(
+                  mediaType = "application/json",
+                  array = @ArraySchema(schema = @Schema(implementation = Book.class)))
+            }),
+        @ApiResponse(
+            responseCode = "204",
+            description = "No books with this publisher in database.")
+      })
+  @GetMapping("/publisher")
+  public ResponseEntity<List<BookDto>> getAllBooksFromPublisher(@RequestParam int publisherId) {
+    List<BookDto> books = bookService.getBooksByPublisher(publisherId);
+
+    if (!books.isEmpty()) {
+      return ResponseEntity.ok(books);
+    } else return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
   }
 
   @Operation(summary = "Add a book to database.")

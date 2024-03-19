@@ -13,15 +13,18 @@ import com.bookstore.catalog_service.model.entity.Book;
 import com.bookstore.catalog_service.model.entity.BookSample;
 import com.bookstore.catalog_service.model.entity.BookTag;
 import com.bookstore.catalog_service.model.entity.Language;
+import com.bookstore.catalog_service.model.entity.Publisher;
 import com.bookstore.catalog_service.model.mapper.AuthorMapper;
 import com.bookstore.catalog_service.model.mapper.BookMapper;
 import com.bookstore.catalog_service.model.mapper.BookTagMapper;
 import com.bookstore.catalog_service.model.mapper.LanguageMapper;
+import com.bookstore.catalog_service.model.mapper.PublisherMapper;
 import com.bookstore.catalog_service.repository.AuthorRepository;
 import com.bookstore.catalog_service.repository.BookRepository;
 import com.bookstore.catalog_service.repository.BookSampleRepository;
 import com.bookstore.catalog_service.repository.BookTagRepository;
 import com.bookstore.catalog_service.repository.LanguageRepository;
+import com.bookstore.catalog_service.repository.PublisherRepository;
 import com.bookstore.catalog_service.specifications.BookSpecifications;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -63,10 +66,12 @@ public class BookService {
   @Autowired BookTagRepository bookTagRepository;
   @Autowired AuthorRepository authorRepository;
   @Autowired BookSampleRepository bookSampleRepository;
+  @Autowired PublisherRepository publisherRepository;
   @Autowired BookTagMapper bookTagMapper;
   @Autowired AuthorMapper authorMapper;
   @Autowired LanguageMapper languageMapper;
   @Autowired BookMapper bookMapper;
+  @Autowired PublisherMapper publisherMapper;
   @Autowired ObjectMapper objectMapper;
   @Autowired RestTemplate restTemplate;
 
@@ -165,6 +170,22 @@ public class BookService {
   }
 
   /**
+   * Retrieve a list of books that have the same publisher.
+   *
+   * @param publisherId the publisher identifier.
+   * @return a list of BookDto.
+   */
+  public List<BookDto> getBooksByPublisher(int publisherId) {
+    Optional<Publisher> publisher = publisherRepository.findById(publisherId);
+
+    if (publisher.isPresent()) {
+      return bookMapper.toDtoList(
+          bookRepository.findAll(
+              Specification.where(BookSpecifications.allBooksFromPublisher(publisher.get()))));
+    } else throw new ResourceNotFoundException("Publisher not found");
+  }
+
+  /**
    * Retrieve a list of books that have the same genre.
    *
    * @param genre the book genre.
@@ -223,8 +244,7 @@ public class BookService {
   public List<BookDto> getBooksInPriceRange(double startPrice, double endPrice) {
 
     if (endPrice > startPrice) {
-      return bookMapper.toDtoList(
-          bookRepository.findByPriceBetween(startPrice, endPrice));
+      return bookMapper.toDtoList(bookRepository.findByPriceBetween(startPrice, endPrice));
     } else
       throw new InputNotAcceptedException("The start price should bw lower than the end price");
   }
@@ -257,18 +277,21 @@ public class BookService {
       throw new DuplicatedResourceException(
           "Book with ISBN " + bookDto.getIsbn() + "already exists.");
     } else {
-
-      Book createdBook = bookRepository.save(bookMapper.toEntity(bookDto));
-
+      // get other needed entities from book dto
+      Publisher publisher = getPublisherFromBook(bookDto);
       Set<Language> languageSet = getLanguageFromBook(bookDto);
       Set<BookTag> bookTagSet = getTagsFromBook(bookDto);
       Set<Author> authorSet = getAuthorsFromBook(bookDto);
 
-      createdBook.setLanguages(languageSet);
-      createdBook.setBookTags(bookTagSet);
-      createdBook.setAuthors(authorSet);
+      Book newBook = bookMapper.toEntity(bookDto);
+      newBook.setPublisher(publisher);
+      newBook.setLanguages(languageSet);
+      newBook.setBookTags(bookTagSet);
+      newBook.setAuthors(authorSet);
 
-      Book bookWithLists = bookRepository.save(createdBook);
+      Book bookWithLists = bookRepository.save(newBook);
+
+      // create stock entry for this book - the entry is created with 0 units.
       createStock(bookWithLists.getId());
 
       return bookMapper.toDto(bookWithLists);
@@ -317,7 +340,7 @@ public class BookService {
 
     if (bookRepository.findById(bookId).isPresent()) {
       BookSample bookSample = new BookSample();
-      bookSample.setBookId(bookId);
+      bookSample.setBook(bookRepository.findById(bookId).get());
       bookSample.setSample(sample);
       bookSampleRepository.save(bookSample);
       return "Book sample added to book with ID" + bookId;
@@ -403,8 +426,7 @@ public class BookService {
     Set<BookTag> bookTagSet = new HashSet<>();
     for (BookTagDto bookTagDto : bookDto.getBookTags()) {
       if (!bookTagRepository.existsByValue(bookTagDto.getValue())) {
-        BookTag savedBookTag =
-            bookTagRepository.save(bookTagMapper.toEntity(bookTagDto));
+        BookTag savedBookTag = bookTagRepository.save(bookTagMapper.toEntity(bookTagDto));
         bookTagSet.add(savedBookTag);
       } else if (bookTagRepository.findByValue(bookTagDto.getValue()).isPresent()) {
         bookTagSet.add(bookTagRepository.findByValue(bookTagDto.getValue()).get());
@@ -426,14 +448,25 @@ public class BookService {
 
     for (LanguageDto language : bookDto.getLanguages()) {
       if (!languageRepository.existsByCode(language.getCode())) {
-        Language savedLanguage =
-            languageRepository.save(languageMapper.toDto(language));
+        Language savedLanguage = languageRepository.save(languageMapper.toDto(language));
         languageSet.add(savedLanguage);
       } else if (languageRepository.findByCode(language.getCode()).isPresent()) {
         languageSet.add(languageRepository.findByCode(language.getCode()).get());
       } else throw new ResourceNotFoundException("Language not found");
     }
     return languageSet;
+  }
+
+  private Publisher getPublisherFromBook(BookDto bookDto) {
+    if (publisherRepository.findByName(bookDto.getPublisher().getName()).isPresent()) {
+      return publisherRepository.findByName(bookDto.getPublisher().getName()).get();
+    } else {
+      Publisher publisher = new Publisher();
+      publisher.setName(bookDto.getPublisher().getName());
+      publisher.setEmail(bookDto.getPublisher().getEmail());
+      publisher.setPhoneNumber(bookDto.getPublisher().getPhoneNumber());
+      return publisherRepository.save(publisher);
+    }
   }
 
   /**
