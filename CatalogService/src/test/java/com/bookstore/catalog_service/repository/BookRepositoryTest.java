@@ -124,7 +124,7 @@ public class BookRepositoryTest {
             Specification.where(BookSpecifications.hasAvailability(Availability.AVAILABLE)));
 
     // Assert
-    assertEquals(bookRepository.findByIsbn("789456123").getTitle(), books.get(0).getTitle());
+    assertEquals(bookRepository.findByIsbn("789456123").get().getTitle(), books.get(0).getTitle());
   }
 
   /** Test if it's possible to retrieve all books from a certain author. */

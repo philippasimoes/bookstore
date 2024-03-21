@@ -1,6 +1,6 @@
 package com.bookstore.order_service.service;
 
-import com.bookstore.exception.ResourceNotFoundException;
+import com.bookstore.order_service.exception.ResourceNotFoundException;
 import com.bookstore.order_service.model.dto.ItemDto;
 import com.bookstore.order_service.model.dto.OrderDto;
 import com.bookstore.order_service.model.dto.enums.OrderStatus;
@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +44,8 @@ public class OrderService {
   private static final String STOCK_URL = "http://stock-service:10001/stock/";
 
   private static final String PAYMENTS_URL = "http://payment-service:10004/payment";
+
+  private static final String SHIPMENT_URL = "http://shipping-service:10006/shipment/tax?weight=";
 
   /**
    * Create new order and order items.
@@ -86,28 +90,45 @@ public class OrderService {
       Order order = orderRepository.findById(id).get();
       order.setStatus(orderStatus);
 
-      // order is completed and ready to be sent to payment service - the total price is calculated
-      // and the information about the order is sent via rest template
-      if (orderStatus.equals(OrderStatus.READY_TO_PAY)) {
-        double totalPrice = 0;
-        for (Item item : order.getItems()) {
-
-          totalPrice = totalPrice + (item.getQuantity() * item.getUnitPrice());
-        }
-        order.setTotalPrice(totalPrice);
-        order.setEditable(false);
-
-        sendOrderToPaymentService(id, order.getCustomerId(), order.getTotalPrice());
-      }
-
       // in case of rollback to add or remove items
       if (orderStatus.equals(OrderStatus.OPEN)) {
         order.setEditable(true);
       }
 
       orderRepository.save(order);
-
       return true;
+    } else {
+      throw new ResourceNotFoundException("Order not found");
+    }
+  }
+
+  // order is completed and ready to be sent to payment service - the total price is calculated
+  // and the information about the order is sent via rest template
+  public void setOrderStatusToReadyToPay(int id) {
+    if (orderRepository.findById(id).isPresent()) {
+
+      Order order = orderRepository.findById(id).get();
+      order.setStatus(OrderStatus.READY_TO_PAY);
+
+      double totalPrice = 0;
+      double totalWeight = 0;
+      for (Item item : order.getItems()) {
+
+        totalPrice = totalPrice + (item.getQuantity() * item.getUnitPrice());
+        totalWeight = totalWeight + (item.getQuantity() * item.getUnitWeight());
+      }
+      order.setTotalPriceItems(totalPrice);
+      order.setTotalWeight(totalWeight);
+
+      order.setTax(calculateTax(totalWeight));
+
+      order.setTotalPriceOrder(order.getTotalPriceItems() + order.getTax());
+      order.setEditable(false);
+
+      sendOrderToPaymentService(id, order.getCustomerId(), order.getTotalPriceOrder());
+
+      orderRepository.save(order);
+
     } else {
       throw new ResourceNotFoundException("Order not found");
     }
@@ -122,10 +143,13 @@ public class OrderService {
    */
   public OrderDto updateOrderItem(int orderId, ItemDto itemDto) {
 
-    if (orderRepository.findById(orderId).isPresent()) {
-      if (itemRepository.findById(itemDto.getId()).isPresent()) {
+    Optional<Order> order = orderRepository.findById(orderId);
+    Optional<Item> item = itemRepository.findById(itemDto.getId());
+
+    if (order.isPresent() && order.get().isEditable()) {
+      if (item.isPresent()) {
         if (itemDto.getQuantity() == 0) {
-          orderRepository.deleteById(itemDto.getId());
+          itemRepository.deleteById(itemDto.getId());
         } else if (!confirmStock(itemDto.getBookId(), itemDto.getQuantity())) {
           LOGGER.warn(
               String.format(
@@ -134,9 +158,10 @@ public class OrderService {
         } else {
           itemRepository.save(itemMapper.toEntity(itemDto));
         }
-        return orderMapper.toDto(orderRepository.findById(orderId).get());
+
+        return orderMapper.toDto(order.get());
       } else throw new ResourceNotFoundException("Item not found");
-    } else throw new ResourceNotFoundException("Order not found");
+    } else throw new ResourceNotFoundException("Order not found or not editable");
   }
 
   /**
@@ -147,10 +172,13 @@ public class OrderService {
    * @return the updated order (DTO).
    */
   public OrderDto deleteOrderItems(int orderId, List<ItemDto> itemDtoList) {
-    if (orderRepository.findById(orderId).isPresent()) {
+    Optional<Order> order = orderRepository.findById(orderId);
+
+    if (order.isPresent()) {
       for (ItemDto itemDto : itemDtoList) {
-        if (itemRepository.findById(itemDto.getId()).isPresent()) {
-          itemRepository.delete(itemMapper.toEntity(itemDto));
+        Optional<Item> item = itemRepository.findById(itemDto.getId());
+        if (item.isPresent()) {
+          itemRepository.delete(item.get());
         } else {
           throw new ResourceNotFoundException("Item not found");
         }
@@ -158,12 +186,13 @@ public class OrderService {
     } else {
       throw new ResourceNotFoundException("Order not found");
     }
-    return orderMapper.toDto(orderRepository.findById(orderId).get());
+
+    return orderMapper.toDto(order.get());
   }
 
   private boolean confirmStock(int bookId, int quantity) {
 
-    CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreaker");
+    CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreakerstock");
 
     int availableUnits =
         circuitBreaker.run(
@@ -182,18 +211,34 @@ public class OrderService {
   private void sendOrderToPaymentService(int orderId, int customerId, double price) {
     // connection with payment service if the order is ready
 
-    Map<String,String> map = new HashMap<>();
+    Map<String, String> map = new HashMap<>();
     map.put("orderId", String.valueOf(orderId));
     map.put("customerId", String.valueOf(customerId));
     map.put("price", String.valueOf(price));
 
-    CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreaker");
+    CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreakerpayment");
 
     circuitBreaker.run(
         () -> restTemplate.postForObject(PAYMENTS_URL, map, Void.class),
         throwable -> {
           LOGGER.warn("Error connecting to payment service.", throwable);
           return null;
+        });
+  }
+
+  private Double calculateTax(double orderWeight) {
+    // connection with shipping service
+
+    CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreakertax");
+
+    return circuitBreaker.run(
+        () ->
+            restTemplate
+                .exchange(SHIPMENT_URL + orderWeight, HttpMethod.GET, null, Double.class)
+                .getBody(),
+        throwable -> {
+          LOGGER.warn("Error connecting to stock service.", throwable);
+          return 0.0;
         });
   }
 }

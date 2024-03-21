@@ -38,6 +38,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Book endpoints")
 public class BookController {
 
+  //TODO: offsets, paginação (filterSearch)
   @Autowired BookService bookService;
 
   @Operation(summary = "Get all books.")

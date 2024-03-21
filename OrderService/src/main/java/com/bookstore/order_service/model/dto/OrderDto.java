@@ -18,7 +18,10 @@ public class OrderDto {
   private int id;
   private int customerId;
   private Timestamp shipmentDate;
-  private double totalPrice;
+  private double totalPriceItems;
+  private double tax;
+  private double totalPriceOrder;
+  private double totalWeight;
   private OrderStatus status;
   private List<ItemDto> items;
 }

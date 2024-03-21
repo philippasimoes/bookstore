@@ -4,7 +4,10 @@ CREATE TABLE orderservice."order" (
    update_date TIMESTAMP WITHOUT TIME ZONE,
    customer_id INTEGER,
    shipment_date TIMESTAMP WITHOUT TIME ZONE,
-   total_price DOUBLE PRECISION,
+   total_price_items DOUBLE PRECISION,
+   total_weight DOUBLE PRECISION,
+   tax DOUBLE PRECISION,
+   total_price_order DOUBLE PRECISION,
    status VARCHAR(255),
    editable BOOLEAN,
    CONSTRAINT pk_order PRIMARY KEY (id)
@@ -18,6 +21,7 @@ CREATE TABLE orderservice.item (
    book_id INTEGER,
    quantity INTEGER,
    unit_price DOUBLE PRECISION,
+   unit_weight DOUBLE PRECISION,
    CONSTRAINT pk_item PRIMARY KEY (id)
 );
 

@@ -1,17 +1,23 @@
 package com.bookstore.payment_service.model.mapper;
 
 import com.bookstore.payment_service.model.dto.PaymentDto;
-import com.bookstore.payment_service.model.entity.Payment;
-import java.util.List;
+import com.bookstore.payment_service.model.entity.BasePayment;
+import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
+import org.mapstruct.MappingConstants;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
+import org.mapstruct.ReportingPolicy;
 
-@Mapper
+@Mapper(
+    unmappedTargetPolicy = ReportingPolicy.IGNORE,
+    componentModel = MappingConstants.ComponentModel.SPRING)
 public interface PaymentMapper {
-  PaymentDto paymentToPaymentDto(Payment payment);
 
-  Payment paymentDtoToPayment(PaymentDto paymentDto);
+  BasePayment toEntity(PaymentDto paymentDto);
 
-  List<PaymentDto> paymentListToPaymentDtoList(List<Payment> paymentList);
+  PaymentDto toDto(BasePayment basePayment);
 
-  List<Payment> paymentDtoListToPaymentList(List<PaymentDto> paymentList);
+  @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+  BasePayment partialUpdate(PaymentDto paymentDto, @MappingTarget BasePayment basePayment);
 }

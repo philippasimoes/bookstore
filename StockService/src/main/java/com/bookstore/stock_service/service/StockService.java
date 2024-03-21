@@ -1,6 +1,5 @@
 package com.bookstore.stock_service.service;
 
-import com.bookstore.stock_service.exception.InsufficientStockException;
 import com.bookstore.stock_service.exception.StockFoundException;
 import com.bookstore.stock_service.infrastructure.message.publisher.RabbitMQProducer;
 import com.bookstore.stock_service.model.entity.Stock;
@@ -10,6 +9,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import java.util.Map;
+import java.util.Optional;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,7 +61,8 @@ public class StockService {
   public void addStock(int bookId) {
     if (stockRepository.findByBookId(bookId).isEmpty()) {
       Stock newStockEntry = new Stock();
-      newStockEntry.setUnits(0);
+      newStockEntry.setAvailableUnits(0);
+      newStockEntry.setPendingUnits(0);
       newStockEntry.setBookId(bookId);
       stockRepository.save(newStockEntry);
 
@@ -77,66 +79,74 @@ public class StockService {
    */
   public StockStatus updateStock(int bookId, int units) {
 
-    StockStatus status;
+    Optional<Stock> stock = stockRepository.findByBookId(bookId);
 
     try {
-      if (bookExists(bookId) && stockRepository.findByBookId(bookId).isPresent()) {
-        try {
-          Stock updatedStock =
-              updateAvailableUnits(stockRepository.findByBookId(bookId).get(), units);
+      if (bookExists(bookId) && stock.isPresent()) {
 
-          if (updatedStock.getUnits() > 0) {
-            producer.sendMessage(eventUpdatedQueue, buildMessage(bookId));
+        if (units > 0) return addAvailableUnits(stock.get(), units);
+        else return removeAvailableUnits(stock.get(), units);
 
-            LOGGER.info(
-                String.format(
-                    "Stock updated - book with id %s have %s units",
-                    bookId, updatedStock.getUnits()));
-
-            status = StockStatus.UPDATED;
-          } else {
-            producer.sendMessage(eventSoldOutQueue, buildMessage(bookId));
-            LOGGER.info(String.format("Stock updated - book with id %s is sold out", bookId));
-
-            status = StockStatus.SOLD_OUT;
-          }
-        } catch (InsufficientStockException e) {
-          LOGGER.error(e.getStackTrace());
-          status = StockStatus.INSUFFICIENT_STOCK;
-        }
       } else {
         LOGGER.error(
             "Book is not present in catalog. Please insert the book in Catalog Service before adding stock.");
-
-        status = StockStatus.BOOK_NOT_FOUND;
+        return StockStatus.BOOK_NOT_FOUND;
       }
-    } catch (JsonProcessingException e) {
 
+    } catch (JsonProcessingException e) {
       LOGGER.error("Error building message", e);
-      status = StockStatus.MESSAGE_ERROR;
+      return StockStatus.MESSAGE_ERROR;
     }
-    return status;
   }
 
-  private Stock updateAvailableUnits(Stock stock, int units) {
+  private StockStatus addAvailableUnits(Stock stock, int units) throws JsonProcessingException {
+    int updatedUnits = stock.getAvailableUnits() + units;
+    stock.setAvailableUnits(updatedUnits);
+    Stock updatedStock = stockRepository.save(stock);
+    producer.sendMessage(eventUpdatedQueue, buildMessage(stock.getBookId()));
+    LOGGER.info(
+        String.format(
+            "Stock updated - book with id %s have %s units",
+            updatedStock.getBookId(), updatedStock.getAvailableUnits()));
+    return StockStatus.UPDATED;
+  }
 
-    int updatedUnits = stock.getUnits() + units;
+  private StockStatus removeAvailableUnits(Stock stock, int units) throws JsonProcessingException {
 
-    if (updatedUnits >= 0) {
-      stock.setUnits(updatedUnits);
+    if (units > stock.getAvailableUnits()) {
+      return StockStatus.INSUFFICIENT_STOCK;
+    } else {
+      int updatedUnits = stock.getAvailableUnits() + units; // because the units is a negative number in this case
+      stock.setAvailableUnits(updatedUnits);
+      stock.setPendingUnits(stock.getPendingUnits() + units);
       Stock updatedStock = stockRepository.save(stock);
+
       LOGGER.info(
           String.format(
-              "Stock updated - book with id %s have %s units",
-              updatedStock.getBookId(), updatedStock.getUnits()));
-      return updatedStock;
-    } else throw new InsufficientStockException();
+              "Stock updated - book with id %s have %s available units. Pending units: %s",
+              updatedStock.getBookId(),
+              updatedStock.getAvailableUnits(),
+              updatedStock.getPendingUnits()));
+
+      if (updatedStock.getAvailableUnits() > 0) {
+        producer.sendMessage(eventUpdatedQueue, buildMessage(stock.getBookId()));
+        return StockStatus.UPDATED;
+      } else {
+        producer.sendMessage(eventSoldOutQueue, buildMessage(stock.getBookId()));
+        LOGGER.info(
+            String.format("Stock updated - book with id %s is sold out", stock.getBookId()));
+
+        return StockStatus.SOLD_OUT;
+      }
+    }
   }
+
+  //TODO: remove pending units
 
   public int getStockByBookId(int bookId) {
 
-    if(stockRepository.findByBookId(bookId).isPresent()){
-      return stockRepository.findByBookId(bookId).get().getUnits();
+    if (stockRepository.findByBookId(bookId).isPresent()) {
+      return stockRepository.findByBookId(bookId).get().getAvailableUnits();
     } else throw new StockFoundException();
   }
 

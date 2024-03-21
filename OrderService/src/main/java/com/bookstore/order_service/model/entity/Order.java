@@ -34,16 +34,23 @@ public class Order extends BaseEntity {
   @Column(name = "shipment_date")
   private Timestamp shipmentDate;
 
-  @Column(name = "total_price")
-  private double totalPrice;
+  @Column(name = "total_price_items")
+  private double totalPriceItems;
+
+  @Column private double tax;
+
+  @Column(name = "total_price_order")
+  private double totalPriceOrder;
 
   @Enumerated(EnumType.STRING)
   private OrderStatus status;
 
-  @Column
-  private boolean editable;
+  @Column private boolean editable;
 
   @OneToMany
-  @JoinColumn(name="order_id")
+  @JoinColumn(name = "order_id")
   private List<Item> items;
+
+  @Column(name = "total_weight")
+  private double totalWeight;
 }

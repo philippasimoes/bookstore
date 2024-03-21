@@ -1,0 +1,6 @@
+FROM openjdk:21-slim
+RUN apt-get update && apt-get install -y curl
+COPY target/DummyCtt-0.0.1-SNAPSHOT.jar dummyctt.jar
+EXPOSE 10008 8089
+ENV SPRINGPROFILES=dev
+ENTRYPOINT ["java","-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:8089","-Dspring.profiles.active=${SPRINGPROFILES}","-jar","-Dserver.port=10008","dummyctt.jar"]

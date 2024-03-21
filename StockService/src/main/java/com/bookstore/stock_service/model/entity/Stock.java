@@ -19,7 +19,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "stock")
+@Table(name = "stock", schema = "stockservice")
 public class Stock {
 
   @Id
@@ -29,8 +29,11 @@ public class Stock {
   @Column(name = "book_id", unique = true)
   private int bookId;
 
-  @Column(name = "units")
-  private int units;
+  @Column(name = "available_units")
+  private int availableUnits;
+
+  @Column(name = "pending_units")
+  private int pendingUnits;
 
   @Column(name = "creation_date")
   @CreationTimestamp

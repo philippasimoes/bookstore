@@ -31,22 +31,27 @@ public class OrderController {
   }
 
   @PatchMapping("/{id}")
-  public ResponseEntity<Boolean> updateOrderStatus(@PathVariable(value = "id") int id, @RequestParam OrderStatus status) {
-    return ResponseEntity.status(HttpStatus.OK)
-            .body(orderService.editOrderStatus(id, status));
+  public ResponseEntity<Boolean> updateOrderStatus(
+      @PathVariable(value = "id") int id, @RequestParam OrderStatus status) {
+    return ResponseEntity.ok(orderService.editOrderStatus(id, status));
+  }
+
+  @PatchMapping("/{id}/payment")
+  public ResponseEntity<Boolean> setOrderStatusToReadyToPay(
+      @PathVariable(value = "id") int id) {
+    orderService.setOrderStatusToReadyToPay(id);
+    return ResponseEntity.ok().build();
   }
 
   @PatchMapping("/edit-items/{order_id}")
   public ResponseEntity<OrderDto> editOrderItem(
       @PathVariable(value = "order_id") int orderId, @RequestBody ItemDto itemDto) {
-    return ResponseEntity.status(HttpStatus.OK)
-        .body(orderService.updateOrderItem(orderId, itemDto));
+    return ResponseEntity.ok(orderService.updateOrderItem(orderId, itemDto));
   }
 
   @PatchMapping("/delete-items/{order_id}")
   public ResponseEntity<OrderDto> deleteOrderItems(
       @PathVariable(value = "order_id") int orderId, @RequestBody List<ItemDto> itemDtoList) {
-    return ResponseEntity.status(HttpStatus.OK)
-        .body(orderService.deleteOrderItems(orderId, itemDtoList));
+    return ResponseEntity.ok(orderService.deleteOrderItems(orderId, itemDtoList));
   }
 }

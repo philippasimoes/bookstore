@@ -1,4 +1,4 @@
-package com.bookstore.exception;
+package com.bookstore.payment_service.exception;
 
 /**
  * Custom exception to be used when the resource is not present in database.

@@ -273,7 +273,9 @@ public class BookService {
    */
   public BookDto addNewBook(BookDto bookDto) {
 
-    if (bookRepository.findByIsbn(bookDto.getIsbn()) != null) {
+    Optional<Book> book = bookRepository.findByIsbn(bookDto.getIsbn());
+
+    if (book.isPresent()) {
       throw new DuplicatedResourceException(
           "Book with ISBN " + bookDto.getIsbn() + "already exists.");
     } else {
@@ -305,8 +307,9 @@ public class BookService {
    * @return The updated book (entity).
    */
   public Book updateBook(BookDto bookDto) {
+    Optional<Book> book = bookRepository.findById(bookDto.getId());
 
-    if (bookRepository.findById(bookDto.getId()).isPresent()) {
+    if (book.isPresent()) {
 
       Book updatedBook = bookRepository.save(bookMapper.toEntity(bookDto));
 
@@ -338,9 +341,11 @@ public class BookService {
    */
   public String addBookSample(int bookId, String sample) {
 
-    if (bookRepository.findById(bookId).isPresent()) {
+    Optional<Book> book = bookRepository.findById(bookId);
+
+    if (book.isPresent()) {
       BookSample bookSample = new BookSample();
-      bookSample.setBook(bookRepository.findById(bookId).get());
+      bookSample.setBook(book.get());
       bookSample.setSample(sample);
       bookSampleRepository.save(bookSample);
       return "Book sample added to book with ID" + bookId;
@@ -400,11 +405,10 @@ public class BookService {
     Set<Author> authorSet = new HashSet<>();
 
     for (AuthorDto authorDto : bookDto.getAuthors()) {
+      Optional<Author> author = authorRepository.findByIsni(authorDto.getIsni());
 
-      if (authorRepository.findByIsni(authorDto.getIsni()) != null) {
-
-        authorSet.add(authorRepository.findByIsni(authorDto.getIsni()));
-
+      if (author.isPresent()) {
+        authorSet.add(author.get());
       } else {
         Author savedAuthor = authorRepository.save(authorMapper.toEntity(authorDto));
         authorSet.add(savedAuthor);
@@ -424,13 +428,16 @@ public class BookService {
   private Set<BookTag> getTagsFromBook(BookDto bookDto) {
 
     Set<BookTag> bookTagSet = new HashSet<>();
+
     for (BookTagDto bookTagDto : bookDto.getBookTags()) {
-      if (!bookTagRepository.existsByValue(bookTagDto.getValue())) {
+      Optional<BookTag> bookTag = bookTagRepository.findByValue(bookTagDto.getValue());
+
+      if (bookTag.isPresent()) {
+        bookTagSet.add(bookTag.get());
+      } else {
         BookTag savedBookTag = bookTagRepository.save(bookTagMapper.toEntity(bookTagDto));
         bookTagSet.add(savedBookTag);
-      } else if (bookTagRepository.findByValue(bookTagDto.getValue()).isPresent()) {
-        bookTagSet.add(bookTagRepository.findByValue(bookTagDto.getValue()).get());
-      } else throw new ResourceNotFoundException("Tag not found");
+      }
     }
     return bookTagSet;
   }
@@ -446,26 +453,30 @@ public class BookService {
 
     Set<Language> languageSet = new HashSet<>();
 
-    for (LanguageDto language : bookDto.getLanguages()) {
-      if (!languageRepository.existsByCode(language.getCode())) {
-        Language savedLanguage = languageRepository.save(languageMapper.toDto(language));
+    for (LanguageDto languageDto : bookDto.getLanguages()) {
+      Optional<Language> language = languageRepository.findByCode(languageDto.getCode());
+
+      if (language.isPresent()) {
+        languageSet.add(language.get());
+      } else {
+        Language savedLanguage = languageRepository.save(languageMapper.toDto(languageDto));
         languageSet.add(savedLanguage);
-      } else if (languageRepository.findByCode(language.getCode()).isPresent()) {
-        languageSet.add(languageRepository.findByCode(language.getCode()).get());
-      } else throw new ResourceNotFoundException("Language not found");
+      }
     }
     return languageSet;
   }
 
   private Publisher getPublisherFromBook(BookDto bookDto) {
-    if (publisherRepository.findByName(bookDto.getPublisher().getName()).isPresent()) {
-      return publisherRepository.findByName(bookDto.getPublisher().getName()).get();
+    Optional<Publisher> publisher = publisherRepository.findByName(bookDto.getPublisher().getName());
+
+    if (publisher.isPresent()) {
+      return publisher.get();
     } else {
-      Publisher publisher = new Publisher();
-      publisher.setName(bookDto.getPublisher().getName());
-      publisher.setEmail(bookDto.getPublisher().getEmail());
-      publisher.setPhoneNumber(bookDto.getPublisher().getPhoneNumber());
-      return publisherRepository.save(publisher);
+      Publisher newPublisher = new Publisher();
+      newPublisher.setName(bookDto.getPublisher().getName());
+      newPublisher.setEmail(bookDto.getPublisher().getEmail());
+      newPublisher.setPhoneNumber(bookDto.getPublisher().getPhoneNumber());
+      return publisherRepository.save(newPublisher);
     }
   }
 

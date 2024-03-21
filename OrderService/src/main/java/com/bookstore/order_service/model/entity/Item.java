@@ -32,6 +32,9 @@ public class Item extends BaseEntity {
 
   @Column private int quantity;
 
-  @Column(updatable = false)
+  @Column(name = "unit_price", updatable = false)
   private double unitPrice;
+
+  @Column(name = "unit_weight")
+  private double unitWeight;
 }

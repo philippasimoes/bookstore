@@ -17,4 +17,5 @@ public class ItemDto {
   private int bookId;
   private int quantity;
   private double unitPrice;
+  private double unitWeight;
 }
