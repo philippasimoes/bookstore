@@ -143,6 +143,36 @@ public class StockController {
   }
 
   /**
+   * Order is shipped and units are removed from pending units.
+   *
+   * @param bookId the book identifier.
+   * @param pendingUnits the units to be removed from the pending units.
+   * @return a response entity with the appropriated code and message.
+   */
+  @PatchMapping("/book/{book_id}")
+  public ResponseEntity<Void> removePendingUnits(
+      @PathVariable("book_id") int bookId, @RequestParam("pending-units") int pendingUnits) {
+
+    stockService.removePendingUnits(bookId, pendingUnits);
+    return ResponseEntity.ok().build();
+  }
+
+  /**
+   * Order is cancelled or the items are removed from the order - units are removed from the pending
+   * units and reintroduced in the available units.
+   *
+   * @param bookId the book identifier.
+   * @param units the book units.
+   * @return a response entity with the appropriated code and message.
+   */
+  @PatchMapping("/book/{book_id}/cancelled")
+  public ResponseEntity<String> removePendingUnitsAndUpdateAvailableUnits(
+      @PathVariable("book_id") int bookId, @RequestParam("units") int units) {
+    return validateStockStatus(
+        stockService.removePendingUnitsAndUpdateAvailableUnits(bookId, units));
+  }
+
+  /**
    * To be called by an external service (ex: Notification Service).
    *
    * @param bookId the book identifier.
@@ -173,7 +203,7 @@ public class StockController {
   @GetMapping("/{bookId}")
   public ResponseEntity<Integer> stockIsAboveZero(@PathVariable("bookId") int bookId) {
 
-    return ResponseEntity.ok(stockService.getStockByBookId(bookId));
+    return ResponseEntity.ok(stockService.getAvailableUnitsByBookId(bookId));
   }
 
   /**

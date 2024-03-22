@@ -1,4 +1,4 @@
-package com.bookstore.order_service.model.dto;
+package com.bookstore.notification_service.model.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

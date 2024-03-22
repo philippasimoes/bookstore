@@ -71,7 +71,6 @@ public class BookService {
   @Autowired AuthorMapper authorMapper;
   @Autowired LanguageMapper languageMapper;
   @Autowired BookMapper bookMapper;
-  @Autowired PublisherMapper publisherMapper;
   @Autowired ObjectMapper objectMapper;
   @Autowired RestTemplate restTemplate;
 

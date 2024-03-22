@@ -24,7 +24,7 @@ import org.springframework.web.client.RestTemplate;
  * @author Filipa Simões
  */
 @Service
-public class StockNotificationService implements NotificationService {
+public class StockNotificationService {
 
   /** Class logger. */
   private static final Logger LOGGER = LogManager.getLogger(StockNotificationService.class);
@@ -48,7 +48,6 @@ public class StockNotificationService implements NotificationService {
    * @param bookId the book identifier.
    * @param customerEmail the user email.
    */
-  @Override
   public void createNotification(int bookId, String customerEmail) {
 
     if (!notificationRepository.findByBookIdAndCustomerEmail(bookId, customerEmail).isPresent()) {
@@ -69,7 +68,6 @@ public class StockNotificationService implements NotificationService {
    *
    * @param notificationId the notification identifier.
    */
-  @Override
   public void updateNotification(int notificationId) {
 
     Optional<Notification> notification = notificationRepository.findById(notificationId);
@@ -118,6 +116,7 @@ public class StockNotificationService implements NotificationService {
    * @param subject the e-mail subject.
    * @param body the e-mail body.
    */
+
   public void sendEmail(String to, String subject, String body) {
 
     SimpleMailMessage message = new SimpleMailMessage();

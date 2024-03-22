@@ -10,14 +10,19 @@ import com.bookstore.order_service.model.mapper.ItemMapper;
 import com.bookstore.order_service.model.mapper.OrderMapper;
 import com.bookstore.order_service.repository.ItemRepository;
 import com.bookstore.order_service.repository.OrderRepository;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.circuitbreaker.CircuitBreaker;
 import org.springframework.cloud.client.circuitbreaker.CircuitBreakerFactory;
@@ -39,13 +44,20 @@ public class OrderService {
 
   @Autowired RestTemplate restTemplate;
 
+  @Autowired
+  ObjectMapper objectMapper;
+
   @Autowired CircuitBreakerFactory circuitBreakerFactory;
 
   private static final String STOCK_URL = "http://stock-service:10001/stock/";
 
+  private static final String NOTIFICATION_URL = "http://notification-service:10002/order";
+
   private static final String PAYMENTS_URL = "http://payment-service:10004/payment";
 
   private static final String SHIPMENT_URL = "http://shipping-service:10006/shipment/tax?weight=";
+
+  private static final String USER_URL = "http://user-service:10007/user/";
 
   /**
    * Create new order and order items.
@@ -85,21 +97,68 @@ public class OrderService {
    * @return true if the update is successful.
    */
   public boolean editOrderStatus(int id, OrderStatus orderStatus) {
-    if (orderRepository.findById(id).isPresent()) {
+    Optional<Order> order = orderRepository.findById(id);
 
-      Order order = orderRepository.findById(id).get();
-      order.setStatus(orderStatus);
+    if (order.isPresent()) {
 
-      // in case of rollback to add or remove items
-      if (orderStatus.equals(OrderStatus.OPEN)) {
-        order.setEditable(true);
+      if (order.get().getStatus().equals(OrderStatus.SHIPPED)
+          || order.get().getStatus().equals(OrderStatus.DELIVERED)
+          || order.get().getStatus().equals(OrderStatus.CANCELLED)) {
+        LOGGER.error("The order can't be edited");
+        return false;
       }
 
-      orderRepository.save(order);
-      return true;
+      if (orderStatus.equals(OrderStatus.OPEN)) {
+        order.get().setEditable(true);
+        order.get().setStatus(orderStatus);
+        orderRepository.save(order.get());
+        return true;
+      } else if (orderStatus.equals(OrderStatus.READY_TO_PAY)
+          || orderStatus.equals(OrderStatus.DELIVERED)
+          || orderStatus.equals(OrderStatus.CANCELLED)) {
+        order.get().setEditable(false);
+        order.get().setStatus(orderStatus);
+        orderRepository.save(order.get());
+        return true;
+      } else return false;
+
     } else {
       throw new ResourceNotFoundException("Order not found");
     }
+  }
+
+  // order is shipped, notification is created to send email to the customer
+  public void setOrderStatusToShipped(String message) {
+    Map<String, String> map;
+
+    try {
+      map = objectMapper.readValue(message, Map.class);
+
+      Optional<Order> order = orderRepository.findById(Integer.parseInt(map.get("orderId")));
+
+      if (order.isPresent()) {
+        order.get().setStatus(OrderStatus.SHIPPED);
+        order.get().setEditable(false);
+        order.get().setShipmentDate(Timestamp.valueOf(map.get("date")));
+        Order updatedOrder = orderRepository.save(order.get());
+
+        String customerEmail = getCustomerEmail(order.get().getCustomerId());
+
+        createNotificationToSendEmail(orderMapper.toDto(updatedOrder), customerEmail, map.get("trackingCode"));
+
+      } else throw new ResourceNotFoundException("Order not found");
+
+    } catch (JsonProcessingException e) {
+        throw new RuntimeException(e);
+    }
+  }
+
+  @RabbitListener(queues = "${rabbitmq.queue.event.shipped.name}")
+  public void consumeUpdatedEvents(String message) {
+
+    LOGGER.info(String.format("received message [%s]", message));
+
+    setOrderStatusToShipped(message);
   }
 
   // order is completed and ready to be sent to payment service - the total price is calculated
@@ -239,6 +298,41 @@ public class OrderService {
         throwable -> {
           LOGGER.warn("Error connecting to stock service.", throwable);
           return 0.0;
+        });
+  }
+
+  private String getCustomerEmail(int customerId) {
+    CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreakeruser");
+
+    // get client email
+    return circuitBreaker.run(
+        () ->
+            restTemplate
+                .exchange(USER_URL + customerId, HttpMethod.GET, null, String.class)
+                .getBody(),
+        throwable -> {
+          LOGGER.warn("Error connecting to user service.", throwable);
+          return null;
+        });
+  }
+
+  private void createNotificationToSendEmail(
+      OrderDto orderDto, String customerEmail, String trackingCode) {
+    CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreakernotification");
+    // create notification and send email to the client
+    circuitBreaker.run(
+        () ->
+            restTemplate.postForObject(
+                NOTIFICATION_URL
+                    + "?customer_email="
+                    + customerEmail
+                    + "&tracking_number="
+                    + trackingCode,
+                orderDto,
+                String.class),
+        throwable -> {
+          LOGGER.warn("Error connecting to notification service.", throwable);
+          return null;
         });
   }
 }

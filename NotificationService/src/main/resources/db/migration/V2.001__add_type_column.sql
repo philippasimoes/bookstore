@@ -1,1 +1,0 @@
-ALTER TABLE notificationservice.notification ADD  notification_type VARCHAR(255);

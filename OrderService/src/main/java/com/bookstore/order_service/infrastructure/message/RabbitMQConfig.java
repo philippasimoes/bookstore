@@ -1,4 +1,5 @@
-package com.bookstore.catalog_service.infrastructure.message;
+package com.bookstore.order_service.infrastructure.message;
+
 
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
@@ -21,11 +22,8 @@ import org.springframework.messaging.handler.annotation.support.DefaultMessageHa
 @Configuration
 public class RabbitMQConfig implements RabbitListenerConfigurer {
 
-  @Value("${rabbitmq.queue.event.updated.name}")
-  private String eventUpdatedQueue;
-
-  @Value("${rabbitmq.queue.event.soldout.name}")
-  private String eventSoldOutQueue;
+  @Value("${rabbitmq.queue.event.shipped.name}")
+  private String eventShippedQueue;
 
   @Value("${rabbitmq.exchange.name}")
   private String exchange;
@@ -34,14 +32,10 @@ public class RabbitMQConfig implements RabbitListenerConfigurer {
   private String routingKey;
 
   @Bean
-  public Queue eventUpdatedQueue() {
-    return new Queue(eventUpdatedQueue);
+  public Queue eventShippedQueue() {
+    return new Queue(eventShippedQueue);
   }
 
-  @Bean
-  public Queue eventSoldOutQueue() {
-    return new Queue(eventSoldOutQueue);
-  }
 
   @Bean
   public TopicExchange exchange() {
@@ -50,13 +44,7 @@ public class RabbitMQConfig implements RabbitListenerConfigurer {
 
   @Bean
   public Binding updatedBinding(
-      @Qualifier("eventUpdatedQueue") Queue queue, TopicExchange exchange) {
-    return BindingBuilder.bind(queue).to(exchange).with(routingKey);
-  }
-
-  @Bean
-  public Binding soldOutBinding(
-      @Qualifier("eventSoldOutQueue") Queue queue, TopicExchange exchange) {
+      @Qualifier("eventShippedQueue") Queue queue, TopicExchange exchange) {
     return BindingBuilder.bind(queue).to(exchange).with(routingKey);
   }
 
@@ -66,11 +54,6 @@ public class RabbitMQConfig implements RabbitListenerConfigurer {
       return new MappingJackson2MessageConverter();
   }
 
-  /**
-   * give Jackson ObjetMapper to RabbitMq for JSON Mapping
-   *
-   * @return
-   */
   @Bean
   DefaultMessageHandlerMethodFactory jsonMessageHandlerMethod() {
     DefaultMessageHandlerMethodFactory factory = new DefaultMessageHandlerMethodFactory();

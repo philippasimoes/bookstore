@@ -1,5 +1,7 @@
 package com.bookstore.notification_service.controller;
 
+import com.bookstore.notification_service.model.dto.OrderDto;
+import com.bookstore.notification_service.service.OrderNotificationService;
 import com.bookstore.notification_service.service.StockNotificationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -18,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -36,8 +39,9 @@ public class NotificationController {
   private final Logger LOGGER = LogManager.getLogger(NotificationController.class);
 
   /** Notification Service injection to access the service layer. */
-  @Autowired
-  StockNotificationService stockNotificationService;
+  @Autowired StockNotificationService stockNotificationService;
+
+  @Autowired OrderNotificationService orderNotificationService;
 
   /** Job Scheduler injection to run background jobs. */
   @Autowired JobScheduler jobScheduler;
@@ -74,7 +78,17 @@ public class NotificationController {
 
     stockNotificationService.createNotification(bookId, customerEmail);
 
-    return ResponseEntity.status(HttpStatus.OK).body("Notification created " + customerEmail);
+    return ResponseEntity.status(HttpStatus.OK).body("Stock notification created " + customerEmail);
+  }
+
+  @PostMapping("/order")
+  public ResponseEntity<String> createOrderNotification(
+      @RequestBody OrderDto order,
+      @RequestParam("customer_email") String customerEmail,
+      @RequestParam("tracking_number") String trackingNumber) {
+    orderNotificationService.createNotification(order, customerEmail, trackingNumber);
+
+    return ResponseEntity.status(HttpStatus.OK).body("Order notification created " + customerEmail);
   }
 
   /** Background job that validates which notifications need to be updated. */

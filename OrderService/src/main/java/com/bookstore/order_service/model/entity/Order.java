@@ -53,4 +53,5 @@ public class Order extends BaseEntity {
 
   @Column(name = "total_weight")
   private double totalWeight;
+
 }

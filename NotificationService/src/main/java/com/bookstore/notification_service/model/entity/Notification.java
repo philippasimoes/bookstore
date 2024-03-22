@@ -29,11 +29,14 @@ import org.hibernate.annotations.UpdateTimestamp;
 public class Notification {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.SEQUENCE)
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
   private int id;
 
   @Column(name = "book_id")
   private int bookId;
+
+  @Column(name = "order_id")
+  private int orderId;
 
   @Column(name = "customer_email")
   private String customerEmail;

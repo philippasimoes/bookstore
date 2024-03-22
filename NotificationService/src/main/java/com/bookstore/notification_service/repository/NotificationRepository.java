@@ -22,4 +22,14 @@ public interface NotificationRepository extends JpaRepository<Notification, Inte
    * @return a Notification if exists.
    */
   Optional<Notification> findByBookIdAndCustomerEmail(int bookId, String customerEmail);
+
+  /**
+   * Query notification table to find the notifications that have the specified order identifier and
+   * customer e-mail.
+   *
+   * @param orderId the order identifier.
+   * @param customerEmail the customer e-mail.
+   * @return a Notification if exists.
+   */
+  Optional<Notification> findByOrderIdAndCustomerEmail(int orderId, String customerEmail);
 }

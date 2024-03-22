@@ -30,12 +30,14 @@ public class OrderController {
     return ResponseEntity.status(HttpStatus.CREATED).body(orderService.createNewOrder(orderDto));
   }
 
+  //to set status OPEN, CANCELLED or DELIVERED
   @PatchMapping("/{id}")
   public ResponseEntity<Boolean> updateOrderStatus(
       @PathVariable(value = "id") int id, @RequestParam OrderStatus status) {
     return ResponseEntity.ok(orderService.editOrderStatus(id, status));
   }
 
+  //to set status READY_TO_PAY
   @PatchMapping("/{id}/payment")
   public ResponseEntity<Boolean> setOrderStatusToReadyToPay(
       @PathVariable(value = "id") int id) {
