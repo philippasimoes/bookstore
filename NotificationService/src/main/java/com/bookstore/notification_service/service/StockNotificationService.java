@@ -50,7 +50,7 @@ public class StockNotificationService {
    */
   public void createNotification(int bookId, String customerEmail) {
 
-    if (!notificationRepository.findByBookIdAndCustomerEmail(bookId, customerEmail).isPresent()) {
+    if (notificationRepository.findByBookIdAndCustomerEmail(bookId, customerEmail).isEmpty()) {
       Notification notification = new Notification();
       notification.setBookId(bookId);
       notification.setCustomerEmail(customerEmail);

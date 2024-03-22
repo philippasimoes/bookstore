@@ -18,7 +18,6 @@ import com.bookstore.catalog_service.model.mapper.AuthorMapper;
 import com.bookstore.catalog_service.model.mapper.BookMapper;
 import com.bookstore.catalog_service.model.mapper.BookTagMapper;
 import com.bookstore.catalog_service.model.mapper.LanguageMapper;
-import com.bookstore.catalog_service.model.mapper.PublisherMapper;
 import com.bookstore.catalog_service.repository.AuthorRepository;
 import com.bookstore.catalog_service.repository.BookRepository;
 import com.bookstore.catalog_service.repository.BookSampleRepository;

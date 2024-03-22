@@ -66,11 +66,6 @@ public class RabbitMQConfig implements RabbitListenerConfigurer {
       return new MappingJackson2MessageConverter();
   }
 
-  /**
-   * give Jackson ObjetMapper to RabbitMq for JSON Mapping
-   *
-   * @return
-   */
   @Bean
   DefaultMessageHandlerMethodFactory jsonMessageHandlerMethod() {
     DefaultMessageHandlerMethodFactory factory = new DefaultMessageHandlerMethodFactory();
