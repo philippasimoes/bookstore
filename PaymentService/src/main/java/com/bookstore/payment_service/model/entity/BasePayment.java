@@ -2,9 +2,7 @@ package com.bookstore.payment_service.model.entity;
 
 import com.bookstore.payment_service.model.dto.enums.PaymentMethod;
 import com.bookstore.payment_service.model.dto.enums.PaymentStatus;
-import com.bookstore.payment_service.utils.HashMapConverter;
 import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -12,16 +10,17 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.sql.Timestamp;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.SoftDelete;
 import org.hibernate.annotations.UpdateTimestamp;
-
-import java.sql.Timestamp;
-import java.util.Map;
+import org.hibernate.type.SqlTypes;
 
 @Getter
 @Setter
@@ -63,6 +62,8 @@ public class BasePayment {
   @Column(name = "payment_amount")
   private double paymentAmount;
 
-  @Convert(converter = HashMapConverter.class)
+  // @Convert(converter = PaymentDetailsAttributeConverter.class)
+  @JdbcTypeCode(SqlTypes.JSON)
+  @Column(name = "payment_details", length = 1024)
   private Map<String, Object> paymentDetails;
 }

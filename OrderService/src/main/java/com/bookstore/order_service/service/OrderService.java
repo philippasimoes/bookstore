@@ -10,15 +10,13 @@ import com.bookstore.order_service.model.mapper.ItemMapper;
 import com.bookstore.order_service.model.mapper.OrderMapper;
 import com.bookstore.order_service.repository.ItemRepository;
 import com.bookstore.order_service.repository.OrderRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -43,16 +41,13 @@ public class OrderService {
 
   @Autowired RestTemplate restTemplate;
 
-  @Autowired
-  ObjectMapper objectMapper;
+  @Autowired ObjectMapper objectMapper;
 
   @Autowired CircuitBreakerFactory circuitBreakerFactory;
 
   private static final String STOCK_URL = "http://stock-service:10001/stock/";
 
   private static final String NOTIFICATION_URL = "http://notification-service:10002/order";
-
-  private static final String PAYMENTS_URL = "http://payment-service:10004/payment";
 
   private static final String SHIPMENT_URL = "http://shipping-service:10006/shipment/tax?weight=";
 
@@ -112,8 +107,9 @@ public class OrderService {
         order.get().setStatus(orderStatus);
         orderRepository.save(order.get());
         return true;
-      } else if (orderStatus.equals(OrderStatus.READY_TO_PAY)
-          || orderStatus.equals(OrderStatus.DELIVERED)
+      } else if (orderStatus.equals(OrderStatus.READY_TO_PAY)) {
+        return setOrderStatusToReadyToPay(id);
+      } else if (orderStatus.equals(OrderStatus.DELIVERED)
           || orderStatus.equals(OrderStatus.CANCELLED)) {
         order.get().setEditable(false);
         order.get().setStatus(orderStatus);
@@ -143,12 +139,13 @@ public class OrderService {
 
         String customerEmail = getCustomerEmail(order.get().getCustomerId());
 
-        createNotificationToSendEmail(orderMapper.toDto(updatedOrder), customerEmail, map.get("trackingCode"));
+        createNotificationToSendEmail(
+            orderMapper.toDto(updatedOrder), customerEmail, map.get("trackingCode"));
 
       } else throw new ResourceNotFoundException("Order not found");
 
     } catch (JsonProcessingException e) {
-        throw new RuntimeException(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -162,7 +159,7 @@ public class OrderService {
 
   // order is completed and ready to be sent to payment service - the total price is calculated
   // and the information about the order is sent via rest template
-  public void setOrderStatusToReadyToPay(int id) {
+  public boolean setOrderStatusToReadyToPay(int id) {
     if (orderRepository.findById(id).isPresent()) {
 
       Order order = orderRepository.findById(id).get();
@@ -183,10 +180,9 @@ public class OrderService {
       order.setTotalPriceOrder(order.getTotalPriceItems() + order.getTax());
       order.setEditable(false);
 
-      sendOrderToPaymentService(id, order.getCustomerId(), order.getTotalPriceOrder());
-
       orderRepository.save(order);
 
+      return true;
     } else {
       throw new ResourceNotFoundException("Order not found");
     }
@@ -264,24 +260,6 @@ public class OrderService {
             });
 
     return availableUnits > quantity;
-  }
-
-  private void sendOrderToPaymentService(int orderId, int customerId, double price) {
-    // connection with payment service if the order is ready
-
-    Map<String, String> map = new HashMap<>();
-    map.put("orderId", String.valueOf(orderId));
-    map.put("customerId", String.valueOf(customerId));
-    map.put("price", String.valueOf(price));
-
-    CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreakerpayment");
-
-    circuitBreaker.run(
-        () -> restTemplate.postForObject(PAYMENTS_URL, map, Void.class),
-        throwable -> {
-          LOGGER.warn("Error connecting to payment service.", throwable);
-          return null;
-        });
   }
 
   private Double calculateTax(double orderWeight) {

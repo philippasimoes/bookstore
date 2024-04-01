@@ -33,6 +33,7 @@
         <flyway.version>10.8.1</flyway.version>
         <java-jwt.version>4.4.0</java-jwt.version>
         <springdoc-openapi-ui.version>1.7.0</springdoc-openapi-ui.version>
+        <paypal-rest-api-sdk.version>1.14.0</paypal-rest-api-sdk.version>
     </properties>
 
     <dependencyManagement>
