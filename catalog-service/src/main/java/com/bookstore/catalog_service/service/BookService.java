@@ -82,7 +82,7 @@ public class BookService {
 
   private static final String GRANT_TYPE = "client_credentials";
 
-  private static final String STOCK_CREATION_URL = "http://stock-service:10001/stock/book/";
+  private static final String STOCK_CREATION_URL = "http://stock-service/stock/book/";
 
   /**
    * Get all books.
@@ -551,8 +551,10 @@ public class BookService {
 
     HttpEntity<String> requestEntity = new HttpEntity<>(requestBody, authHeaders);
 
+    RestTemplate keycloakRestTemplate = new RestTemplate();
+
     ResponseEntity<String> response =
-        restTemplate.postForEntity(TOKEN_URL, requestEntity, String.class);
+            keycloakRestTemplate.postForEntity(TOKEN_URL, requestEntity, String.class);
 
     if (response.getStatusCode().is2xxSuccessful()) {
       LOGGER.info("Authentication successful.");

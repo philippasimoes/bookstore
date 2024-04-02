@@ -55,18 +55,18 @@ public class PaypalPaymentProcessor {
     Payer payer = new Payer();
     payer.setPaymentMethod(method);
 
-    Payment payment = new Payment();
-    payment.setIntent(intent);
-    payment.setPayer(payer);
-    payment.setTransactions(transactions);
+    Payment payPalPayment = new Payment();
+    payPalPayment.setIntent(intent);
+    payPalPayment.setPayer(payer);
+    payPalPayment.setTransactions(transactions);
 
     RedirectUrls redirectUrls = new RedirectUrls();
     redirectUrls.setCancelUrl(cancelUrl);
     redirectUrls.setReturnUrl(successUrl);
 
-    payment.setRedirectUrls(redirectUrls);
+    payPalPayment.setRedirectUrls(redirectUrls);
 
-    Payment createdPayment = payment.create(apiContext);
+    Payment createdPayPalPayment = payPalPayment.create(apiContext);
 
     // database operations
     BasePayment basePayment = new BasePayment();
@@ -77,29 +77,35 @@ public class PaypalPaymentProcessor {
     basePayment.setPaymentMethod(PaymentMethod.PAYPAL);
 
     Map<String, Object> paypalPaymentDetails = new HashMap<>();
-    paypalPaymentDetails.put("paymentId", createdPayment.getId());
-    //paypalPaymentDetails.put("payerId", createdPayment.getPayer().getPayerInfo().getPayerId());
+    paypalPaymentDetails.put("paymentId", createdPayPalPayment.getId());
 
     basePayment.setPaymentDetails(paypalPaymentDetails);
     paymentRepository.save(basePayment);
 
-    return createdPayment;
+    return createdPayPalPayment;
   }
 
-  public Payment executePayment(String paymentId, String payerId) throws PayPalRESTException, ResourceNotFoundException {
-    Payment payment = new Payment();
-    payment.setId(paymentId);
+  public Payment executePayment(String paymentId, String payerId)
+      throws PayPalRESTException, ResourceNotFoundException {
+    Payment payPalPayment = new Payment();
+    payPalPayment.setId(paymentId);
     PaymentExecution paymentExecute = new PaymentExecution();
     paymentExecute.setPayerId(payerId);
 
-    Payment executedPayment = payment.execute(apiContext, paymentExecute);
+    Payment executedPayment = payPalPayment.execute(apiContext, paymentExecute);
+
+    Optional<BasePayment> basePayment =
+        paymentRepository.findByPaypalPaymentId(executedPayment.getId());
 
     if (executedPayment.getState().equals("approved")) {
-      Optional<BasePayment> basePayment =
-          paymentRepository.findByPaypalPaymentId(executedPayment.getId());
 
       if (basePayment.isPresent()) {
         basePayment.get().setPaymentStatus(PaymentStatus.COMPLETE);
+        paymentRepository.save(basePayment.get());
+      }
+    } else {
+      if (basePayment.isPresent()) {
+        basePayment.get().setPaymentStatus(PaymentStatus.FAILED);
         paymentRepository.save(basePayment.get());
       }
     }

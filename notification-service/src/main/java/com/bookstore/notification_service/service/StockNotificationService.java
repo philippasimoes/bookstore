@@ -29,7 +29,7 @@ public class StockNotificationService {
   /** Class logger. */
   private static final Logger LOGGER = LogManager.getLogger(StockNotificationService.class);
 
-  private static final String STOCK_URL = "http://stock-service:10001/stock/";
+  private static final String STOCK_URL = "http://stock-service/stock/";
 
   /** NotificationRepository injection to access the database. */
   @Autowired NotificationRepository notificationRepository;

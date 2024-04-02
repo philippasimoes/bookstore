@@ -150,11 +150,11 @@ public class StockController {
    * @return a response entity with the appropriated code and message.
    */
   @PatchMapping("/book/{book_id}")
-  public ResponseEntity<Void> removePendingUnits(
+  public ResponseEntity<String> removePendingUnits(
       @PathVariable("book_id") int bookId, @RequestParam("pending-units") int pendingUnits) {
 
-    stockService.removePendingUnits(bookId, pendingUnits);
-    return ResponseEntity.ok().build();
+
+    return validateStockStatus(stockService.removePendingUnits(bookId, pendingUnits));
   }
 
   /**
@@ -165,7 +165,7 @@ public class StockController {
    * @param units the book units.
    * @return a response entity with the appropriated code and message.
    */
-  @PatchMapping("/book/{book_id}/cancelled")
+  @PatchMapping("/book/order-cancelled/{book_id}")
   public ResponseEntity<String> removePendingUnitsAndUpdateAvailableUnits(
       @PathVariable("book_id") int bookId, @RequestParam("units") int units) {
     return validateStockStatus(

@@ -21,7 +21,17 @@ services:
       - ./utils/postgres/multiple-databases.sh:/docker-entrypoint-initdb.d/multiple-databases.sh
     networks:
       - bookstore-network
-
+  eureka-server:
+    image: 'discovery-service:latest'
+    build:
+      context: ./discovery-server
+      dockerfile: Dockerfile
+    restart: always
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    networks:
+      - bookstore-network
   catalog-service:
     image: 'catalog-service:latest'
     build:

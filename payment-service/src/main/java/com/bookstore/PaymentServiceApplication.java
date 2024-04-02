@@ -12,9 +12,4 @@ public class PaymentServiceApplication {
 
         SpringApplication.run(PaymentServiceApplication.class, args);
     }
-
-    @Bean
-    public RestTemplate getRestTemplate() {
-        return new RestTemplate();
-    }
 }

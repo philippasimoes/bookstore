@@ -1,6 +1,7 @@
 package com.bookstore.payment_service.controller;
 
 import com.bookstore.payment_service.model.dto.OrderData;
+import com.bookstore.payment_service.service.CreditCardPaymentProcessor;
 import com.bookstore.payment_service.service.PaypalPaymentProcessor;
 import com.paypal.api.payments.Links;
 import com.paypal.api.payments.Payment;
@@ -8,6 +9,7 @@ import com.paypal.base.rest.PayPalRESTException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,6 +25,7 @@ public class PaymentController {
   private static final Logger LOGGER = LogManager.getLogger(PaymentController.class);
 
   @Autowired PaypalPaymentProcessor paypalPaymentProcessor;
+  @Autowired CreditCardPaymentProcessor creditCardPaymentProcessor;
 
   // ########################################### PAYPAL ###########################################
 
@@ -90,5 +93,14 @@ public class PaymentController {
   @GetMapping("/paypal/error")
   public String paymentError() {
     return "paymentError";
+  }
+
+  @PostMapping("/credit")
+  public ResponseEntity<String> creditCardPayment(@RequestBody OrderData request) {
+    return ResponseEntity.ok(
+        creditCardPaymentProcessor.createPayment(
+            Integer.parseInt(request.customerId()),
+            Integer.parseInt(request.orderId()),
+            Double.parseDouble(request.price())));
   }
 }

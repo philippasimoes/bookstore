@@ -36,12 +36,11 @@ public class StockService {
   private static final Logger LOGGER = LogManager.getLogger(StockService.class);
 
   private static final String TOKEN_URL =
-          "http://keycloak:8080/realms/bookstore/protocol/openid-connect/token";
+      "http://keycloak:8080/realms/bookstore/protocol/openid-connect/token";
   private static final String CATALOG_SERVICE_ID = "catalog-service";
   private static final String CATALOG_SERVICE_SECRET = "FD3bZqrV67ZGFktuQnX02qaPMuE3V71v";
   private static final String GRANT_TYPE = "client_credentials";
-  private static final String BOOK_CONFIRMATION_URL =
-          "http://catalog-service:10000/books/confirmation/";
+  private static final String BOOK_CONFIRMATION_URL = "http://catalog-service/books/confirmation/";
 
   @Autowired StockRepository stockRepository;
   @Autowired ObjectMapper objectMapper;
@@ -53,7 +52,6 @@ public class StockService {
 
   @Value("${rabbitmq.queue.event.soldout.name}")
   private String eventSoldOutQueue;
-
 
   /**
    * Used by catalog-service: when the book is created, a stock entry is created with the new book
@@ -75,8 +73,8 @@ public class StockService {
 
   /**
    * Update book stock. Possible scenarios: 1) Book units are added by an admin (bookstore received
-   * units from the publisher) and 2) Books are added to an order, and we need to remove them from the
-   * available stock and add them to the pending stock;
+   * units from the publisher) and 2) Books are added to an order, and we need to remove them from
+   * the available stock and add them to the pending stock;
    *
    * @param bookId the book identifier.
    * @param units the units to add or remove from stock.
@@ -105,7 +103,6 @@ public class StockService {
       return StockStatus.MESSAGE_ERROR;
     }
   }
-
 
   /**
    * Add units to available units.
@@ -178,7 +175,7 @@ public class StockService {
   }
 
   /**
-   * Removing the number o units from pending units and add them to the available units - used when
+   * Removing the number of units from pending units and add them to the available units - used when
    * order is cancelled or items are removed from the order.
    *
    * @param bookId the book identifier.
@@ -206,11 +203,12 @@ public class StockService {
    * @param bookId the book identifier.
    * @param units the book units to be removed from pending units.
    */
-  public void removePendingUnits(int bookId, int units) {
+  public StockStatus removePendingUnits(int bookId, int units) {
     Optional<Stock> stock = stockRepository.findByBookId(bookId);
     if (stock.isPresent()) {
       stock.get().setPendingUnits(stock.get().getPendingUnits() - units);
       stockRepository.save(stock.get());
+      return StockStatus.UPDATED;
     } else throw new StockNotFoundException();
   }
 
@@ -261,8 +259,10 @@ public class StockService {
 
     HttpEntity<String> requestEntity = new HttpEntity<>(requestBody, authHeaders);
 
+    RestTemplate keycloakRestTemplate = new RestTemplate();
+
     ResponseEntity<String> response =
-        restTemplate.postForEntity(TOKEN_URL, requestEntity, String.class);
+        keycloakRestTemplate.postForEntity(TOKEN_URL, requestEntity, String.class);
 
     if (response.getStatusCode().is2xxSuccessful()) {
       LOGGER.info("Authentication successful.");

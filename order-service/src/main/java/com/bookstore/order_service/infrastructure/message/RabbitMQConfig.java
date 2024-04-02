@@ -25,17 +25,27 @@ public class RabbitMQConfig implements RabbitListenerConfigurer {
   @Value("${rabbitmq.queue.event.shipped.name}")
   private String eventShippedQueue;
 
-  @Value("${rabbitmq.exchange.name}")
+  @Value("${rabbitmq.queue.event.paid.name}")
+  private String eventPaidQueue;
+
+  @Value("${rabbitmq.order.exchange.name}")
   private String exchange;
 
-  @Value("${rabbitmq.routing.key}")
-  private String routingKey;
+  @Value("${rabbitmq.shipping.routing.key}")
+  private String shippingRoutingKey;
+
+  @Value("${rabbitmq.payment.routing.key}")
+  private String paymentRoutingKey;
 
   @Bean
   public Queue eventShippedQueue() {
     return new Queue(eventShippedQueue);
   }
 
+  @Bean
+  public Queue eventPaidQueue() {
+    return new Queue(eventPaidQueue);
+  }
 
   @Bean
   public TopicExchange exchange() {
@@ -43,9 +53,15 @@ public class RabbitMQConfig implements RabbitListenerConfigurer {
   }
 
   @Bean
-  public Binding updatedBinding(
+  public Binding updatedShippingBinding(
       @Qualifier("eventShippedQueue") Queue queue, TopicExchange exchange) {
-    return BindingBuilder.bind(queue).to(exchange).with(routingKey);
+    return BindingBuilder.bind(queue).to(exchange).with(shippingRoutingKey);
+  }
+
+  @Bean
+  public Binding updatedPaymentBinding(
+          @Qualifier("eventPaidQueue") Queue queue, TopicExchange exchange) {
+    return BindingBuilder.bind(queue).to(exchange).with(paymentRoutingKey);
   }
 
   @Bean

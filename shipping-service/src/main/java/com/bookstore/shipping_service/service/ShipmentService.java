@@ -29,17 +29,12 @@ import org.springframework.web.client.RestTemplate;
 public class ShipmentService {
   private static final Logger LOGGER = LogManager.getLogger(ShipmentService.class);
   private static final String GEOAPI_URL = "https://geoapi.pt/cp/";
-  private static final String DUMMY_CTT_URL = "http://dummy-ctt:10008/ctt/tracking-code";
-
+  private static final String DUMMY_CTT_URL = "http://dummy-ctt/ctt/tracking-code";
   @Value("${rabbitmq.queue.event.shipped.name}")
   private String eventShippedQueue;
-
   @Autowired RestTemplate restTemplate;
-
   @Autowired CircuitBreakerFactory circuitBreakerFactory;
-
   @Autowired ObjectMapper objectMapper;
-
   @Autowired ShipmentRepository shipmentRepository;
   @Autowired RabbitMQProducer producer;
 
@@ -49,10 +44,12 @@ public class ShipmentService {
 
     CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreaker-address");
 
+    RestTemplate geoRestTemplate = new RestTemplate();
+
     String addresses =
         circuitBreaker.run(
             () ->
-                restTemplate.getForObject(
+                geoRestTemplate.getForObject(
                     GEOAPI_URL + address.postalCode() + "?json=1", String.class),
             throwable -> {
               LOGGER.warn("Error connecting to geoapi.", throwable);
