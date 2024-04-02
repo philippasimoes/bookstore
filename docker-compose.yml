@@ -25,7 +25,7 @@ services:
   catalog-service:
     image: 'catalog-service:latest'
     build:
-      context: ./CatalogService
+      context: ./catalog-service
       dockerfile: Dockerfile
     restart: always
     container_name: catalog-service
@@ -50,14 +50,14 @@ services:
       retries: 5
       start_period: 10s
     volumes:
-      - ./CatalogService/log:/CatalogService/log
+      - ./catalog-service/log:/catalog-service/log
     networks:
       - bookstore-network
 
   stock-service:
     image: 'stock-service:latest'
     build:
-      context: ./StockService
+      context: ./stock-service
       dockerfile: Dockerfile
     restart: always
     container_name: stock-service
@@ -81,14 +81,14 @@ services:
       timeout: 5s
       retries: 5
     volumes:
-      - ./StockService/log:/StockService/log
+      - ./stock-service/log:/stock-service/log
     networks:
       - bookstore-network
 
   notification-service:
     image: 'notification-service:latest'
     build:
-      context: ./NotificationService
+      context: ./notification-service
       dockerfile: Dockerfile
     restart: always
     container_name: notification-service
@@ -109,14 +109,14 @@ services:
       timeout: 5s
       retries: 5
     volumes:
-      - ./NotificationService/log:/NotificationService/log
+      - ./notification-service/log:/notification-service/log
     networks:
       - bookstore-network
 
   order-service:
     image: 'order-service:latest'
     build:
-      context: ./OrderService
+      context: ./order-service
       dockerfile: Dockerfile
     restart: always
     container_name: order-service
@@ -136,14 +136,14 @@ services:
       timeout: 5s
       retries: 5
     volumes:
-      - ./OrderService/log:/OrderService/log
+      - ./order-service/log:/order-service/log
     networks:
       - bookstore-network
 
   payment-service:
     image: 'payment-service:latest'
     build:
-      context: ./PaymentService
+      context: ./payment-service
       dockerfile: Dockerfile
     restart: always
     container_name: payment-service
@@ -163,14 +163,14 @@ services:
       timeout: 5s
       retries: 5
     volumes:
-      - ./PaymentService/log:/PaymentService/log
+      - ./payment-service/log:/payment-service/log
     networks:
       - bookstore-network
 
   return-service:
     image: 'return-service:latest'
     build:
-      context: ./ReturnService
+      context: ./return-service
       dockerfile: Dockerfile
     restart: always
     container_name: return-service
@@ -190,14 +190,14 @@ services:
       timeout: 5s
       retries: 5
     volumes:
-      - ./ReturnService/log:/ReturnService/log
+      - ./return-service/log:/return-service/log
     networks:
       - bookstore-network
 
   shipping-service:
     image: 'shipping-service:latest'
     build:
-      context: ./ShippingService
+      context: ./shipping-service
       dockerfile: Dockerfile
     restart: always
     container_name: shipping-service
@@ -217,14 +217,14 @@ services:
       timeout: 5s
       retries: 5
     volumes:
-      - ./ShippingService/log:/ShippingService/log
+      - ./shipping-service/log:/shipping-service/log
     networks:
       - bookstore-network
 
   user-service:
     image: 'user-service:latest'
     build:
-      context: ./UserService
+      context: ./user-service
       dockerfile: Dockerfile
     restart: always
     container_name: user-service
@@ -244,14 +244,14 @@ services:
       timeout: 5s
       retries: 5
     volumes:
-      - ./UserService/log:/UserService/log
+      - ./user-service/log:/user-service/log
     networks:
       - bookstore-network
 
   dummy-ctt:
     image: 'dummy-ctt:latest'
     build:
-      context: ./DummyCtt
+      context: ./dummy-ctt
       dockerfile: Dockerfile
     restart: always
     container_name: dummy-ctt
@@ -269,7 +269,7 @@ services:
       timeout: 5s
       retries: 5
     volumes:
-      - ./DummyCtt/log:/DummyCtt/log
+      - ./dummy-ctt/log:/dummy-ctt/log
     networks:
       - bookstore-network
 

@@ -190,14 +190,14 @@
     </build>
 
     <modules>
-        <module>CatalogService</module>
-        <module>NotificationService</module>
-        <module>StockService</module>
-        <module>UserService</module>
-        <module>OrderService</module>
-        <module>PaymentService</module>
-        <module>ReturnService</module>
-        <module>ShippingService</module>
-        <module>DummyCtt</module>
+        <module>catalog-service</module>
+        <module>notification-service</module>
+        <module>stock-service</module>
+        <module>user-service</module>
+        <module>order-service</module>
+        <module>payment-service</module>
+        <module>return-service</module>
+        <module>shipping-service</module>
+        <module>dummy-ctt</module>
     </modules>
 </project>
