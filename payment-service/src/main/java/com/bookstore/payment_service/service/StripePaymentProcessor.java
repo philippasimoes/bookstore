@@ -8,6 +8,8 @@ import com.bookstore.payment_service.model.entity.BasePayment;
 import com.bookstore.payment_service.repository.BasePaymentRepository;
 import com.bookstore.payment_service.utils.PaymentUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.paypal.base.rest.PayPalRESTException;
 import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Charge;
@@ -23,11 +25,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
-public class StripePaymentProcessor {
+public class StripePaymentProcessor implements PaymentProcessor {
 
   private static final Logger LOGGER = LogManager.getLogger(StripePaymentProcessor.class);
   @Autowired BasePaymentRepository basePaymentRepository;
   @Autowired RabbitMQProducer producer;
+  @Autowired ObjectMapper mapper;
 
   @Value("${rabbitmq.queue.event.paid.name}")
   private String eventPaidQueue;
@@ -70,63 +73,52 @@ public class StripePaymentProcessor {
     }
   }
 
-  /**
-   * Perform the payment.
-   *
-   * @param chargeRequest the request data with the token (obtained in {@link
-   *     #createCardToken(StripeToken)}) and order data (such as amount, order identifier, internal
-   *     user identifier, etc.).
-   * @return A charge object with all the data from Stripe.
-   */
-  public StripePayment createPayment(StripePayment chargeRequest) {
+  @Override
+  public Object createPayment(Map<String, Object> request) throws StripeException {
+
+    StripePayment stripePayment = mapper.convertValue(request, StripePayment.class);
 
     Stripe.apiKey = stripeSecretKey;
 
-    try {
-      // Stripe operations
-      chargeRequest.setSuccess(false);
-      Map<String, Object> chargeParams = new HashMap<>();
-      chargeParams.put("amount", (int) (chargeRequest.getAmount() * 100)); // cents
-      chargeParams.put("currency", chargeRequest.getCurrency());
-      chargeParams.put(
-          "description",
-          "Payment for order with id "
-              + chargeRequest.getAdditionalInfo().getOrDefault("ORDER_ID", ""));
-      chargeParams.put("source", chargeRequest.getStripeToken());
-      Map<String, Object> metaData = new HashMap<>();
-      metaData.put("id", chargeRequest.getChargeId());
-      metaData.putAll(chargeRequest.getAdditionalInfo());
-      chargeParams.put("metadata", metaData);
+    // Stripe operations
+    stripePayment.setSuccess(false);
+    Map<String, Object> chargeParams = new HashMap<>();
+    chargeParams.put("amount", (int) (stripePayment.getAmount() * 100)); // cents
+    chargeParams.put("currency", stripePayment.getCurrency());
+    chargeParams.put(
+        "description",
+        "Payment for order with id "
+            + stripePayment.getAdditionalInfo().getOrDefault("ORDER_ID", ""));
+    chargeParams.put("source", stripePayment.getStripeToken());
+    Map<String, Object> metaData = new HashMap<>();
+    metaData.put("id", stripePayment.getChargeId());
+    metaData.putAll(stripePayment.getAdditionalInfo());
+    chargeParams.put("metadata", metaData);
 
-      Charge charge = Charge.create(chargeParams);
-      chargeRequest.setMessage(charge.getOutcome().getSellerMessage());
+    Charge charge = Charge.create(chargeParams);
+    stripePayment.setMessage(charge.getOutcome().getSellerMessage());
 
-      // Database operations
-      BasePayment payment = PaymentUtils.createBasePayment(chargeRequest);
+    // Database operations
+    BasePayment payment = PaymentUtils.createBasePayment(stripePayment);
 
-      if (charge.getPaid()) {
-        chargeRequest.setChargeId(charge.getId());
-        chargeRequest.setSuccess(true);
-        chargeRequest.setReceiptUrl(charge.getReceiptUrl());
+    if (charge.getPaid()) {
+      stripePayment.setChargeId(charge.getId());
+      stripePayment.setSuccess(true);
+      stripePayment.setReceiptUrl(charge.getReceiptUrl());
 
-        payment.setPaymentDate(Timestamp.from(Instant.ofEpochSecond(charge.getCreated())));
-        payment.setPaymentStatus(PaymentStatus.COMPLETE);
-        basePaymentRepository.save(payment);
-        try {
-          producer.sendMessage(
-              eventPaidQueue, PaymentUtils.buildMessage(chargeRequest.getOrderId()));
-        } catch (JsonProcessingException e) {
-          LOGGER.error("Error building message", e);
-        }
-      } else {
-        payment.setPaymentStatus(PaymentStatus.FAILED);
-        basePaymentRepository.save(payment);
+      payment.setPaymentDate(Timestamp.from(Instant.ofEpochSecond(charge.getCreated())));
+      payment.setPaymentStatus(PaymentStatus.COMPLETE);
+      basePaymentRepository.save(payment);
+      try {
+        producer.sendMessage(eventPaidQueue, PaymentUtils.buildMessage(stripePayment.getOrderId()));
+      } catch (JsonProcessingException e) {
+        LOGGER.error("Error building message", e);
       }
-
-      return chargeRequest;
-    } catch (StripeException e) {
-      LOGGER.error("StripeService (charge)", e);
-      throw new RuntimeException(e.getMessage());
+    } else {
+      payment.setPaymentStatus(PaymentStatus.FAILED);
+      basePaymentRepository.save(payment);
     }
+
+    return stripePayment;
   }
 }

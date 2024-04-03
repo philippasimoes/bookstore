@@ -10,9 +10,11 @@ import com.bookstore.payment_service.service.StripePaymentProcessor;
 import com.paypal.api.payments.Links;
 import com.paypal.api.payments.Payment;
 import com.paypal.base.rest.PayPalRESTException;
+import com.stripe.exception.StripeException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,6 +24,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.view.RedirectView;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/payment")
@@ -44,14 +48,10 @@ public class PaymentController {
   // email: sb-cm9kt30002196@personal.example.com
   // password: 3UNPwC%k
   @PostMapping("/paypal")
-  public RedirectView createPayPalPayment(@RequestBody PayPalPayment payPalPayment) {
+  public RedirectView createPayPalPayment(@RequestBody Map<String, Object> payPalPayment) {
 
     try {
-
-      String cancelUrl = "http://localhost:10004/payment/paypal/cancel";
-      String successUrl = "http://localhost:10004/payment/paypal/success";
-
-      Payment payment = paypalPaymentProcessor.createPayment(payPalPayment);
+      Payment payment = (Payment) paypalPaymentProcessor.createPayment(payPalPayment);
 
       for (Links links : payment.getLinks()) {
         if (links.getRel().equals("approval_url")) {
@@ -103,14 +103,18 @@ public class PaymentController {
 
   @PostMapping("/stripe/charge")
   @ResponseBody
-  public StripePayment charge(@RequestBody StripePayment model) {
-
-    return stripePaymentProcessor.createPayment(model);
+  public ResponseEntity<StripePayment> charge(@RequestBody Map<String, Object> model) {
+    try {
+      return ResponseEntity.ok((StripePayment) stripePaymentProcessor.createPayment(model));
+    } catch (StripeException e) {
+      LOGGER.error(e.getMessage());
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+    }
   }
 
   // ################################### CREDIT CARD - TEST ONLY ###################################
   @PostMapping("/credit")
-  public ResponseEntity<String> creditCardPayment(@RequestBody CreditCardPayment request) {
+  public ResponseEntity<String> creditCardPayment(@RequestBody Map<String, Object> request) {
     return ResponseEntity.ok(creditCardPaymentProcessor.createPayment(request));
   }
 }

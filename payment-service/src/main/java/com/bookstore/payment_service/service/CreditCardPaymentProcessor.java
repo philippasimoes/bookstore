@@ -14,11 +14,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.Map;
+
 @Service
-public class CreditCardPaymentProcessor {
+public class CreditCardPaymentProcessor implements PaymentProcessor{
   private static final Logger LOGGER = LogManager.getLogger(CreditCardPaymentProcessor.class);
   @Autowired BasePaymentRepository basePaymentRepository;
-
   @Autowired RabbitMQProducer producer;
   @Autowired ObjectMapper objectMapper;
 
@@ -26,7 +27,10 @@ public class CreditCardPaymentProcessor {
   private String eventPaidQueue;
 
   // dummy method, just for testing
-  public String createPayment(CreditCardPayment creditCardPayment) {
+  @Override
+  public String createPayment(Map<String, Object> request) {
+
+    CreditCardPayment creditCardPayment = objectMapper.convertValue(request,CreditCardPayment.class);
 
     BasePayment basePayment = PaymentUtils.createBasePayment(creditCardPayment);
     basePayment.setPaymentStatus(PaymentStatus.COMPLETE);
