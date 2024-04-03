@@ -1,5 +1,5 @@
-#jdk image
-FROM openjdk:21-slim
+FROM amazoncorretto:21-alpine-jdk
+RUN apk --no-cache add curl
 
 # install
 

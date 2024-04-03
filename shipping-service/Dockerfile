@@ -1,5 +1,5 @@
-FROM openjdk:21-slim
-RUN apt-get update && apt-get install -y curl
+FROM amazoncorretto:21-alpine-jdk
+RUN apk --no-cache add curl
 COPY target/shipping-service-0.0.1-SNAPSHOT.jar shippingservice.jar
 EXPOSE 10006 8087
 ENV SPRINGPROFILES=dev
