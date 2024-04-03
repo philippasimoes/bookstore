@@ -62,7 +62,6 @@ public class BasePayment {
   @Column(name = "payment_amount")
   private double paymentAmount;
 
-  // @Convert(converter = PaymentDetailsAttributeConverter.class)
   @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "payment_details", length = 1024)
   private Map<String, Object> paymentDetails;

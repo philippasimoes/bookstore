@@ -9,5 +9,6 @@ public enum PaymentMethod {
     APPLE_PAY,
     KLARNA,
     MBWAY,
-    CRYPTOCURRENCY
+    CRYPTOCURRENCY,
+    STRIPE
 }

@@ -7,7 +7,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 
-public interface PaymentRepository extends JpaRepository<BasePayment, Integer> {
+public interface BasePaymentRepository extends JpaRepository<BasePayment, Integer> {
 
   @Query(
       value =
