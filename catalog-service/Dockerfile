@@ -1,5 +1,5 @@
-FROM openjdk:21-slim
-RUN apt-get update && apt-get install -y curl
+FROM amazoncorretto:21-alpine-jdk
+RUN apk --no-cache add curl
 COPY target/catalog-service-0.0.1-SNAPSHOT.jar catalogservice.jar
 EXPOSE 10000 8081
 ENV SPRINGPROFILES=dev
