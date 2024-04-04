@@ -12,11 +12,17 @@ import com.bookstore.order_service.repository.ItemRepository;
 import com.bookstore.order_service.repository.OrderRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.sql.Time;
 import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -30,10 +36,12 @@ import org.springframework.web.client.RestTemplate;
 
 @Service
 public class OrderService {
+
   private static final Logger LOGGER = LogManager.getLogger(OrderService.class);
   @Autowired OrderRepository orderRepository;
   @Autowired ItemRepository itemRepository;
-  @Autowired OrderMapper orderMapper;
+  @Autowired
+  OrderMapper orderMapper;
   @Autowired ItemMapper itemMapper;
   @Autowired RestTemplate restTemplate;
   @Autowired ObjectMapper objectMapper;
@@ -55,17 +63,20 @@ public class OrderService {
 
     List<Item> itemList = new ArrayList<>();
 
-    for (ItemDto itemDto : orderDto.getItems()) {
-      if (confirmStock(itemDto.getBookId(), itemDto.getQuantity())) {
-        Item item = itemMapper.toEntity(itemDto);
-        item.setOrder(order);
-        itemList.add(itemRepository.save(item));
-      } else {
-        LOGGER.warn(
-            String.format("Book with id %s not added - not enough stock.", itemDto.getBookId()));
+    if (!orderDto.getItems().isEmpty()) {
+      for (ItemDto itemDto : orderDto.getItems()) {
+        if (confirmStock(itemDto.getBookId(), itemDto.getQuantity())) {
+          Item item = itemMapper.toEntity(itemDto);
+          item.setOrder(order);
+          itemList.add(itemRepository.save(item));
+        } else {
+          LOGGER.warn(
+              String.format("Book with id %s not added - not enough stock.", itemDto.getBookId()));
+        }
       }
     }
 
+    order.setEditable(true);
     order.setStatus(OrderStatus.OPEN);
     order.setItems(itemList);
 
@@ -74,49 +85,44 @@ public class OrderService {
   }
 
   /**
-   * Edit the order status.
+   * Edit the order status - possible options: OPEN, READY_TO_PAY, DELIVERED and CANCELLED (status
+   * PAID and SHIPPED will be added in {@link #setOrderStatusToPaid(String) setOrderStatusToPaid}
+   * and {@link #setOrderStatusToShipped(String) setOrderStatusToShipped}).
    *
    * @param id the order identifier.
    * @param orderStatus the desired order status.
-   * @return true if the update is successful.
+   * @return the edited order dto.
    */
-  public boolean editOrderStatus(int id, OrderStatus orderStatus) {
+  public OrderDto editOrderStatus(int id, OrderStatus orderStatus) {
     Optional<Order> order = orderRepository.findById(id);
 
     if (order.isPresent()) {
 
       if (order.get().getStatus().equals(OrderStatus.SHIPPED)
-              || order.get().getStatus().equals(OrderStatus.DELIVERED)
-              || order.get().getStatus().equals(OrderStatus.CANCELLED)
-              || order.get().getStatus().equals(OrderStatus.PAID)) {
+          || order.get().getStatus().equals(OrderStatus.DELIVERED)
+          || order.get().getStatus().equals(OrderStatus.CANCELLED)
+          || order.get().getStatus().equals(OrderStatus.PAID)) {
         LOGGER.error("The order can't be edited");
-        return false;
       }
 
-      switch (orderStatus){
-        case OPEN -> {
-          order.get().setEditable(true);
-          order.get().setStatus(orderStatus);
-          orderRepository.save(order.get());
-          return true;
-        }
-        case READY_TO_PAY -> {
-          return setOrderStatusToReadyToPay(id);
-        }
-        case DELIVERED, CANCELLED -> {
-          order.get().setEditable(false);
-          order.get().setStatus(orderStatus);
-          orderRepository.save(order.get());
-          return true;
-        }
-        case null, default -> {
-          return false;
-        }
+      switch (orderStatus) {
+        case OPEN -> setOrderStatusToOpen(order.get());
+        case READY_TO_PAY -> setOrderStatusToReadyToPay(id);
+        case DELIVERED, CANCELLED -> setOrderStatusToDeliveredOrCancelled(orderStatus, order.get());
       }
-
+      return orderMapper.toDto(order.get());
     } else {
       throw new ResourceNotFoundException("Order not found");
     }
+  }
+
+  public List<OrderDto> findDeliveredOrdersByCustomerAndShipping(int customerId) {
+
+    Timestamp initialShippingDate = Timestamp.from(Instant.now().minus(30, ChronoUnit.DAYS));
+    Timestamp finalShippingDate = Timestamp.from(Instant.now());
+
+    return orderMapper.toDtoList(orderRepository.findByCustomerIdAndShipmentDate(
+        customerId, OrderStatus.DELIVERED.name(), initialShippingDate, finalShippingDate));
   }
 
   /**
@@ -125,7 +131,7 @@ public class OrderService {
    * @param message the message containing the order identifier and other relevant data.
    */
   @RabbitListener(queues = "${rabbitmq.queue.event.shipped.name}")
-  public void consumeUpdatedEvents(String message) {
+  public void consumeShippedEvents(String message) {
 
     LOGGER.info(String.format("received message [%s]", message));
 
@@ -183,6 +189,7 @@ public class OrderService {
    * @return the updated order (DTO).
    */
   public OrderDto deleteOrderItems(int orderId, List<ItemDto> itemDtoList) {
+
     Optional<Order> order = orderRepository.findById(orderId);
 
     if (order.isPresent()) {
@@ -229,12 +236,13 @@ public class OrderService {
   }
 
   /**
-   * Order is shipped - the order status is updated accordingly and the stock is adjusted.
-   * A notification is created to send an e-mail to customer.
+   * Order is shipped - the order status is updated accordingly and the stock is adjusted. A
+   * notification is created to send an e-mail to customer.
    *
    * @param message the message containing the order identifier and other relevant data.
    */
-  public void setOrderStatusToShipped(String message) {
+  private void setOrderStatusToShipped(String message) {
+
     Map<String, String> map;
 
     try {
@@ -252,7 +260,7 @@ public class OrderService {
 
         // sending e-mail to client with tracking code
         createNotificationToSendEmail(
-                orderMapper.toDto(updatedOrder), customerEmail, map.get("trackingCode"));
+            orderMapper.toDto(updatedOrder), customerEmail, map.get("trackingCode"));
 
         // updating stock
         for (Item item : order.get().getItems()) {
@@ -267,12 +275,38 @@ public class OrderService {
   }
 
   /**
+   * Change {@link OrderStatus} to Delivered or Cancelled - the order cannot be edited anymore.
+   *
+   * @param orderStatus the desired status (Delivered or Cancelled).
+   * @param order       the order to edit.
+   */
+  private void setOrderStatusToDeliveredOrCancelled(OrderStatus orderStatus, Order order) {
+
+    order.setEditable(false);
+    order.setStatus(orderStatus);
+    orderRepository.save(order);
+  }
+
+  /**
+   * Change {@link OrderStatus} to OPEN, and it's possible to edit the order again.
+   *
+   * @param order the order to edit.
+   */
+  private void setOrderStatusToOpen(Order order) {
+
+    order.setEditable(true);
+    order.setStatus(OrderStatus.OPEN);
+    orderRepository.save(order);
+  }
+
+  /**
    * Order is shipped and units are removed from pending units.
    *
    * @param bookId the book identifier.
    * @param units the units to be removed from pending units.
    */
   private void updateStockWhenOrderIsShipped(int bookId, int units) {
+
     CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreakerstock");
 
     circuitBreaker.run(
@@ -293,6 +327,7 @@ public class OrderService {
    * @param units the book units.
    */
   private void adjustStockWhenOrderIsCancelledOrItemIsRemovedFromOrder(int bookId, int units) {
+
     CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreakerstock");
 
     circuitBreaker.run(
@@ -315,6 +350,7 @@ public class OrderService {
    * @return true if order is found in database and updated successfully.
    */
   private boolean setOrderStatusToReadyToPay(int id) {
+
     if (orderRepository.findById(id).isPresent()) {
 
       Order order = orderRepository.findById(id).get();
@@ -349,6 +385,7 @@ public class OrderService {
    * @param message The message from Payment Service containing the order identifier.
    */
   private void setOrderStatusToPaid(String message) {
+
     Pair<String, Integer> pair;
 
     try {
@@ -375,7 +412,6 @@ public class OrderService {
    * @return the tax value.
    */
   private Double calculateTax(double orderWeight) {
-    // connection with shipping service
 
     CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreakertax");
 
@@ -397,6 +433,7 @@ public class OrderService {
    * @return the customer e-mail.
    */
   private String getCustomerEmail(int customerId) {
+
     CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreakeruser");
 
     // get client email
@@ -420,6 +457,7 @@ public class OrderService {
    */
   private void createNotificationToSendEmail(
       OrderDto orderDto, String customerEmail, String trackingCode) {
+
     CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreakernotification");
     // create notification and send email to the client
     circuitBreaker.run(

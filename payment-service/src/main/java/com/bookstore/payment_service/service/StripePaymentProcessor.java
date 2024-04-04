@@ -9,7 +9,6 @@ import com.bookstore.payment_service.repository.BasePaymentRepository;
 import com.bookstore.payment_service.utils.PaymentUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.paypal.base.rest.PayPalRESTException;
 import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Charge;

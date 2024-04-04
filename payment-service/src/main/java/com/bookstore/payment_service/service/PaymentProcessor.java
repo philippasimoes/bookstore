@@ -1,6 +1,5 @@
 package com.bookstore.payment_service.service;
 
-import com.paypal.base.rest.PayPalRESTException;
 import java.util.Map;
 
 public interface PaymentProcessor {

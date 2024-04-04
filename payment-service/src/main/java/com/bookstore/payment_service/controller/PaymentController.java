@@ -1,7 +1,5 @@
 package com.bookstore.payment_service.controller;
 
-import com.bookstore.payment_service.model.dto.CreditCardPayment;
-import com.bookstore.payment_service.model.dto.PayPalPayment;
 import com.bookstore.payment_service.model.dto.StripePayment;
 import com.bookstore.payment_service.model.dto.StripeToken;
 import com.bookstore.payment_service.service.CreditCardPaymentProcessor;

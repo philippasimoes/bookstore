@@ -1,18 +1,13 @@
 package com.bookstore.order_service.model.dto;
 
 import com.bookstore.order_service.model.dto.enums.OrderStatus;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.sql.Timestamp;
+import java.util.Date;
 import java.util.List;
+import lombok.Data;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@Data
 public class OrderDto {
 
   private int id;
@@ -23,5 +18,6 @@ public class OrderDto {
   private double totalPriceOrder;
   private double totalWeight;
   private OrderStatus status;
+  private boolean editable;
   private List<ItemDto> items;
 }

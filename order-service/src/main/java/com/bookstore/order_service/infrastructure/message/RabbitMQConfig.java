@@ -1,6 +1,5 @@
 package com.bookstore.order_service.infrastructure.message;
 
-
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.Queue;
@@ -28,6 +27,9 @@ public class RabbitMQConfig implements RabbitListenerConfigurer {
   @Value("${rabbitmq.queue.event.paid.name}")
   private String eventPaidQueue;
 
+  @Value("${rabbitmq.queue.event.delivered.name}")
+  private String eventDeliveredQueue;
+
   @Value("${rabbitmq.order.exchange.name}")
   private String exchange;
 
@@ -37,6 +39,9 @@ public class RabbitMQConfig implements RabbitListenerConfigurer {
   @Value("${rabbitmq.payment.routing.key}")
   private String paymentRoutingKey;
 
+  @Value("${rabbitmq.delivered.routing.key}")
+  private String deliveredRoutingKey;
+
   @Bean
   public Queue eventShippedQueue() {
     return new Queue(eventShippedQueue);
@@ -45,6 +50,11 @@ public class RabbitMQConfig implements RabbitListenerConfigurer {
   @Bean
   public Queue eventPaidQueue() {
     return new Queue(eventPaidQueue);
+  }
+
+  @Bean
+  public Queue eventDeliveredQueue() {
+    return new Queue(eventDeliveredQueue);
   }
 
   @Bean
@@ -60,14 +70,20 @@ public class RabbitMQConfig implements RabbitListenerConfigurer {
 
   @Bean
   public Binding updatedPaymentBinding(
-          @Qualifier("eventPaidQueue") Queue queue, TopicExchange exchange) {
+      @Qualifier("eventPaidQueue") Queue queue, TopicExchange exchange) {
     return BindingBuilder.bind(queue).to(exchange).with(paymentRoutingKey);
+  }
+
+  @Bean
+  public Binding updatedDeliveredBinding(
+      @Qualifier("eventDeliveredQueue") Queue queue, TopicExchange exchange) {
+    return BindingBuilder.bind(queue).to(exchange).with(deliveredRoutingKey);
   }
 
   @Bean
   MappingJackson2MessageConverter jackson2Converter() {
 
-      return new MappingJackson2MessageConverter();
+    return new MappingJackson2MessageConverter();
   }
 
   @Bean
