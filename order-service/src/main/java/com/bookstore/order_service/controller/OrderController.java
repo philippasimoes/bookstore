@@ -4,6 +4,8 @@ import com.bookstore.order_service.model.dto.ItemDto;
 import com.bookstore.order_service.model.dto.OrderDto;
 import com.bookstore.order_service.model.dto.enums.OrderStatus;
 import com.bookstore.order_service.service.OrderService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import jakarta.ws.rs.Path;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/order")
@@ -37,6 +40,12 @@ public class OrderController {
     return ResponseEntity.ok(orderService.editOrderStatus(id, status));
   }
 
+  @PatchMapping("/add-items/{order_id}")
+  public ResponseEntity<List<ItemDto>> addItems(
+      @PathVariable(value = "order_id") int orderId, @RequestBody List<ItemDto> items) {
+    return ResponseEntity.ok(orderService.addItems(orderId, items));
+  }
+
   @PatchMapping("/edit-items/{order_id}")
   public ResponseEntity<OrderDto> editOrderItem(
       @PathVariable(value = "order_id") int orderId, @RequestBody ItemDto itemDto) {
@@ -49,8 +58,27 @@ public class OrderController {
     return ResponseEntity.ok(orderService.deleteOrderItems(orderId, itemDtoList));
   }
 
-  @GetMapping("/{customerId}")
-  public ResponseEntity<List<OrderDto>> getCustomerDeliveredOrders(@PathVariable(value = "customerId") int customerId) {
+  @GetMapping("/customer-orders/{customerId}")
+  public ResponseEntity<List<OrderDto>> getCustomerDeliveredOrders(
+      @PathVariable(value = "customerId") int customerId) {
     return ResponseEntity.ok(orderService.findDeliveredOrdersByCustomerAndShipping(customerId));
+  }
+
+  @GetMapping("/{orderId}")
+  public ResponseEntity<List<ItemDto>> getOrderItems(@PathVariable(value = "orderId") int orderId) {
+    return ResponseEntity.ok(orderService.getOrderItems(orderId));
+  }
+
+  @GetMapping("/{orderId}/item/{itemId}")
+  public ResponseEntity<Integer> getItemQuantity(
+      @PathVariable(value = "orderId") int orderId, @PathVariable(value = "itemId") int itemId) {
+    return ResponseEntity.ok(orderService.getItemQuantity(orderId, itemId));
+  }
+
+  @GetMapping("/{orderId}/item-details/{bookId}")
+  public ResponseEntity<Map<String, String>> getItemData(
+      @PathVariable(value = "orderId") int orderId, @PathVariable(value = "bookId") int bookId)
+      throws JsonProcessingException {
+    return ResponseEntity.ok(orderService.getItemData(orderId, bookId));
   }
 }

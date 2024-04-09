@@ -1,17 +1,10 @@
 package com.bookstore.user_service.model.dto;
 
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
 import java.sql.Timestamp;
+import lombok.Data;
 
-@NoArgsConstructor
-@AllArgsConstructor
-@Setter
-@Getter
+@Data
 public class UserDto {
 
     private int id;
@@ -23,6 +16,7 @@ public class UserDto {
     private String postalCode;
     private String role;
     private boolean enabled;
+    private double storeCredit;
     private Timestamp creationDate;
     private Timestamp updateDate;
 }

@@ -5,10 +5,7 @@ import lombok.EqualsAndHashCode;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class PayPalPayment extends GenericPayment {
-  String method;
-  String intent;
-  String description;
-  String cancelUrl;
-  String successUrl;
+public class CreditCardPaymentDto extends BasePaymentDto {
+
+  String creditCardNumber;
 }

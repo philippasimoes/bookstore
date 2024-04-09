@@ -22,10 +22,7 @@ public class CttService {
   @Value("${rabbitmq.queue.event.delivered.name}")
   private String eventDeliveredQueue;
 
-  /*@Value("${rabbitmq.queue.event.return.key}")
-  private String eventReturnQueue;*/
-
-  public String generateTrackingCode(String clientId, int orderId) {
+  public String generateTrackingCode() {
     return UUID.randomUUID().toString();
   }
 
@@ -40,12 +37,12 @@ public class CttService {
     }
   }
 
- /* public void returnCollected(int returnId) {
+  public void returnCollected(int returnId) {
     try {
       Pair<String, Integer> pair = Pair.of("returnId", returnId);
       producer.sendMessage(eventDeliveredQueue, objectMapper.writeValueAsString(pair));
     } catch (JsonProcessingException e) {
       LOGGER.error("Error building message", e);
     }
-  }*/
+  }
 }

@@ -32,6 +32,7 @@ public class User implements UserDetails {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private int id;
+
   @Column private String name;
   @Column private String email;
   @Column private String username;
@@ -40,9 +41,14 @@ public class User implements UserDetails {
   @Column private String postalCode;
   @Column private String role;
   @Column private boolean enabled;
+
+  @Column(name = "store_credit")
+  private double storeCredit;
+
   @Column(name = "creation_date")
   @CreationTimestamp
   private Timestamp creationDate;
+
   @Column(name = "update_date")
   @UpdateTimestamp
   private Timestamp updateDate;

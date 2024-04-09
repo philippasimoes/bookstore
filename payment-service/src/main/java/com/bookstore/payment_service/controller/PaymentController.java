@@ -1,20 +1,24 @@
 package com.bookstore.payment_service.controller;
 
-import com.bookstore.payment_service.model.dto.StripePayment;
+import com.bookstore.payment_service.model.dto.StripePaymentDto;
 import com.bookstore.payment_service.model.dto.StripeToken;
 import com.bookstore.payment_service.service.CreditCardPaymentProcessor;
+import com.bookstore.payment_service.service.GenericPaymentOperations;
 import com.bookstore.payment_service.service.PaypalPaymentProcessor;
 import com.bookstore.payment_service.service.StripePaymentProcessor;
 import com.paypal.api.payments.Links;
 import com.paypal.api.payments.Payment;
 import com.paypal.base.rest.PayPalRESTException;
 import com.stripe.exception.StripeException;
+import com.stripe.model.Refund;
+import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,8 +26,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.view.RedirectView;
-
-import java.util.Map;
 
 @RestController
 @RequestMapping("/payment")
@@ -34,6 +36,7 @@ public class PaymentController {
   @Autowired PaypalPaymentProcessor paypalPaymentProcessor;
   @Autowired CreditCardPaymentProcessor creditCardPaymentProcessor;
   @Autowired StripePaymentProcessor stripePaymentProcessor;
+  @Autowired GenericPaymentOperations genericPaymentOperations;
 
   // ########################################### PAYPAL ###########################################
 
@@ -90,7 +93,8 @@ public class PaymentController {
   }
 
   // ########################################### STRIPE ###########################################
-  // To test this use the test card number: 4242424242424242, to expMonth and expYear use any future
+  // To test this use the test card number: 4242424242424242 (or another from
+  // https://docs.stripe.com/testing#cards), to expMonth and expYear use any future
   // date. Use any three-digit CVC
   @PostMapping("/stripe/card/token")
   @ResponseBody
@@ -101,13 +105,32 @@ public class PaymentController {
 
   @PostMapping("/stripe/charge")
   @ResponseBody
-  public ResponseEntity<StripePayment> charge(@RequestBody Map<String, Object> model) {
+  public ResponseEntity<StripePaymentDto> charge(@RequestBody Map<String, Object> model) {
     try {
-      return ResponseEntity.ok((StripePayment) stripePaymentProcessor.createPayment(model));
+      return ResponseEntity.ok((StripePaymentDto) stripePaymentProcessor.createPayment(model));
     } catch (StripeException e) {
       LOGGER.error(e.getMessage());
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
     }
+  }
+
+  @PostMapping("/stripe/refund")
+  @ResponseBody
+  public ResponseEntity<Refund> refund(@RequestBody Map<String, String> model) {
+    try {
+       stripePaymentProcessor.refund(model);
+       return ResponseEntity.ok().build();
+    } catch (StripeException e) {
+      LOGGER.error(e.getMessage());
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+    }
+  }
+
+  // ########################################### GENERIC ###########################################
+  @GetMapping("/order/{order-id}")
+  public ResponseEntity<Map<String, String>> getPaymentDetails(
+      @PathVariable(value = "order-id") int orderId) {
+    return ResponseEntity.ok(genericPaymentOperations.getPaymentDetails(orderId));
   }
 
   // ################################### CREDIT CARD - TEST ONLY ###################################

@@ -1,8 +1,9 @@
 package com.bookstore.payment_service.service;
 
 import com.bookstore.payment_service.infrastructure.message.publisher.RabbitMQProducer;
-import com.bookstore.payment_service.model.dto.StripePayment;
+import com.bookstore.payment_service.model.dto.StripePaymentDto;
 import com.bookstore.payment_service.model.dto.StripeToken;
+import com.bookstore.payment_service.model.dto.enums.PaymentMethod;
 import com.bookstore.payment_service.model.dto.enums.PaymentStatus;
 import com.bookstore.payment_service.model.entity.BasePayment;
 import com.bookstore.payment_service.repository.BasePaymentRepository;
@@ -12,7 +13,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Charge;
+import com.stripe.model.Refund;
 import com.stripe.model.Token;
+import com.stripe.param.RefundCreateParams;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.HashMap;
@@ -31,8 +34,11 @@ public class StripePaymentProcessor implements PaymentProcessor {
   @Autowired RabbitMQProducer producer;
   @Autowired ObjectMapper mapper;
 
-  @Value("${rabbitmq.queue.event.paid.name}")
+  @Value("${rabbitmq.queue.event.paid.name}") // order service
   private String eventPaidQueue;
+
+  @Value("${rabbitmq.queue.event.refund.name}") // return service
+  private String eventRefundQueue;
 
   @Value("${STRIPE_PUBLIC_KEY}")
   private String stripePublicKey;
@@ -75,20 +81,21 @@ public class StripePaymentProcessor implements PaymentProcessor {
   @Override
   public Object createPayment(Map<String, Object> request) throws StripeException {
 
-    StripePayment stripePayment = mapper.convertValue(request, StripePayment.class);
+    StripePaymentDto stripePayment = mapper.convertValue(request, StripePaymentDto.class);
 
     Stripe.apiKey = stripeSecretKey;
 
     // Stripe operations
     stripePayment.setSuccess(false);
     Map<String, Object> chargeParams = new HashMap<>();
-    chargeParams.put("amount", (int) (stripePayment.getAmount() * 100)); // cents
+    chargeParams.put("amount", (long) (stripePayment.getAmount() * 100)); // cents
     chargeParams.put("currency", stripePayment.getCurrency());
     chargeParams.put(
         "description",
         "Payment for order with id "
             + stripePayment.getAdditionalInfo().getOrDefault("ORDER_ID", ""));
     chargeParams.put("source", stripePayment.getStripeToken());
+
     Map<String, Object> metaData = new HashMap<>();
     metaData.put("id", stripePayment.getChargeId());
     metaData.putAll(stripePayment.getAdditionalInfo());
@@ -105,11 +112,17 @@ public class StripePaymentProcessor implements PaymentProcessor {
       stripePayment.setSuccess(true);
       stripePayment.setReceiptUrl(charge.getReceiptUrl());
 
-      payment.setPaymentDate(Timestamp.from(Instant.ofEpochSecond(charge.getCreated())));
+      payment.setOperationDate(Timestamp.from(Instant.ofEpochSecond(charge.getCreated())));
       payment.setPaymentStatus(PaymentStatus.COMPLETE);
+      payment.setOperationDate(Timestamp.from(Instant.now()));
+
+      Map<String, Object> map = new HashMap<>();
+      map.put("externalPaymentId", charge.getId());
+      payment.setPaymentDetails(map);
       basePaymentRepository.save(payment);
       try {
-        producer.sendMessage(eventPaidQueue, PaymentUtils.buildMessage(stripePayment.getOrderId()));
+        producer.sendMessage(
+            eventPaidQueue, PaymentUtils.buildMessage("orderId", stripePayment.getOrderId()));
       } catch (JsonProcessingException e) {
         LOGGER.error("Error building message", e);
       }
@@ -119,5 +132,40 @@ public class StripePaymentProcessor implements PaymentProcessor {
     }
 
     return stripePayment;
+  }
+
+  public void refund(Map<String, String> map) throws StripeException {
+    Stripe.apiKey = stripeSecretKey;
+
+    RefundCreateParams params =
+        RefundCreateParams.builder()
+            .setCharge(map.get("externalPaymentId"))
+            .setAmount((long) (Double.parseDouble(map.get("amount")) * 100))
+            .build();
+
+    Refund refund1 = Refund.create(params);
+
+    BasePayment basePayment = new BasePayment();
+    basePayment.setCustomerId(Integer.parseInt(map.get("customerId")));
+    basePayment.setReturnId(Integer.parseInt(map.get("returnId")));
+    basePayment.setAmount(Double.parseDouble(map.get("amount")));
+    basePayment.setOperationDate(Timestamp.from(Instant.now()));
+    basePayment.setPaymentMethod(PaymentMethod.STRIPE);
+    basePayment.setPaymentStatus(PaymentStatus.REFUNDED);
+
+    Map<String, Object> paymentDetails = new HashMap<>();
+    map.put("externalPaymentId", map.get("externalPaymentId"));
+    basePayment.setPaymentDetails(paymentDetails);
+
+    basePaymentRepository.save(basePayment);
+    if (refund1.getStatus().equals("succeeded")) {
+      try {
+        producer.sendMessage(
+            eventRefundQueue,
+            PaymentUtils.buildMessage("returnId", Integer.parseInt(map.get("returnId"))));
+      } catch (JsonProcessingException e) {
+        LOGGER.error("Error building message", e);
+      }
+    }
   }
 }

@@ -10,16 +10,18 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import jakarta.persistence.Temporal;
-import jakarta.persistence.TemporalType;
-
 import java.sql.Timestamp;
-import java.util.Date;
 import java.util.List;
-import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.SoftDelete;
 
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @SoftDelete
 @Entity
 @Table(name = "order", schema = "orderservice")
@@ -51,5 +53,4 @@ public class Order extends BaseEntity {
 
   @Column(name = "total_weight")
   private double totalWeight;
-
 }

@@ -1,9 +1,9 @@
 package com.bookstore.payment_service.utils;
 
-import com.bookstore.payment_service.model.dto.CreditCardPayment;
-import com.bookstore.payment_service.model.dto.GenericPayment;
-import com.bookstore.payment_service.model.dto.PayPalPayment;
-import com.bookstore.payment_service.model.dto.StripePayment;
+import com.bookstore.payment_service.model.dto.CreditCardPaymentDto;
+import com.bookstore.payment_service.model.dto.BasePaymentDto;
+import com.bookstore.payment_service.model.dto.PayPalPaymentDto;
+import com.bookstore.payment_service.model.dto.StripePaymentDto;
 import com.bookstore.payment_service.model.dto.enums.PaymentMethod;
 import com.bookstore.payment_service.model.entity.BasePayment;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -16,23 +16,23 @@ public final class PaymentUtils {
 
   static ObjectMapper objectMapper = new ObjectMapper();
 
-  public static String buildMessage(int orderId) throws JsonProcessingException {
-    Pair<String, Integer> pair = Pair.of("orderId", orderId);
+  public static String buildMessage(String key, int id) throws JsonProcessingException {
+    Pair<String, Integer> pair = Pair.of(key, id);
     return objectMapper.writeValueAsString(pair);
   }
 
-  public static BasePayment createBasePayment(GenericPayment genericPayment) {
+  public static BasePayment createBasePayment(BasePaymentDto basePaymentDto) {
 
     BasePayment payment = new BasePayment();
-    payment.setOrderId(genericPayment.getOrderId());
-    payment.setCustomerId(genericPayment.getCustomerId());
-    payment.setPaymentAmount(genericPayment.getAmount());
+    payment.setOrderId(basePaymentDto.getOrderId());
+    payment.setCustomerId(basePaymentDto.getCustomerId());
+    payment.setAmount(basePaymentDto.getAmount());
 
-    switch (genericPayment) {
-      case StripePayment stripePayment -> payment.setPaymentMethod(PaymentMethod.STRIPE);
-      case PayPalPayment payPalPayment -> genericPayment.setPaymentMethod(PaymentMethod.PAYPAL);
-      case CreditCardPayment creditCardPayment ->
-          genericPayment.setPaymentMethod(PaymentMethod.CREDIT_CARD);
+    switch (basePaymentDto) {
+      case StripePaymentDto stripePayment -> payment.setPaymentMethod(PaymentMethod.STRIPE);
+      case PayPalPaymentDto payPalPayment -> basePaymentDto.setPaymentMethod(PaymentMethod.PAYPAL);
+      case CreditCardPaymentDto creditCardPayment ->
+          basePaymentDto.setPaymentMethod(PaymentMethod.CREDIT_CARD);
       default -> {}
     }
 

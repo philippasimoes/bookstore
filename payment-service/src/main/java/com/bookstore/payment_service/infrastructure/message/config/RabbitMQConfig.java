@@ -20,15 +20,26 @@ public class RabbitMQConfig {
   @Value("${rabbitmq.queue.event.paid.name}")
   private String eventPaidQueue;
 
+  @Value("${rabbitmq.queue.event.refund.name}")
+  private String eventRefundedQueue;
+
   @Value("${rabbitmq.exchange.name}")
   private String exchange;
 
-  @Value("${rabbitmq.routing.key}")
-  private String routingKey;
+  @Value("${rabbitmq.payment.routing.key}")
+  private String paymentRoutingKey;
+
+  @Value("${rabbitmq.refund.routing.key}")
+  private String refundedRoutingKey;
 
   @Bean
   public Queue eventPaidQueue() {
     return new Queue(eventPaidQueue);
+  }
+
+  @Bean
+  public Queue eventRefundedQueue() {
+    return new Queue(eventRefundedQueue);
   }
 
   @Bean
@@ -37,7 +48,12 @@ public class RabbitMQConfig {
   }
 
   @Bean
-  public Binding updatedBinding(@Qualifier("eventPaidQueue") Queue queue, TopicExchange exchange) {
-    return BindingBuilder.bind(queue).to(exchange).with(routingKey);
+  public Binding updatedPaymentBinding(@Qualifier("eventPaidQueue") Queue queue, TopicExchange exchange) {
+    return BindingBuilder.bind(queue).to(exchange).with(paymentRoutingKey);
+  }
+
+  @Bean
+  public Binding updatedRefundedBinding(@Qualifier("eventRefundedQueue") Queue queue, TopicExchange exchange) {
+    return BindingBuilder.bind(queue).to(exchange).with(refundedRoutingKey);
   }
 }

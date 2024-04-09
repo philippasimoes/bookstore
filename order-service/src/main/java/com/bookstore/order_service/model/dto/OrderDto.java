@@ -1,9 +1,7 @@
 package com.bookstore.order_service.model.dto;
 
 import com.bookstore.order_service.model.dto.enums.OrderStatus;
-
 import java.sql.Timestamp;
-import java.util.Date;
 import java.util.List;
 import lombok.Data;
 

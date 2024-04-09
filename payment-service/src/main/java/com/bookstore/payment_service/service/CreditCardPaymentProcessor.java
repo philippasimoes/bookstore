@@ -1,7 +1,7 @@
 package com.bookstore.payment_service.service;
 
 import com.bookstore.payment_service.infrastructure.message.publisher.RabbitMQProducer;
-import com.bookstore.payment_service.model.dto.CreditCardPayment;
+import com.bookstore.payment_service.model.dto.CreditCardPaymentDto;
 import com.bookstore.payment_service.model.dto.enums.PaymentStatus;
 import com.bookstore.payment_service.model.entity.BasePayment;
 import com.bookstore.payment_service.repository.BasePaymentRepository;
@@ -14,10 +14,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
-public class CreditCardPaymentProcessor implements PaymentProcessor{
+public class CreditCardPaymentProcessor implements PaymentProcessor {
   private static final Logger LOGGER = LogManager.getLogger(CreditCardPaymentProcessor.class);
   @Autowired BasePaymentRepository basePaymentRepository;
   @Autowired RabbitMQProducer producer;
@@ -30,16 +32,21 @@ public class CreditCardPaymentProcessor implements PaymentProcessor{
   @Override
   public String createPayment(Map<String, Object> request) {
 
-    CreditCardPayment creditCardPayment = objectMapper.convertValue(request,CreditCardPayment.class);
+    CreditCardPaymentDto creditCardPayment =
+        objectMapper.convertValue(request, CreditCardPaymentDto.class);
 
     BasePayment basePayment = PaymentUtils.createBasePayment(creditCardPayment);
     basePayment.setPaymentStatus(PaymentStatus.COMPLETE);
 
+    Map<String, Object> map = new HashMap<>();
+    map.put("externalPaymentId", UUID.randomUUID());
+
+    basePayment.setPaymentDetails(map);
     basePaymentRepository.save(basePayment);
 
     try {
       producer.sendMessage(
-          eventPaidQueue, PaymentUtils.buildMessage(creditCardPayment.getOrderId()));
+          eventPaidQueue, PaymentUtils.buildMessage("orderId", creditCardPayment.getOrderId()));
     } catch (JsonProcessingException e) {
       LOGGER.error("Error building message", e);
     }

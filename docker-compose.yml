@@ -63,7 +63,6 @@ services:
       - ./catalog-service/log:/catalog-service/log
     networks:
       - bookstore-network
-
   stock-service:
     image: 'stock-service:latest'
     build:
@@ -94,7 +93,6 @@ services:
       - ./stock-service/log:/stock-service/log
     networks:
       - bookstore-network
-
   notification-service:
     image: 'notification-service:latest'
     build:
@@ -122,7 +120,6 @@ services:
       - ./notification-service/log:/notification-service/log
     networks:
       - bookstore-network
-
   order-service:
     image: 'order-service:latest'
     build:
@@ -149,7 +146,6 @@ services:
       - ./order-service/log:/order-service/log
     networks:
       - bookstore-network
-
   payment-service:
     image: 'payment-service:latest'
     build:
@@ -176,7 +172,6 @@ services:
       - ./payment-service/log:/payment-service/log
     networks:
       - bookstore-network
-
   return-service:
     image: 'return-service:latest'
     build:
@@ -203,7 +198,6 @@ services:
       - ./return-service/log:/return-service/log
     networks:
       - bookstore-network
-
   shipping-service:
     image: 'shipping-service:latest'
     build:
@@ -230,7 +224,6 @@ services:
       - ./shipping-service/log:/shipping-service/log
     networks:
       - bookstore-network
-
   user-service:
     image: 'user-service:latest'
     build:
@@ -257,7 +250,6 @@ services:
       - ./user-service/log:/user-service/log
     networks:
       - bookstore-network
-
   dummy-ctt:
     image: 'dummy-ctt:latest'
     build:
@@ -282,7 +274,6 @@ services:
       - ./dummy-ctt/log:/dummy-ctt/log
     networks:
       - bookstore-network
-
   rabbitmq:
     container_name: rabbitmq
     image: 'rabbitmq:3.13.0-rc.5-management'
@@ -298,7 +289,6 @@ services:
       retries: 3
     networks:
       - bookstore-network
-
   keycloak:
     container_name: keycloak
     image: quay.io/keycloak/keycloak:23.0.7
@@ -325,6 +315,5 @@ services:
       - ./utils/keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
     networks:
       - bookstore-network
-
 networks:
   bookstore-network:

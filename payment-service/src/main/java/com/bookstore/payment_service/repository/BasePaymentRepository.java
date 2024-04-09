@@ -11,7 +11,9 @@ public interface BasePaymentRepository extends JpaRepository<BasePayment, Intege
 
   @Query(
       value =
-          "SELECT * FROM paymentservice.payment WHERE payment_details ->> 'paymentId' = :paymentId",
+          "SELECT * FROM paymentservice.payment WHERE payment_details ->> 'externalPaymentId' = :externalPaymentId",
       nativeQuery = true)
-  Optional<BasePayment> findByPaypalPaymentId(@Param("paymentId") String paymentId);
+  Optional<BasePayment> findByPaypalPaymentId(@Param("externalPaymentId") String paymentId);
+
+  Optional<BasePayment> findByOrderId(int orderId);
 }

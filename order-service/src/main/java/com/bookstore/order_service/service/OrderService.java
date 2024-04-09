@@ -12,17 +12,14 @@ import com.bookstore.order_service.repository.ItemRepository;
 import com.bookstore.order_service.repository.OrderRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -40,8 +37,7 @@ public class OrderService {
   private static final Logger LOGGER = LogManager.getLogger(OrderService.class);
   @Autowired OrderRepository orderRepository;
   @Autowired ItemRepository itemRepository;
-  @Autowired
-  OrderMapper orderMapper;
+  @Autowired OrderMapper orderMapper;
   @Autowired ItemMapper itemMapper;
   @Autowired RestTemplate restTemplate;
   @Autowired ObjectMapper objectMapper;
@@ -50,6 +46,7 @@ public class OrderService {
   private static final String NOTIFICATION_URL = "http://notification-service/order";
   private static final String SHIPMENT_URL = "http://shipping-service/shipment/tax?weight=";
   private static final String USER_URL = "http://user-service/user/";
+  private static final String PAYMENTS_URL = "http://payment-service/payment";
 
   /**
    * Create new order and order items.
@@ -82,6 +79,32 @@ public class OrderService {
 
     Order savedOrder = orderRepository.save(order);
     return orderMapper.toDto(savedOrder);
+  }
+
+  public List<ItemDto> addItems(int orderId, List<ItemDto> itemDtoList) {
+    Optional<Order> order = orderRepository.findById(orderId);
+
+    if (order.isPresent()) {
+      List<Item> itemsToAdd = itemMapper.toEntityList(itemDtoList);
+      for (Item item : itemsToAdd) {
+        if (confirmStock(item.getBookId(), item.getQuantity())) {
+          item.setOrder(order.get());
+          itemRepository.save(item);
+        } else {
+          LOGGER.warn(
+              String.format("Book with id %s not added - not enough stock.", item.getBookId()));
+        }
+      }
+      List<Item> orderItems = order.get().getItems();
+      orderItems.addAll(itemsToAdd);
+
+      order.get().setItems(orderItems);
+      orderRepository.save(order.get());
+
+      return getOrderItems(orderId);
+    } else {
+      throw new ResourceNotFoundException("Order not found");
+    }
   }
 
   /**
@@ -121,8 +144,39 @@ public class OrderService {
     Timestamp initialShippingDate = Timestamp.from(Instant.now().minus(30, ChronoUnit.DAYS));
     Timestamp finalShippingDate = Timestamp.from(Instant.now());
 
-    return orderMapper.toDtoList(orderRepository.findByCustomerIdAndShipmentDate(
-        customerId, OrderStatus.DELIVERED.name(), initialShippingDate, finalShippingDate));
+    return orderMapper.toDtoList(
+        orderRepository.findByCustomerIdAndShipmentDate(
+            customerId, OrderStatus.DELIVERED.name(), initialShippingDate, finalShippingDate));
+  }
+
+  public List<ItemDto> getOrderItems(int orderId) {
+    List<Item> items = itemRepository.findByOrderId(orderId);
+
+    return itemMapper.toDtoList(items);
+  }
+
+  public int getItemQuantity(int orderId, int itemId) {
+    Optional<Order> order = orderRepository.findById(orderId);
+    Optional<Item> item = itemRepository.findById(itemId);
+
+    if (order.isPresent() && item.isPresent() && order.get().getItems().contains(item.get())) {
+      return item.get().getQuantity();
+    } else throw new ResourceNotFoundException("Order or item does not exist.");
+  }
+
+  public List<ItemDto> getReturnableItems(int orderId) {
+    Optional<Order> order = orderRepository.findById(orderId);
+
+    if (order.isPresent()) {
+      List<Item> returnableItems = new ArrayList<>();
+
+      for (Item item : order.get().getItems()) {
+        if (item.getUnitWeight() != 0) {
+          returnableItems.add(item);
+        }
+      }
+      return itemMapper.toDtoList(returnableItems);
+    } else throw new ResourceNotFoundException("Order not found.");
   }
 
   /**
@@ -210,6 +264,24 @@ public class OrderService {
     return orderMapper.toDto(order.get());
   }
 
+  public Map<String, String> getItemData(int orderId, int bookId) {
+    Optional<Order> order = orderRepository.findById(orderId);
+
+    Optional<Item> item = itemRepository.findByOrderIdAndBookId(orderId, bookId);
+
+    if (item.isPresent()) {
+      Map<String, String> map = new HashMap<>();
+      map.put("orderId", String.valueOf(orderId));
+      map.put("bookId", String.valueOf(bookId));
+      map.put("quantity", String.valueOf(item.get().getQuantity()));
+      map.put("unitPrice", String.valueOf(item.get().getUnitPrice()));
+      map.put("unitWeight", String.valueOf(item.get().getUnitWeight()));
+
+
+      return map;
+    } else throw new ResourceNotFoundException("Item not found");
+  }
+
   /**
    * Checks whether the book's available units are sufficient.
    *
@@ -278,7 +350,7 @@ public class OrderService {
    * Change {@link OrderStatus} to Delivered or Cancelled - the order cannot be edited anymore.
    *
    * @param orderStatus the desired status (Delivered or Cancelled).
-   * @param order       the order to edit.
+   * @param order the order to edit.
    */
   private void setOrderStatusToDeliveredOrCancelled(OrderStatus orderStatus, Order order) {
 
@@ -347,9 +419,8 @@ public class OrderService {
    * and the order cannot be edited (unless the order status is changed to open again).
    *
    * @param id the order identifier.
-   * @return true if order is found in database and updated successfully.
    */
-  private boolean setOrderStatusToReadyToPay(int id) {
+  private void setOrderStatusToReadyToPay(int id) {
 
     if (orderRepository.findById(id).isPresent()) {
 
@@ -373,7 +444,6 @@ public class OrderService {
       order.setEditable(false);
 
       orderRepository.save(order);
-      return true;
     } else {
       throw new ResourceNotFoundException("Order not found");
     }

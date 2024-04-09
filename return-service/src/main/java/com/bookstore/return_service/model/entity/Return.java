@@ -1,23 +1,21 @@
 package com.bookstore.return_service.model.entity;
 
+import com.bookstore.return_service.model.dto.enums.RefundType;
 import com.bookstore.return_service.model.dto.enums.ReturnReason;
 import com.bookstore.return_service.model.dto.enums.ReturnStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.SoftDelete;
-
-import java.sql.Timestamp;
-import java.util.List;
 
 @Getter
 @Setter
@@ -26,25 +24,31 @@ import java.util.List;
 @Entity
 @SoftDelete
 @Table(name = "return", schema = "returnservice")
-public class Return {
+public class Return extends BaseEntity {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "id", nullable = false)
-  private int id;
+  @Column private int orderId;
 
-  @Column
-  private int orderId;
+  @Column private int customerId;
 
-  @Column(name="item_id_list")
-  private List<Integer> itemIdList;
+  @OneToMany
+  @JoinColumn(name = "return_id")
+  private List<ReturnItem> returnItems;
 
   @Enumerated(EnumType.STRING)
   private ReturnReason returnReason;
 
-  @Column
-  private Timestamp date;
-
   @Enumerated(EnumType.STRING)
   private ReturnStatus returnStatus;
+
+  @Column(name = "amount_to_refund")
+  private double amountToRefund;
+
+  @Enumerated(EnumType.STRING)
+  private RefundType refundType;
+
+  @Column(name = "tracking_code")
+  private String trackingCode;
+
+  @Column(name = "external_payment_id")
+  private String externalPaymentId;
 }

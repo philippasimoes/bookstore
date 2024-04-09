@@ -8,7 +8,7 @@ import java.util.Map;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class StripePayment extends GenericPayment {
+public class StripePaymentDto extends BasePaymentDto {
 
   private String stripeToken;
   private String username;

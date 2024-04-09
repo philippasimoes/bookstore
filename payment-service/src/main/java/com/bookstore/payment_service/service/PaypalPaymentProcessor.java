@@ -2,7 +2,7 @@ package com.bookstore.payment_service.service;
 
 import com.bookstore.payment_service.exception.ResourceNotFoundException;
 import com.bookstore.payment_service.infrastructure.message.publisher.RabbitMQProducer;
-import com.bookstore.payment_service.model.dto.PayPalPayment;
+import com.bookstore.payment_service.model.dto.PayPalPaymentDto;
 import com.bookstore.payment_service.model.dto.enums.PaymentStatus;
 import com.bookstore.payment_service.model.entity.BasePayment;
 import com.bookstore.payment_service.repository.BasePaymentRepository;
@@ -44,17 +44,15 @@ public class PaypalPaymentProcessor implements PaymentProcessor {
 
   @Autowired ObjectMapper mapper;
 
-  final static String CANCEL_URL = "http://localhost:10004/payment/paypal/cancel";
-  final static String SUCCESS_URL = "http://localhost:10004/payment/paypal/success";
+  static final String CANCEL_URL = "http://localhost:10004/payment/paypal/cancel";
+  static final String SUCCESS_URL = "http://localhost:10004/payment/paypal/success";
 
   @Override
-  public Object createPayment(Map<String, Object> request)
-      throws PayPalRESTException {
+  public Object createPayment(Map<String, Object> request) throws PayPalRESTException {
 
-    PayPalPayment payment = mapper.convertValue(request, PayPalPayment.class);
+    PayPalPaymentDto payment = mapper.convertValue(request, PayPalPaymentDto.class);
     payment.setCancelUrl(CANCEL_URL);
     payment.setSuccessUrl(SUCCESS_URL);
-
 
     // PayPal operations
     Amount amount = new Amount();
@@ -84,11 +82,12 @@ public class PaypalPaymentProcessor implements PaymentProcessor {
     payPalPayment.setRedirectUrls(redirectUrls);
 
     Payment createdPayPalPayment = payPalPayment.create(apiContext);
+
     // database operations
     BasePayment basePayment = PaymentUtils.createBasePayment(payment);
 
     Map<String, Object> paypalPaymentDetails = new HashMap<>();
-    paypalPaymentDetails.put("paymentId", createdPayPalPayment.getId());
+    paypalPaymentDetails.put("externalPaymentId", createdPayPalPayment.getId());
     basePayment.setPaymentDetails(paypalPaymentDetails);
 
     basePaymentRepository.save(basePayment);
@@ -122,7 +121,7 @@ public class PaypalPaymentProcessor implements PaymentProcessor {
         basePaymentRepository.save(basePayment.get());
         try {
           producer.sendMessage(
-              eventPaidQueue, PaymentUtils.buildMessage(basePayment.get().getOrderId()));
+              eventPaidQueue, PaymentUtils.buildMessage("orderId", basePayment.get().getOrderId()));
         } catch (JsonProcessingException e) {
           LOGGER.error("Error building message", e);
         }

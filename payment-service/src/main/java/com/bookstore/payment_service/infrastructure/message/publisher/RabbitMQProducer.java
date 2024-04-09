@@ -17,12 +17,6 @@ public class RabbitMQProducer {
 
   private final Logger LOGGER = LogManager.getLogger(RabbitMQProducer.class);
 
-  @Value("${rabbitmq.exchange.name}")
-  private String exchange;
-
-  @Value("${rabbitmq.routing.key}")
-  private String routingKey;
-
   @Autowired public RabbitTemplate rabbitTemplate;
 
   public void sendMessage(String queueName, String message) {

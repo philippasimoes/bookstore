@@ -2,11 +2,10 @@ package com.bookstore.return_service.model.mapper;
 
 import com.bookstore.return_service.model.dto.ReturnDto;
 import com.bookstore.return_service.model.entity.Return;
-import org.mapstruct.BeanMapping;
+import java.util.List;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
-import org.mapstruct.MappingTarget;
-import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 
 @Mapper(
@@ -14,10 +13,11 @@ import org.mapstruct.ReportingPolicy;
     componentModel = MappingConstants.ComponentModel.SPRING)
 public interface ReturnMapper {
 
+  @Mapping(target = "returnItems", ignore = true)
   Return toEntity(ReturnDto returnDto);
 
+  @Mapping(target = "returnItems", ignore = true)
   ReturnDto toDto(Return returnEntity);
 
-  @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-  Return partialUpdate(ReturnDto returnDto, @MappingTarget Return returnEntity);
+  List<ReturnDto> toDtoList(List<Return> returnList);
 }

@@ -50,17 +50,20 @@ public class BasePayment {
   @Column(name = "customer_id", updatable = false)
   private int customerId;
 
+  @Column(name="refund_id", updatable = false)
+  private int returnId;
+
   @Enumerated(EnumType.STRING)
   private PaymentMethod paymentMethod;
 
   @Enumerated(EnumType.STRING)
   private PaymentStatus paymentStatus;
 
-  @Column(name = "payment_date")
-  private Timestamp paymentDate;
+  @Column(name = "operation_date")
+  private Timestamp operationDate;
 
-  @Column(name = "payment_amount")
-  private double paymentAmount;
+  @Column(name = "amount")
+  private double amount;
 
   @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "payment_details", length = 1024)

@@ -37,13 +37,19 @@ public class UserService implements UserDetailsService {
   }
 
   public UserDto addNewUser(UserDto userDto) {
-    User user = userMapper.userDtoToUser(userDto);
+    if (!existsByUsername(userDto.getUsername())) {
 
-    user.setPassword(new BCryptPasswordEncoder().encode(userDto.getPassword()));
+      User user = userMapper.userDtoToUser(userDto);
 
-    User savedUser = userRepository.save(user);
+      user.setPassword(new BCryptPasswordEncoder().encode(userDto.getPassword()));
 
-    return userMapper.userToUserDto(savedUser);
+      user.setStoreCredit(0);
+      User savedUser = userRepository.save(user);
+
+      return userMapper.userToUserDto(savedUser);
+    } else {
+      throw new RuntimeException("Username already exists"); //TODO: exception
+    }
   }
 
   public boolean existsByUsername(String username) {

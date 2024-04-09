@@ -18,13 +18,18 @@ public class CttController {
   public ResponseEntity<String> generateTrackingCode(
       @RequestParam(value = "client_id") String clientId,
       @RequestParam(value = "order_id") int orderId) {
-    return ResponseEntity.ok(cttService.generateTrackingCode(clientId, orderId));
+    return ResponseEntity.ok(cttService.generateTrackingCode());
   }
 
   @GetMapping("/delivered")
   public ResponseEntity<Void> orderDelivered(@RequestParam(value = "order_id") int orderId) {
     cttService.notifyOrderDelivered(orderId);
     return ResponseEntity.ok().build();
+  }
+
+  @GetMapping("/return-tracking-code")
+  public ResponseEntity<String> generateReturnTrackingCode(@RequestParam(value="return_id") int returnId){
+    return ResponseEntity.ok(cttService.generateTrackingCode());
   }
 
   public ResponseEntity<Void> returnCollected(@RequestParam(value = "return_id") int returnId) {
