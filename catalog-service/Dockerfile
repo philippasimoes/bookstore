@@ -1,5 +1,6 @@
 FROM amazoncorretto:21-alpine-jdk
 RUN apk --no-cache add curl
+RUN apk add ttf-dejavu
 COPY target/catalog-service-0.0.1-SNAPSHOT.jar catalogservice.jar
 EXPOSE 10000 8081
 ENV SPRINGPROFILES=dev

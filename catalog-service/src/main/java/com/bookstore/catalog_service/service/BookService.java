@@ -27,18 +27,30 @@ import com.bookstore.catalog_service.repository.PublisherRepository;
 import com.bookstore.catalog_service.specifications.BookSpecifications;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
-
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import net.sf.jasperreports.engine.JRException;
+import net.sf.jasperreports.engine.JasperCompileManager;
+import net.sf.jasperreports.engine.JasperExportManager;
+import net.sf.jasperreports.engine.JasperFillManager;
+import net.sf.jasperreports.engine.JasperPrint;
+import net.sf.jasperreports.engine.JasperReport;
+import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.core.io.Resource;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.util.Pair;
 import org.springframework.http.HttpEntity;
@@ -72,6 +84,7 @@ public class BookService {
   @Autowired BookMapper bookMapper;
   @Autowired ObjectMapper objectMapper;
   @Autowired RestTemplate restTemplate;
+  @Autowired ApplicationContext context;
 
   private static final String TOKEN_URL =
       "http://keycloak:8080/realms/bookstore/protocol/openid-connect/token";
@@ -554,7 +567,7 @@ public class BookService {
     RestTemplate keycloakRestTemplate = new RestTemplate();
 
     ResponseEntity<String> response =
-            keycloakRestTemplate.postForEntity(TOKEN_URL, requestEntity, String.class);
+        keycloakRestTemplate.postForEntity(TOKEN_URL, requestEntity, String.class);
 
     if (response.getStatusCode().is2xxSuccessful()) {
       LOGGER.info("Authentication successful.");
@@ -563,5 +576,23 @@ public class BookService {
       LOGGER.error(String.format("Authentication failure. Status: %s.", response.getStatusCode()));
       return null;
     }
+  }
+
+  public void exportReport(HttpServletResponse response) throws JRException, IOException {
+    String path = "classpath:reports";
+
+    List<Book> books = bookRepository.findAll();
+
+    Resource resource = context.getResource("classpath:books.jrxml");
+
+    InputStream inputStream = resource.getInputStream();
+    JasperReport jasperReport = JasperCompileManager.compileReport(inputStream);
+    JRBeanCollectionDataSource dataSource = new JRBeanCollectionDataSource(books);
+    JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, null, dataSource);
+
+    response.setContentType(MediaType.APPLICATION_PDF_VALUE);
+    response.setHeader("Content-Disposition", "inline; filename=books.pdf");
+    final OutputStream outStream = response.getOutputStream();
+    JasperExportManager.exportReportToPdfStream(jasperPrint, outStream);
   }
 }

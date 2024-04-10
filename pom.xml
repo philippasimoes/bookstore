@@ -35,6 +35,8 @@
         <springdoc-openapi-ui.version>1.7.0</springdoc-openapi-ui.version>
         <paypal-rest-api-sdk.version>1.14.0</paypal-rest-api-sdk.version>
         <stripe-java.version>24.23.0-beta.1</stripe-java.version>
+        <spring-cloud-starter-netflix-eureka.version>4.1.1</spring-cloud-starter-netflix-eureka.version>
+        <jasper-reports.version>6.21.2</jasper-reports.version>
     </properties>
 
     <dependencyManagement>
@@ -151,6 +153,21 @@
                 <artifactId>spring-boot-starter-actuator</artifactId>
                 <version>${spring-boot.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-starter-netflix-eureka-server</artifactId>
+                <version>${spring-cloud-starter-netflix-eureka.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+                <version>${spring-cloud-starter-netflix-eureka.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.sf.jasperreports</groupId>
+                <artifactId>jasperreports</artifactId>
+                <version>${jasper-reports.version}</version>
+            </dependency>
             <!-- Test dependencies -->
             <dependency>
                 <groupId>org.springframework.boot</groupId>
@@ -170,17 +187,6 @@
                 <version>${h2.version}</version>
                 <scope>test</scope>
             </dependency>
-            <dependency>
-                <groupId>org.springframework.cloud</groupId>
-                <artifactId>spring-cloud-starter-netflix-eureka-server</artifactId>
-                <version>4.1.1</version>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework.cloud</groupId>
-                <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
-                <version>4.1.1</version>
-            </dependency>
-
         </dependencies>
     </dependencyManagement>
 
