@@ -14,8 +14,13 @@ public class UserController {
 
   @Autowired UserService userService;
 
-  @GetMapping("/{user_id}")
+  @GetMapping("/email/{user_id}")
   public ResponseEntity<String> getUserEmail(@PathVariable("user_id") int userId) {
     return ResponseEntity.ok(userService.getUserEmail(userId));
+  }
+
+  @GetMapping("/{user_id}")
+  public ResponseEntity<Boolean> userExists(@PathVariable("user_id") int userId) {
+    return ResponseEntity.ok(userService.userExists(userId));
   }
 }

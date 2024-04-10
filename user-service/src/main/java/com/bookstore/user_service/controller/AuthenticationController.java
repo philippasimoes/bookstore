@@ -1,5 +1,6 @@
 package com.bookstore.user_service.controller;
 
+import com.bookstore.user_service.exception.UserAlreadyExistAuthenticationException;
 import com.bookstore.user_service.infrastructure.security.TokenService;
 import com.bookstore.user_service.model.dto.AuthenticationDto;
 import com.bookstore.user_service.model.dto.LoginResponseDto;
@@ -34,11 +35,11 @@ public class AuthenticationController {
       @RequestBody @Valid AuthenticationDto authenticationDto) {
 
     UserDetails user = userService.findByUsername(authenticationDto.username());
-    var usernamePassword =
+    UsernamePasswordAuthenticationToken usernamePassword =
         new UsernamePasswordAuthenticationToken(
             user.getUsername(), user.getPassword(), user.getAuthorities());
 
-    var accessToken = tokenService.generateAccessToken(usernamePassword);
+    String accessToken = tokenService.generateAccessToken(usernamePassword);
 
     return ResponseEntity.ok(new LoginResponseDto(accessToken));
   }
@@ -46,10 +47,10 @@ public class AuthenticationController {
   @PostMapping("/register")
   public ResponseEntity<UserDto> register(@RequestBody @Valid UserDto userDto) {
 
-    if (userService.existsByUsername(userDto.getUsername()))
-      return ResponseEntity.badRequest().build();
-    else {
+    try {
       return ResponseEntity.ok(userService.addNewUser(userDto));
+    } catch (UserAlreadyExistAuthenticationException e) {
+      return ResponseEntity.badRequest().build();
     }
   }
 }

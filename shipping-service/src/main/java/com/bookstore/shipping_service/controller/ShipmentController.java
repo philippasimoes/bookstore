@@ -30,7 +30,7 @@ public class ShipmentController {
 
   @GetMapping("/tax")
   public ResponseEntity<Double> calculateTax(@RequestParam double weight) {
-    return ResponseEntity.ok(shipmentService.calculateTax(weight));
+    return ResponseEntity.ok(shipmentService.calculateFee(weight));
   }
 
   @PostMapping

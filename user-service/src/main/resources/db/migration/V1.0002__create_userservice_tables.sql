@@ -8,7 +8,6 @@ CREATE TABLE userservice."user" (
    postal_code VARCHAR(255),
    role VARCHAR(255),
    enabled BOOLEAN,
-    store_credit DOUBLE PRECISION,
    creation_date TIMESTAMP WITHOUT TIME ZONE,
    update_date TIMESTAMP WITHOUT TIME ZONE,
    CONSTRAINT pk_user PRIMARY KEY (id)

@@ -9,6 +9,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/**
+ * Class needed to discover connected applications (Eureka).
+ */
 @RestController
 public class ServiceInstanceRestController {
   @Autowired private DiscoveryClient discoveryClient;

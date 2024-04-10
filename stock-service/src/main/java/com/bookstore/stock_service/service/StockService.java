@@ -222,7 +222,7 @@ public class StockService {
 
     if (stockRepository.findByBookId(bookId).isPresent()) {
       return stockRepository.findByBookId(bookId).get().getAvailableUnits();
-    } else throw new StockFoundException();
+    } else throw new StockNotFoundException();
   }
 
   /**

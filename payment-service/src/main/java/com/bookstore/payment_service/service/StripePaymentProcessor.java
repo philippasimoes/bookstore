@@ -78,6 +78,14 @@ public class StripePaymentProcessor implements PaymentProcessor {
     }
   }
 
+  /**
+   * Perform a Stripe payment and create the payment object in the database.
+   *
+   * @param request a map with relevant information such as order identifier, customer identifier
+   *     and the stripe token previously obtained.
+   * @return a Stripe payment object.
+   * @throws StripeException if something fails when doing the Stripe operations.
+   */
   @Override
   public Object createPayment(Map<String, Object> request) throws StripeException {
 
@@ -134,6 +142,13 @@ public class StripePaymentProcessor implements PaymentProcessor {
     return stripePayment;
   }
 
+  /**
+   * Perform a Stripe refund and create the payment object in database.
+   *
+   * @param map the map containing relevant data such as customer and return identifier, and the
+   *     amount to be refunded.
+   * @throws StripeException if something fails when doing the Stripe operations.
+   */
   public void refund(Map<String, String> map) throws StripeException {
     Stripe.apiKey = stripeSecretKey;
 

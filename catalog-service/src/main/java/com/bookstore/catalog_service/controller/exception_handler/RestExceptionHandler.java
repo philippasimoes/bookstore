@@ -28,7 +28,7 @@ public class RestExceptionHandler {
     ApiError error =
         new ApiError(
             HttpStatus.NOT_FOUND.value(),
-            "Resource Not Found",
+            "Resource Not Found.",
             new Date(System.currentTimeMillis()));
     return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
   }
@@ -39,7 +39,7 @@ public class RestExceptionHandler {
     ApiError error =
         new ApiError(
             HttpStatus.NOT_ACCEPTABLE.value(),
-            "The start price should bw lower than the end price",
+            "The start price should bw lower than the end price.",
             new Date(System.currentTimeMillis()));
     return new ResponseEntity<>(error, HttpStatus.NOT_ACCEPTABLE);
   }
@@ -50,7 +50,7 @@ public class RestExceptionHandler {
     ApiError error =
         new ApiError(
             HttpStatus.FOUND.value(),
-            "Book with entered ISBN already exists",
+            "Book with entered ISBN already exists.",
             new Date(System.currentTimeMillis()));
     return new ResponseEntity<>(error, HttpStatus.FOUND);
   }
@@ -61,7 +61,7 @@ public class RestExceptionHandler {
     ApiError error =
         new ApiError(
             HttpStatus.INTERNAL_SERVER_ERROR.value(),
-            "Something went wrong with database",
+            "Something went wrong with database.",
             new Date(System.currentTimeMillis()));
 
     return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -73,7 +73,7 @@ public class RestExceptionHandler {
     ApiError error =
         new ApiError(
             HttpStatus.INTERNAL_SERVER_ERROR.value(),
-            "Something went wrong with database",
+            "Something went wrong with database.",
             new Date(System.currentTimeMillis()));
 
     return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);

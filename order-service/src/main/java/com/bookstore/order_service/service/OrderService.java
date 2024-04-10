@@ -46,41 +46,51 @@ public class OrderService {
   private static final String NOTIFICATION_URL = "http://notification-service/order";
   private static final String SHIPMENT_URL = "http://shipping-service/shipment/tax?weight=";
   private static final String USER_URL = "http://user-service/user/";
-  private static final String PAYMENTS_URL = "http://payment-service/payment";
 
   /**
    * Create new order and order items.
    *
-   * @param orderDto the order DTO.
-   * @return the new order (DTO).
+   * @param orderDto the order to create {@link OrderDto}.
+   * @return the new order.
    */
   public OrderDto createNewOrder(OrderDto orderDto) {
 
-    Order order = orderRepository.save(orderMapper.toEntity(orderDto));
+    if (customerExists(orderDto.getCustomerId())) {
 
-    List<Item> itemList = new ArrayList<>();
+      Order order = orderRepository.save(orderMapper.toEntity(orderDto));
 
-    if (!orderDto.getItems().isEmpty()) {
-      for (ItemDto itemDto : orderDto.getItems()) {
-        if (confirmStock(itemDto.getBookId(), itemDto.getQuantity())) {
-          Item item = itemMapper.toEntity(itemDto);
-          item.setOrder(order);
-          itemList.add(itemRepository.save(item));
-        } else {
-          LOGGER.warn(
-              String.format("Book with id %s not added - not enough stock.", itemDto.getBookId()));
+      List<Item> itemList = new ArrayList<>();
+
+      if (!orderDto.getItems().isEmpty()) {
+        for (ItemDto itemDto : orderDto.getItems()) {
+          if (confirmStock(itemDto.getBookId(), itemDto.getQuantity())) {
+            Item item = itemMapper.toEntity(itemDto);
+            item.setOrder(order);
+            itemList.add(itemRepository.save(item));
+          } else {
+            LOGGER.warn(
+                String.format(
+                    "Book with id %s not added - not enough stock.", itemDto.getBookId()));
+          }
         }
       }
-    }
 
-    order.setEditable(true);
-    order.setStatus(OrderStatus.OPEN);
-    order.setItems(itemList);
+      order.setEditable(true);
+      order.setStatus(OrderStatus.OPEN);
+      order.setItems(itemList);
 
-    Order savedOrder = orderRepository.save(order);
-    return orderMapper.toDto(savedOrder);
+      Order savedOrder = orderRepository.save(order);
+      return orderMapper.toDto(savedOrder);
+    } else throw new ResourceNotFoundException("Customer not found");
   }
 
+  /**
+   * Add items to an existent order.
+   *
+   * @param orderId the order identifier.
+   * @param itemDtoList list of items to add {@link ItemDto}
+   * @return all order items.
+   */
   public List<ItemDto> addItems(int orderId, List<ItemDto> itemDtoList) {
     Optional<Order> order = orderRepository.findById(orderId);
 
@@ -139,6 +149,12 @@ public class OrderService {
     }
   }
 
+  /**
+   * Retrieves all customer's orders with {@link OrderStatus} DELIVERED within 30 days.
+   *
+   * @param customerId the customer identifier.
+   * @return a list of {@link OrderDto}.
+   */
   public List<OrderDto> findDeliveredOrdersByCustomerAndShipping(int customerId) {
 
     Timestamp initialShippingDate = Timestamp.from(Instant.now().minus(30, ChronoUnit.DAYS));
@@ -149,12 +165,25 @@ public class OrderService {
             customerId, OrderStatus.DELIVERED.name(), initialShippingDate, finalShippingDate));
   }
 
+  /**
+   * Retrieves all order's items.
+   *
+   * @param orderId the order identifier.
+   * @return the order items.
+   */
   public List<ItemDto> getOrderItems(int orderId) {
     List<Item> items = itemRepository.findByOrderId(orderId);
 
     return itemMapper.toDtoList(items);
   }
 
+  /**
+   * Retrieves the item quantity.
+   *
+   * @param orderId the order identifier.
+   * @param itemId the item identifier.
+   * @return the item quantity.
+   */
   public int getItemQuantity(int orderId, int itemId) {
     Optional<Order> order = orderRepository.findById(orderId);
     Optional<Item> item = itemRepository.findById(itemId);
@@ -164,6 +193,12 @@ public class OrderService {
     } else throw new ResourceNotFoundException("Order or item does not exist.");
   }
 
+  /**
+   * Retrieves the order's items that could be returned.
+   *
+   * @param orderId the order identifier.
+   * @return the returnable items.
+   */
   public List<ItemDto> getReturnableItems(int orderId) {
     Optional<Order> order = orderRepository.findById(orderId);
 
@@ -177,32 +212,6 @@ public class OrderService {
       }
       return itemMapper.toDtoList(returnableItems);
     } else throw new ResourceNotFoundException("Order not found.");
-  }
-
-  /**
-   * Receive shipped orders in shipped events queue.
-   *
-   * @param message the message containing the order identifier and other relevant data.
-   */
-  @RabbitListener(queues = "${rabbitmq.queue.event.shipped.name}")
-  public void consumeShippedEvents(String message) {
-
-    LOGGER.info(String.format("received message [%s]", message));
-
-    setOrderStatusToShipped(message);
-  }
-
-  /**
-   * Receive paid orders in paid events queue.
-   *
-   * @param message the message sent by Payment Service containing the order identifier.
-   */
-  @RabbitListener(queues = "${rabbitmq.queue.event.paid.name}")
-  public void consumePaidEvents(String message) {
-
-    LOGGER.info(String.format("received message [%s]", message));
-
-    setOrderStatusToPaid(message);
   }
 
   /**
@@ -277,9 +286,44 @@ public class OrderService {
       map.put("unitPrice", String.valueOf(item.get().getUnitPrice()));
       map.put("unitWeight", String.valueOf(item.get().getUnitWeight()));
 
-
       return map;
     } else throw new ResourceNotFoundException("Item not found");
+  }
+
+  /**
+   * Receive shipped orders in shipped events queue.
+   *
+   * @param message the message containing the order identifier and other relevant data.
+   */
+  @RabbitListener(queues = "${rabbitmq.queue.event.shipped.name}")
+  public void consumeShippedEvents(String message) {
+
+    LOGGER.info(String.format("received message [%s]", message));
+
+    try {
+      setOrderStatusToShipped(message);
+    } catch (JsonProcessingException e) {
+      LOGGER.error("Error processing message");
+      e.getMessage();
+    }
+  }
+
+  /**
+   * Receive paid orders in paid events queue.
+   *
+   * @param message the message sent by Payment Service containing the order identifier.
+   */
+  @RabbitListener(queues = "${rabbitmq.queue.event.paid.name}")
+  public void consumePaidEvents(String message) {
+
+    LOGGER.info(String.format("received message [%s]", message));
+
+    try{
+    setOrderStatusToPaid(message);
+    } catch (JsonProcessingException e) {
+      LOGGER.error("Error processing message");
+      e.getMessage();
+    }
   }
 
   /**
@@ -313,37 +357,32 @@ public class OrderService {
    *
    * @param message the message containing the order identifier and other relevant data.
    */
-  private void setOrderStatusToShipped(String message) {
+  private void setOrderStatusToShipped(String message) throws JsonProcessingException {
 
     Map<String, String> map;
 
-    try {
-      map = objectMapper.readValue(message, Map.class);
+    map = objectMapper.readValue(message, Map.class);
 
-      Optional<Order> order = orderRepository.findById(Integer.parseInt(map.get("orderId")));
+    Optional<Order> order = orderRepository.findById(Integer.parseInt(map.get("orderId")));
 
-      if (order.isPresent()) {
-        order.get().setStatus(OrderStatus.SHIPPED);
-        order.get().setEditable(false);
-        order.get().setShipmentDate(Timestamp.valueOf(map.get("date")));
-        Order updatedOrder = orderRepository.save(order.get());
+    if (order.isPresent()) {
+      order.get().setStatus(OrderStatus.SHIPPED);
+      order.get().setEditable(false);
+      order.get().setShipmentDate(Timestamp.valueOf(map.get("date")));
+      Order updatedOrder = orderRepository.save(order.get());
 
-        String customerEmail = getCustomerEmail(order.get().getCustomerId());
+      String customerEmail = getCustomerEmail(order.get().getCustomerId());
 
-        // sending e-mail to client with tracking code
-        createNotificationToSendEmail(
-            orderMapper.toDto(updatedOrder), customerEmail, map.get("trackingCode"));
+      // sending e-mail to client with tracking code
+      createNotificationToSendEmail(
+          orderMapper.toDto(updatedOrder), customerEmail, map.get("trackingCode"));
 
-        // updating stock
-        for (Item item : order.get().getItems()) {
-          updateStockWhenOrderIsShipped(item.getBookId(), item.getQuantity());
-        }
+      // updating stock
+      for (Item item : order.get().getItems()) {
+        updateStockWhenOrderIsShipped(item.getBookId(), item.getQuantity());
+      }
 
-      } else throw new ResourceNotFoundException("Order not found");
-
-    } catch (JsonProcessingException e) {
-      throw new RuntimeException(e);
-    }
+    } else throw new ResourceNotFoundException("Order not found");
   }
 
   /**
@@ -454,25 +493,20 @@ public class OrderService {
    *
    * @param message The message from Payment Service containing the order identifier.
    */
-  private void setOrderStatusToPaid(String message) {
+  private void setOrderStatusToPaid(String message) throws JsonProcessingException {
 
     Pair<String, Integer> pair;
 
-    try {
-      pair = objectMapper.readValue(message, Pair.class);
+    pair = objectMapper.readValue(message, Pair.class);
 
-      Optional<Order> order = orderRepository.findById(pair.getSecond());
+    Optional<Order> order = orderRepository.findById(pair.getSecond());
 
-      if (order.isPresent()) {
-        order.get().setStatus(OrderStatus.PAID);
-        order.get().setEditable(false);
-        orderRepository.save(order.get());
+    if (order.isPresent()) {
+      order.get().setStatus(OrderStatus.PAID);
+      order.get().setEditable(false);
+      orderRepository.save(order.get());
 
-      } else throw new ResourceNotFoundException("Order not found");
-
-    } catch (JsonProcessingException e) {
-      throw new RuntimeException(e);
-    }
+    } else throw new ResourceNotFoundException("Order not found");
   }
 
   /**
@@ -510,7 +544,22 @@ public class OrderService {
     return circuitBreaker.run(
         () ->
             restTemplate
-                .exchange(USER_URL + customerId, HttpMethod.GET, null, String.class)
+                .exchange(USER_URL + "email/" + customerId, HttpMethod.GET, null, String.class)
+                .getBody(),
+        throwable -> {
+          LOGGER.warn("Error connecting to user service.", throwable);
+          return null;
+        });
+  }
+
+  private boolean customerExists(int customerId) {
+
+    CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreakeruser");
+
+    return circuitBreaker.run(
+        () ->
+            restTemplate
+                .exchange(USER_URL + customerId, HttpMethod.GET, null, Boolean.class)
                 .getBody(),
         throwable -> {
           LOGGER.warn("Error connecting to user service.", throwable);

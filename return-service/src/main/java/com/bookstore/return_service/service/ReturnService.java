@@ -53,7 +53,8 @@ public class ReturnService {
    * @param returnDto the return dto.
    * @return the created return entry.
    */
-  public Map<String, String> createReturn(ReturnDto returnDto) throws JsonProcessingException {
+  public Map<String, String> createReturn(ReturnDto returnDto)
+      throws JsonProcessingException, ResourceNotFoundException {
     Return returnEntity = returnRepository.save(returnMapper.toEntity(returnDto));
 
     List<ReturnItem> returnItems = new ArrayList<>();
@@ -75,11 +76,13 @@ public class ReturnService {
             returnItem.setUnitWeight(Double.parseDouble(map.get("unitWeight")));
             amount = amount + (returnItem.getOrderUnitPrice() * returnItemDto.getQuantity());
             returnItems.add(returnItemRepository.save(returnItem));
-          } else
+          } else {
             throw new RuntimeException("Quantity to return is higher than quantity from the order");
-        } else
+          }
+        } else {
           throw new ResourceNotFoundException(
               String.format("Item from order %s does not exist.", returnDto.getOrderId()));
+        }
       }
     }
 

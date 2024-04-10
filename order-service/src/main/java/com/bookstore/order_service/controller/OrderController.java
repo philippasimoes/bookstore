@@ -4,8 +4,8 @@ import com.bookstore.order_service.model.dto.ItemDto;
 import com.bookstore.order_service.model.dto.OrderDto;
 import com.bookstore.order_service.model.dto.enums.OrderStatus;
 import com.bookstore.order_service.service.OrderService;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import jakarta.ws.rs.Path;
+import java.util.List;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,9 +17,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/order")
@@ -69,6 +66,12 @@ public class OrderController {
     return ResponseEntity.ok(orderService.getOrderItems(orderId));
   }
 
+  @GetMapping("/{orderId}/returnable/")
+  public ResponseEntity<List<ItemDto>> getReturnableItems(
+      @PathVariable(value = "orderId") int orderId) {
+    return ResponseEntity.ok(orderService.getReturnableItems(orderId));
+  }
+
   @GetMapping("/{orderId}/item/{itemId}")
   public ResponseEntity<Integer> getItemQuantity(
       @PathVariable(value = "orderId") int orderId, @PathVariable(value = "itemId") int itemId) {
@@ -77,8 +80,7 @@ public class OrderController {
 
   @GetMapping("/{orderId}/item-details/{bookId}")
   public ResponseEntity<Map<String, String>> getItemData(
-      @PathVariable(value = "orderId") int orderId, @PathVariable(value = "bookId") int bookId)
-      throws JsonProcessingException {
+      @PathVariable(value = "orderId") int orderId, @PathVariable(value = "bookId") int bookId) {
     return ResponseEntity.ok(orderService.getItemData(orderId, bookId));
   }
 }

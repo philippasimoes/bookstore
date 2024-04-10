@@ -30,15 +30,23 @@ public class ShipmentService {
   private static final Logger LOGGER = LogManager.getLogger(ShipmentService.class);
   private static final String GEOAPI_URL = "https://geoapi.pt/cp/";
   private static final String DUMMY_CTT_URL = "http://dummy-ctt/ctt/tracking-code";
+
   @Value("${rabbitmq.queue.event.shipped.name}")
   private String eventShippedQueue;
+
   @Autowired RestTemplate restTemplate;
   @Autowired CircuitBreakerFactory circuitBreakerFactory;
   @Autowired ObjectMapper objectMapper;
   @Autowired ShipmentRepository shipmentRepository;
   @Autowired RabbitMQProducer producer;
 
-  public boolean validateAddress(Address address) throws JsonProcessingException {
+  /**
+   * Validate address.
+   *
+   * @param address the address.
+   * @return true if address is correct.
+   */
+  public boolean validateAddress(Address address) {
 
     boolean exists = false;
 
@@ -56,54 +64,60 @@ public class ShipmentService {
               return null;
             });
 
-    GeoApiObject geoApiObject = objectMapper.readValue(addresses, GeoApiObject.class);
+    try {
+      GeoApiObject geoApiObject = objectMapper.readValue(addresses, GeoApiObject.class);
 
-    for (Ponto ponto : geoApiObject.getPontos()) {
-      if (ponto.getRua().contains(address.streetName().toUpperCase())
-          && ponto.getCasa().contains(address.number())) {
-        exists = true;
-        break;
+      for (Ponto ponto : geoApiObject.getPontos()) {
+        if (ponto.getRua().contains(address.streetName().toUpperCase())
+            && ponto.getCasa().contains(address.number())) {
+          exists = true;
+          break;
+        }
       }
+
+    } catch (JsonProcessingException e) {
+      LOGGER.error("Error parsing json object");
+      e.getMessage();
     }
+
     return exists;
   }
 
-  public double calculateTax(double weight) {
+  /**
+   * Calculate the fee based on order weight.
+   *
+   * @param weight the order weight.
+   * @return the fee.
+   */
+  public double calculateFee(double weight) {
     if (weight <= 5.0) {
       return 2.60;
     } else return 2.95;
   }
 
+  /**
+   * Create a {@link Shipment}.
+   *
+   * @param orderId the order identifier.
+   * @return the new shipment identifier.
+   */
   public int createShipment(int orderId) {
 
     Optional<Shipment> shipment = shipmentRepository.findByOrderId(orderId);
 
     if (shipment.isEmpty()) {
+      String trackingNumber = getTrackingNumber(orderId);
+
+      //dummy date because we don't have any external integration for shipment.
+      Timestamp shipmentDate = new Timestamp(System.currentTimeMillis());
+
       Shipment newShipment = new Shipment();
       newShipment.setOrderId(orderId);
       newShipment.setShipmentMethod(ShipmentMethod.CTT);
-
-      CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreaker-shipment");
-
-      String trackingNumber =
-          circuitBreaker.run(
-              () ->
-                  restTemplate.getForObject(
-                      DUMMY_CTT_URL + "?client_id=bookstore&order_id=" + orderId, String.class),
-              throwable -> {
-                LOGGER.warn("Error connecting to dummy ctt.", throwable);
-                return null;
-              });
-
       newShipment.setTrackingNumber(trackingNumber);
-      Timestamp shipmentDate = new Timestamp(System.currentTimeMillis());
       newShipment.setDate(shipmentDate);
-      try {
-        producer.sendMessage(
-            eventShippedQueue, buildMessage(orderId, trackingNumber, shipmentDate));
-      } catch (JsonProcessingException e) {
-        LOGGER.error("Error building message", e);
-      }
+
+      producer.sendMessage(eventShippedQueue, buildMessage(orderId, trackingNumber, shipmentDate));
 
       return shipmentRepository.save(newShipment).getId();
     } else
@@ -111,14 +125,49 @@ public class ShipmentService {
           String.format("Shipment record for order %s already exists.", orderId));
   }
 
-  private String buildMessage(int orderId, String trackingCode, Timestamp date)
-      throws JsonProcessingException {
+  /**
+   * Get tracking number from an external service (for test purposes, it's used a dummy service to
+   * generate the tracking number).
+   *
+   * @param orderId the order identifier.
+   * @return the tracking number.
+   */
+  private String getTrackingNumber(int orderId) {
+
+    CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreaker-shipment");
+
+    String trackingNumber =
+        circuitBreaker.run(
+            () ->
+                restTemplate.getForObject(
+                    DUMMY_CTT_URL + "?client_id=bookstore&order_id=" + orderId, String.class),
+            throwable -> {
+              LOGGER.warn("Error connecting to dummy ctt.", throwable);
+              return null;
+            });
+    return trackingNumber;
+  }
+
+  /**
+   * Build a message with relevant data (to be sent to {@link #eventShippedQueue}).
+   *
+   * @param orderId the order identifier.
+   * @param trackingCode the order tracking code.
+   * @param date the shipment date.
+   * @return a json string with the information above.
+   */
+  private String buildMessage(int orderId, String trackingCode, Timestamp date) {
 
     Map<String, String> map = new HashMap<>();
     map.put("orderId", String.valueOf(orderId));
     map.put("trackingCode", trackingCode);
     map.put("date", String.valueOf(date));
 
-    return objectMapper.writeValueAsString(map);
+    try {
+      return objectMapper.writeValueAsString(map);
+    } catch (JsonProcessingException e) {
+      LOGGER.error("Error building message", e);
+      return null;
+    }
   }
 }
