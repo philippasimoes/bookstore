@@ -5,12 +5,7 @@ import static org.springframework.security.config.Customizer.withDefaults;
 import java.util.Collection;
 import java.util.Map;
 import java.util.stream.Collectors;
-
-import jakarta.servlet.Filter;
-import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.convert.converter.Converter;
@@ -25,8 +20,6 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
-import org.springframework.security.web.session.SessionManagementFilter;
 
 /**
  * API security configuration.
@@ -38,6 +31,8 @@ import org.springframework.security.web.session.SessionManagementFilter;
 @Profile(value = {"dev", "prod"})
 public class SecurityConfig {
 
+  private static final String ADMIN_ROLE = "ADMIN";
+
   @Bean
   public SecurityFilterChain configure(HttpSecurity http) throws Exception {
 
@@ -45,17 +40,17 @@ public class SecurityConfig {
             authorize ->
                 authorize
                     .requestMatchers(HttpMethod.POST, "/books")
-                    .hasRole("ADMIN")
+                    .hasRole(ADMIN_ROLE)
                     .requestMatchers(HttpMethod.PATCH, "/books/**")
-                    .hasRole("ADMIN")
+                    .hasRole(ADMIN_ROLE)
                     .requestMatchers(HttpMethod.POST, "/authors/**")
-                    .hasRole("ADMIN")
+                    .hasRole(ADMIN_ROLE)
                     .requestMatchers(HttpMethod.PUT, "/authors/**")
-                    .hasRole("ADMIN")
+                    .hasRole(ADMIN_ROLE)
                     .requestMatchers(HttpMethod.POST, "/lang/**")
-                    .hasRole("ADMIN")
+                    .hasRole(ADMIN_ROLE)
                     .requestMatchers(HttpMethod.POST, "/tags/**")
-                    .hasRole("ADMIN")
+                    .hasRole(ADMIN_ROLE)
                     .requestMatchers(HttpMethod.GET, "/confirmation/**")
                     .fullyAuthenticated()
                     .anyRequest()

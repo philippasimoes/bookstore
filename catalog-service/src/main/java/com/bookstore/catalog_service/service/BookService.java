@@ -45,10 +45,10 @@ import net.sf.jasperreports.engine.JasperFillManager;
 import net.sf.jasperreports.engine.JasperPrint;
 import net.sf.jasperreports.engine.JasperReport;
 import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.Resource;
 import org.springframework.data.jpa.domain.Specification;
@@ -72,30 +72,57 @@ public class BookService {
 
   private static final Logger LOGGER = LogManager.getLogger(BookService.class);
 
-  @Autowired BookRepository bookRepository;
-  @Autowired LanguageRepository languageRepository;
-  @Autowired BookTagRepository bookTagRepository;
-  @Autowired AuthorRepository authorRepository;
-  @Autowired BookSampleRepository bookSampleRepository;
-  @Autowired PublisherRepository publisherRepository;
-  @Autowired BookTagMapper bookTagMapper;
-  @Autowired AuthorMapper authorMapper;
-  @Autowired LanguageMapper languageMapper;
-  @Autowired BookMapper bookMapper;
-  @Autowired ObjectMapper objectMapper;
-  @Autowired RestTemplate restTemplate;
-  @Autowired ApplicationContext context;
-
+  private final BookRepository bookRepository;
+  private final LanguageRepository languageRepository;
+  private final BookTagRepository bookTagRepository;
+  private final AuthorRepository authorRepository;
+  private final BookSampleRepository bookSampleRepository;
+  private final PublisherRepository publisherRepository;
+  private final BookTagMapper bookTagMapper;
+  private final AuthorMapper authorMapper;
+  private final LanguageMapper languageMapper;
+  private final BookMapper bookMapper;
+  private final ObjectMapper objectMapper;
+  private final RestTemplate restTemplate;
+  private final ApplicationContext context;
   private static final String TOKEN_URL =
       "http://keycloak:8080/realms/bookstore/protocol/openid-connect/token";
-
   private static final String STOCK_SERVICE_ID = "stock-service";
-
   private static final String STOCK_SERVICE_SECRET = "vzFYf3wn4yItcZ35vKJZf63VmYC4TOSx";
-
   private static final String GRANT_TYPE = "client_credentials";
-
   private static final String STOCK_CREATION_URL = "http://stock-service/stock/book/";
+  private static final String AUTHOR_NOT_FOUND_MESSAGE = "Author not found.";
+  private static final String BOOK_NOT_FOUND_MESSAGE = "Book not found.";
+
+  public BookService(
+      BookRepository bookRepository,
+      LanguageRepository languageRepository,
+      BookTagRepository bookTagRepository,
+      AuthorRepository authorRepository,
+      BookSampleRepository bookSampleRepository,
+      PublisherRepository publisherRepository,
+      BookTagMapper bookTagMapper,
+      AuthorMapper authorMapper,
+      LanguageMapper languageMapper,
+      BookMapper bookMapper,
+      ObjectMapper objectMapper,
+      RestTemplate restTemplate,
+      ApplicationContext context) {
+
+    this.bookRepository = bookRepository;
+    this.languageRepository = languageRepository;
+    this.bookTagRepository = bookTagRepository;
+    this.authorRepository = authorRepository;
+    this.bookSampleRepository = bookSampleRepository;
+    this.publisherRepository = publisherRepository;
+    this.bookTagMapper = bookTagMapper;
+    this.authorMapper = authorMapper;
+    this.languageMapper = languageMapper;
+    this.bookMapper = bookMapper;
+    this.objectMapper = objectMapper;
+    this.restTemplate = restTemplate;
+    this.context = context;
+  }
 
   /**
    * Get all books.
@@ -132,35 +159,35 @@ public class BookService {
   /**
    * Retrieve a list of books that have the same author.
    *
-   * @param author_id the author identifier.
+   * @param authorId the author identifier.
    * @return a list of BookDto.
    */
-  public List<BookDto> getBooksByAuthor(int author_id) {
+  public List<BookDto> getBooksByAuthor(int authorId) {
 
-    Optional<Author> author = authorRepository.findById(author_id);
+    Optional<Author> author = authorRepository.findById(authorId);
 
     if (author.isPresent()) {
       return bookMapper.toDtoList(
           bookRepository.findAll(
               Specification.where(BookSpecifications.allBooksFromAuthor(author.get()))));
-    } else throw new ResourceNotFoundException("Author not found");
+    } else throw new ResourceNotFoundException(AUTHOR_NOT_FOUND_MESSAGE);
   }
 
   /**
    * Retrieve a list of books that have the same language.
    *
-   * @param language_id the language identifier.
+   * @param languageId the language identifier.
    * @return a list of BookDto.
    */
-  public List<BookDto> getBooksByLanguage(int language_id) {
+  public List<BookDto> getBooksByLanguage(int languageId) {
 
-    Optional<Language> language = languageRepository.findById(language_id);
+    Optional<Language> language = languageRepository.findById(languageId);
 
     if (language.isPresent()) {
       return bookMapper.toDtoList(
           bookRepository.findAll(
               Specification.where(BookSpecifications.allBooksFromLanguage(language.get()))));
-    } else throw new ResourceNotFoundException("Author not found");
+    } else throw new ResourceNotFoundException(AUTHOR_NOT_FOUND_MESSAGE);
   }
 
   /**
@@ -177,7 +204,7 @@ public class BookService {
       return bookMapper.toDtoList(
           bookRepository.findAll(
               Specification.where(BookSpecifications.allBooksFromTag(bookTag.get()))));
-    } else throw new ResourceNotFoundException("Author not found");
+    } else throw new ResourceNotFoundException(AUTHOR_NOT_FOUND_MESSAGE);
   }
 
   /**
@@ -271,7 +298,7 @@ public class BookService {
     Book book =
         bookRepository
             .findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Book not found"));
+            .orElseThrow(() -> new ResourceNotFoundException(BOOK_NOT_FOUND_MESSAGE));
 
     return bookMapper.toDto(book);
   }
@@ -339,7 +366,7 @@ public class BookService {
       return bookRepository.save(updatedBook);
 
     } else {
-      throw new ResourceNotFoundException("Book not found in database");
+      throw new ResourceNotFoundException(BOOK_NOT_FOUND_MESSAGE);
     }
   }
 
@@ -360,7 +387,7 @@ public class BookService {
       bookSample.setSample(sample);
       bookSampleRepository.save(bookSample);
       return "Book sample added to book with ID" + bookId;
-    } else throw new ResourceNotFoundException("Book not found");
+    } else throw new ResourceNotFoundException(BOOK_NOT_FOUND_MESSAGE);
   }
 
   /**
@@ -375,7 +402,7 @@ public class BookService {
     if (id != null && availability != null && bookRepository.findById(id).isPresent()) {
       bookRepository.updateBookAvailability(id, availability);
       return "The availability of the book with id " + id + " has been updated.";
-    } else throw new ResourceNotFoundException("Book not found");
+    } else throw new ResourceNotFoundException(BOOK_NOT_FOUND_MESSAGE);
   }
 
   /**
@@ -386,7 +413,7 @@ public class BookService {
   @RabbitListener(queues = "${rabbitmq.queue.event.updated.name}")
   public void consumeUpdatedEvents(String message) {
 
-    LOGGER.info(String.format("received message [%s]", message));
+    LOGGER.log(Level.INFO, "Received Message: {}", message);
 
     updateBookFromMessage(message, Availability.AVAILABLE);
   }
@@ -399,7 +426,7 @@ public class BookService {
   @RabbitListener(queues = "${rabbitmq.queue.event.soldout.name}")
   public void consumeSoldOutEvents(String message) {
 
-    LOGGER.info(String.format("received message [%s]", message));
+    LOGGER.log(Level.INFO, "Received Message: {}", message);
 
     updateBookFromMessage(message, Availability.SOLD_OUT);
   }
@@ -478,7 +505,8 @@ public class BookService {
   }
 
   private Publisher getPublisherFromBook(BookDto bookDto) {
-    Optional<Publisher> publisher = publisherRepository.findByName(bookDto.getPublisher().getName());
+    Optional<Publisher> publisher =
+        publisherRepository.findByName(bookDto.getPublisher().getName());
 
     if (publisher.isPresent()) {
       return publisher.get();
@@ -503,14 +531,19 @@ public class BookService {
     try {
       pair = objectMapper.readValue(message, Pair.class);
 
-      Book book = bookRepository.findById(pair.getFirst()).get();
+      Book book =
+          bookRepository
+              .findById(pair.getFirst())
+              .orElseThrow(() -> new ResourceNotFoundException(BOOK_NOT_FOUND_MESSAGE));
       book.setStockAvailable(pair.getSecond());
       book.setAvailability(availability);
       Book updatedBook = bookRepository.save(book);
-      LOGGER.info(
-          String.format(
-              "Book updated: Availability: %s, stock: %s",
-              updatedBook.getAvailability(), updatedBook.getStockAvailable()));
+
+      LOGGER.log(
+          Level.INFO,
+          "Book updated: Availability: {}, stock: {}",
+          updatedBook.getAvailability(),
+          updatedBook.getStockAvailable());
 
     } catch (JsonProcessingException e) {
       LOGGER.error("Could not read pair from message", e);
@@ -573,13 +606,13 @@ public class BookService {
       LOGGER.info("Authentication successful.");
       return response.getBody();
     } else {
-      LOGGER.error(String.format("Authentication failure. Status: %s.", response.getStatusCode()));
+
+      LOGGER.log(Level.ERROR, "Authentication failure. Status: {}.", response.getStatusCode());
       return null;
     }
   }
 
   public void exportReport(HttpServletResponse response) throws JRException, IOException {
-    String path = "classpath:reports";
 
     List<Book> books = bookRepository.findAll();
 

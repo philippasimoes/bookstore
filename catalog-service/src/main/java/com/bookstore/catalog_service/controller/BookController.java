@@ -17,7 +17,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 import net.sf.jasperreports.engine.JRException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -41,8 +40,12 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Book endpoints")
 public class BookController {
 
-  // TODO: offsets, paginação (filterSearch)
-  @Autowired BookService bookService;
+  private final BookService bookService;
+
+  public BookController(BookService bookService) {
+
+    this.bookService = bookService;
+  }
 
   @Operation(summary = "Get all books.")
   @ApiResponses(

@@ -16,6 +16,8 @@ import org.springframework.data.jpa.domain.Specification;
  */
 public class BookSpecifications {
 
+  private BookSpecifications() {}
+
   /**
    * Used to query the database to retrieve the books with a determined availability.
    *

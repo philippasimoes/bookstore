@@ -3,7 +3,6 @@ package com.bookstore.catalog_service.model.entity;
 import com.bookstore.catalog_service.model.dto.enums.Availability;
 import com.bookstore.catalog_service.model.dto.enums.Format;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import java.util.Set;

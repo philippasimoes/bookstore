@@ -8,9 +8,10 @@ import com.bookstore.catalog_service.repository.LanguageRepository;
 import jakarta.transaction.Transactional;
 import java.util.HashSet;
 import java.util.Set;
+
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /**
@@ -22,9 +23,16 @@ import org.springframework.stereotype.Service;
 public class LanguageService {
 
   private static final Logger LOGGER = LogManager.getLogger(LanguageService.class);
-  @Autowired LanguageRepository languageRepository;
 
-  @Autowired LanguageMapper languageMapper;
+  private final LanguageRepository languageRepository;
+
+  private final LanguageMapper languageMapper;
+
+  public LanguageService(LanguageRepository languageRepository, LanguageMapper languageMapper) {
+
+    this.languageRepository = languageRepository;
+    this.languageMapper = languageMapper;
+  }
 
   public Set<LanguageDto> getAllLanguages() {
     return languageMapper.toDtoSet(new HashSet<>(languageRepository.findAll()));
@@ -33,8 +41,10 @@ public class LanguageService {
   @Transactional
   public Language addNewLanguage(LanguageDto languageDto) {
     if (languageRepository.existsByCode(languageDto.getCode())) {
-      LOGGER.error(
-          String.format("Language with code %s is already in database.", languageDto.getCode()));
+
+      LOGGER.log(
+          Level.ERROR, "Language with code {} is already in database.", languageDto.getCode());
+
       throw new DuplicatedResourceException("Language already exists.");
     } else return languageRepository.save(languageMapper.toDto(languageDto));
   }

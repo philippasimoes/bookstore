@@ -12,7 +12,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest(classes = {BookTagMapperImpl.class})
 @ActiveProfiles(value = "test")
-public class BookBookTagMapperTest {
+class BookBookTagMapperTest {
 
   @Autowired BookTagMapper bookTagMapper;
 
@@ -21,7 +21,7 @@ public class BookBookTagMapperTest {
   BookTagDto bookTagDto = new BookTagDto(2, "tag_1");
 
   @Test
-  public void testTagToTagDto() {
+  void testTagToTagDto() {
 
     BookTagDto bookTagDto_2 = bookTagMapper.toDto(bookTag);
 
@@ -30,7 +30,7 @@ public class BookBookTagMapperTest {
   }
 
   @Test
-  public void testTagDtoToTag() {
+  void testTagDtoToTag() {
 
     BookTag bookTag2 = bookTagMapper.toEntity(bookTagDto);
 

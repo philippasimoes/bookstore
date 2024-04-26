@@ -13,8 +13,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import java.util.Set;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,7 +33,12 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Author endpoints")
 public class AuthorController {
 
-  @Autowired AuthorService authorService;
+  private final AuthorService authorService;
+
+  public AuthorController(AuthorService authorService) {
+
+    this.authorService = authorService;
+  }
 
   @Operation(summary = "Get all authors.")
   @ApiResponses(

@@ -2,7 +2,6 @@ package com.bookstore.catalog_service.model.mapper;
 
 import com.bookstore.catalog_service.model.dto.BookSampleDto;
 import com.bookstore.catalog_service.model.entity.BookSample;
-import java.util.List;
 import org.mapstruct.Mapper;
 
 /**

@@ -6,12 +6,9 @@ import com.bookstore.catalog_service.model.entity.Author;
 import com.bookstore.catalog_service.model.mapper.AuthorMapper;
 import com.bookstore.catalog_service.repository.AuthorRepository;
 import jakarta.transaction.Transactional;
-
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /**
@@ -23,9 +20,15 @@ import org.springframework.stereotype.Service;
 @Transactional
 public class AuthorService {
 
-  @Autowired AuthorRepository authorRepository;
+  private final AuthorRepository authorRepository;
 
-  @Autowired AuthorMapper authorMapper;
+  private final AuthorMapper authorMapper;
+
+  public AuthorService(AuthorRepository authorRepository, AuthorMapper authorMapper) {
+
+    this.authorRepository = authorRepository;
+    this.authorMapper = authorMapper;
+  }
 
   public AuthorDto getAuthorByID(int id) {
     Author author =
