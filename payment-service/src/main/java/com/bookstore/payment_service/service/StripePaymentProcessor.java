@@ -20,9 +20,9 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -30,9 +30,13 @@ import org.springframework.stereotype.Service;
 public class StripePaymentProcessor implements PaymentProcessor {
 
   private static final Logger LOGGER = LogManager.getLogger(StripePaymentProcessor.class);
-  @Autowired BasePaymentRepository basePaymentRepository;
-  @Autowired RabbitMQProducer producer;
-  @Autowired ObjectMapper mapper;
+  private static final String AMT = "amount";
+  private static final String RETURN_ID = "returnId";
+  private static final String EXT_PAYMENT_ID = "externalPaymentId";
+
+  private final BasePaymentRepository basePaymentRepository;
+  private final RabbitMQProducer producer;
+  private final ObjectMapper mapper;
 
   @Value("${rabbitmq.queue.event.paid.name}") // order service
   private String eventPaidQueue;
@@ -41,10 +45,18 @@ public class StripePaymentProcessor implements PaymentProcessor {
   private String eventRefundQueue;
 
   @Value("${STRIPE_PUBLIC_KEY}")
-  private String stripePublicKey;
+  private static String stripePublicKey;
 
   @Value("${STRIPE_SECRET_KEY}")
-  private String stripeSecretKey;
+  private static String stripeSecretKey;
+
+  public StripePaymentProcessor(
+      BasePaymentRepository basePaymentRepository, RabbitMQProducer producer, ObjectMapper mapper) {
+
+    this.basePaymentRepository = basePaymentRepository;
+    this.producer = producer;
+    this.mapper = mapper;
+  }
 
   /**
    * Gets a token for the used card.
@@ -69,11 +81,11 @@ public class StripePaymentProcessor implements PaymentProcessor {
       if (token != null && token.getId() != null) {
         stripeToken.setSuccess(true);
         stripeToken.setToken(token.getId());
-        LOGGER.info(String.format("TOKEN: %s", token.getId()));
+        LOGGER.log(Level.INFO, "TOKEN: {}", token.getId());
       }
       return stripeToken;
     } catch (StripeException e) {
-      LOGGER.error("StripeService (createCardToken)", e);
+      LOGGER.log(Level.ERROR, "StripeService (createCardToken)", e);
       throw new RuntimeException(e.getMessage());
     }
   }
@@ -96,7 +108,7 @@ public class StripePaymentProcessor implements PaymentProcessor {
     // Stripe operations
     stripePayment.setSuccess(false);
     Map<String, Object> chargeParams = new HashMap<>();
-    chargeParams.put("amount", (long) (stripePayment.getAmount() * 100)); // cents
+    chargeParams.put(AMT, (long) (stripePayment.getAmount() * 100)); // cents
     chargeParams.put("currency", stripePayment.getCurrency());
     chargeParams.put(
         "description",
@@ -115,7 +127,7 @@ public class StripePaymentProcessor implements PaymentProcessor {
     // Database operations
     BasePayment payment = PaymentUtils.createBasePayment(stripePayment);
 
-    if (charge.getPaid()) {
+    if (Boolean.TRUE.equals(charge.getPaid())) {
       stripePayment.setChargeId(charge.getId());
       stripePayment.setSuccess(true);
       stripePayment.setReceiptUrl(charge.getReceiptUrl());
@@ -125,14 +137,14 @@ public class StripePaymentProcessor implements PaymentProcessor {
       payment.setOperationDate(Timestamp.from(Instant.now()));
 
       Map<String, Object> map = new HashMap<>();
-      map.put("externalPaymentId", charge.getId());
+      map.put(EXT_PAYMENT_ID, charge.getId());
       payment.setPaymentDetails(map);
       basePaymentRepository.save(payment);
       try {
         producer.sendMessage(
             eventPaidQueue, PaymentUtils.buildMessage("orderId", stripePayment.getOrderId()));
       } catch (JsonProcessingException e) {
-        LOGGER.error("Error building message", e);
+        LOGGER.log(Level.ERROR, "Error building message", e);
       }
     } else {
       payment.setPaymentStatus(PaymentStatus.FAILED);
@@ -154,22 +166,22 @@ public class StripePaymentProcessor implements PaymentProcessor {
 
     RefundCreateParams params =
         RefundCreateParams.builder()
-            .setCharge(map.get("externalPaymentId"))
-            .setAmount((long) (Double.parseDouble(map.get("amount")) * 100))
+            .setCharge(map.get(EXT_PAYMENT_ID))
+            .setAmount((long) (Double.parseDouble(map.get(AMT)) * 100))
             .build();
 
     Refund refund1 = Refund.create(params);
 
     BasePayment basePayment = new BasePayment();
     basePayment.setCustomerId(Integer.parseInt(map.get("customerId")));
-    basePayment.setReturnId(Integer.parseInt(map.get("returnId")));
-    basePayment.setAmount(Double.parseDouble(map.get("amount")));
+    basePayment.setReturnId(Integer.parseInt(map.get(RETURN_ID)));
+    basePayment.setAmount(Double.parseDouble(map.get(AMT)));
     basePayment.setOperationDate(Timestamp.from(Instant.now()));
     basePayment.setPaymentMethod(PaymentMethod.STRIPE);
     basePayment.setPaymentStatus(PaymentStatus.REFUNDED);
 
     Map<String, Object> paymentDetails = new HashMap<>();
-    map.put("externalPaymentId", map.get("externalPaymentId"));
+    map.put(EXT_PAYMENT_ID, map.get(EXT_PAYMENT_ID));
     basePayment.setPaymentDetails(paymentDetails);
 
     basePaymentRepository.save(basePayment);
@@ -177,9 +189,9 @@ public class StripePaymentProcessor implements PaymentProcessor {
       try {
         producer.sendMessage(
             eventRefundQueue,
-            PaymentUtils.buildMessage("returnId", Integer.parseInt(map.get("returnId"))));
+            PaymentUtils.buildMessage(RETURN_ID, Integer.parseInt(map.get(RETURN_ID))));
       } catch (JsonProcessingException e) {
-        LOGGER.error("Error building message", e);
+        LOGGER.log(Level.ERROR, "Error building message", e);
       }
     }
   }

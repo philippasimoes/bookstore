@@ -23,9 +23,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -33,19 +34,28 @@ import org.springframework.stereotype.Service;
 public class PaypalPaymentProcessor implements PaymentProcessor {
 
   private static final Logger LOGGER = LogManager.getLogger(PaypalPaymentProcessor.class);
+  static final String CANCEL_URL = "http://localhost:10004/payment/paypal/cancel";
+  static final String SUCCESS_URL = "http://localhost:10004/payment/paypal/success";
 
-  @Autowired RabbitMQProducer producer;
+  private final RabbitMQProducer producer;
+  private final BasePaymentRepository basePaymentRepository;
+  private final APIContext apiContext;
+  private final ObjectMapper mapper;
 
   @Value("${rabbitmq.queue.event.paid.name}")
   private String eventPaidQueue;
 
-  @Autowired BasePaymentRepository basePaymentRepository;
-  @Autowired APIContext apiContext;
+  public PaypalPaymentProcessor(
+      RabbitMQProducer producer,
+      BasePaymentRepository basePaymentRepository,
+      APIContext apiContext,
+      ObjectMapper mapper) {
 
-  @Autowired ObjectMapper mapper;
-
-  static final String CANCEL_URL = "http://localhost:10004/payment/paypal/cancel";
-  static final String SUCCESS_URL = "http://localhost:10004/payment/paypal/success";
+    this.producer = producer;
+    this.basePaymentRepository = basePaymentRepository;
+    this.apiContext = apiContext;
+    this.mapper = mapper;
+  }
 
   @Override
   public Object createPayment(Map<String, Object> request) throws PayPalRESTException {
@@ -82,6 +92,7 @@ public class PaypalPaymentProcessor implements PaymentProcessor {
     payPalPayment.setRedirectUrls(redirectUrls);
 
     Payment createdPayPalPayment = payPalPayment.create(apiContext);
+    LOGGER.log(Level.INFO, "PayPal payment created");
 
     // database operations
     BasePayment basePayment = PaymentUtils.createBasePayment(payment);
@@ -90,8 +101,8 @@ public class PaypalPaymentProcessor implements PaymentProcessor {
     paypalPaymentDetails.put("externalPaymentId", createdPayPalPayment.getId());
     basePayment.setPaymentDetails(paypalPaymentDetails);
 
-    basePaymentRepository.save(basePayment);
-
+    BasePayment paymentCreated = basePaymentRepository.save(basePayment);
+    LOGGER.log(Level.INFO, "Payment created with id {}.", paymentCreated.getId());
     return createdPayPalPayment;
   }
 
@@ -119,11 +130,12 @@ public class PaypalPaymentProcessor implements PaymentProcessor {
       if (basePayment.isPresent()) {
         basePayment.get().setPaymentStatus(PaymentStatus.COMPLETE);
         basePaymentRepository.save(basePayment.get());
+        LOGGER.log(Level.INFO, "Payment with id {} is completed.", basePayment.get().getId());
         try {
           producer.sendMessage(
               eventPaidQueue, PaymentUtils.buildMessage("orderId", basePayment.get().getOrderId()));
         } catch (JsonProcessingException e) {
-          LOGGER.error("Error building message", e);
+          LOGGER.log(Level.ERROR, "Error building message", e);
         }
       }
     } else {

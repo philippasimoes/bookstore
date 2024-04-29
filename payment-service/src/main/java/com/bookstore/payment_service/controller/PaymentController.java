@@ -12,9 +12,9 @@ import com.paypal.base.rest.PayPalRESTException;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Refund;
 import java.util.Map;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,7 +23,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.view.RedirectView;
 
@@ -33,10 +32,22 @@ public class PaymentController {
 
   private static final Logger LOGGER = LogManager.getLogger(PaymentController.class);
 
-  @Autowired PaypalPaymentProcessor paypalPaymentProcessor;
-  @Autowired CreditCardPaymentProcessor creditCardPaymentProcessor;
-  @Autowired StripePaymentProcessor stripePaymentProcessor;
-  @Autowired GenericPaymentOperations genericPaymentOperations;
+  private final PaypalPaymentProcessor paypalPaymentProcessor;
+  private final CreditCardPaymentProcessor creditCardPaymentProcessor;
+  private final StripePaymentProcessor stripePaymentProcessor;
+  private final GenericPaymentOperations genericPaymentOperations;
+
+  public PaymentController(
+      PaypalPaymentProcessor paypalPaymentProcessor,
+      CreditCardPaymentProcessor creditCardPaymentProcessor,
+      StripePaymentProcessor stripePaymentProcessor,
+      GenericPaymentOperations genericPaymentOperations) {
+
+    this.paypalPaymentProcessor = paypalPaymentProcessor;
+    this.creditCardPaymentProcessor = creditCardPaymentProcessor;
+    this.stripePaymentProcessor = stripePaymentProcessor;
+    this.genericPaymentOperations = genericPaymentOperations;
+  }
 
   // ########################################### PAYPAL ###########################################
 
@@ -61,7 +72,7 @@ public class PaymentController {
       }
 
     } catch (PayPalRESTException e) {
-      LOGGER.error(e.getMessage());
+      LOGGER.log(Level.ERROR, e.getMessage());
     }
     return new RedirectView("/payment/paypal/error");
   }
@@ -77,7 +88,7 @@ public class PaymentController {
         return "paymentSuccess";
       }
     } catch (PayPalRESTException e) {
-      LOGGER.error(e.getMessage());
+      LOGGER.log(Level.ERROR, e.getMessage());
     }
     return "paymentSuccess";
   }
@@ -97,31 +108,28 @@ public class PaymentController {
   // https://docs.stripe.com/testing#cards), to expMonth and expYear use any future
   // date. Use any three-digit CVC
   @PostMapping("/stripe/card/token")
-  @ResponseBody
   public StripeToken createCardToken(@RequestBody StripeToken model) {
 
     return stripePaymentProcessor.createCardToken(model);
   }
 
   @PostMapping("/stripe/charge")
-  @ResponseBody
   public ResponseEntity<StripePaymentDto> charge(@RequestBody Map<String, Object> model) {
     try {
       return ResponseEntity.ok((StripePaymentDto) stripePaymentProcessor.createPayment(model));
     } catch (StripeException e) {
-      LOGGER.error(e.getMessage());
+      LOGGER.log(Level.ERROR, e.getMessage());
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
     }
   }
 
   @PostMapping("/stripe/refund")
-  @ResponseBody
   public ResponseEntity<Refund> refund(@RequestBody Map<String, String> model) {
     try {
-       stripePaymentProcessor.refund(model);
-       return ResponseEntity.ok().build();
+      stripePaymentProcessor.refund(model);
+      return ResponseEntity.ok().build();
     } catch (StripeException e) {
-      LOGGER.error(e.getMessage());
+      LOGGER.log(Level.ERROR, e.getMessage());
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
     }
   }
