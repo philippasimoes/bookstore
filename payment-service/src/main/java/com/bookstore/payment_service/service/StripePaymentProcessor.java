@@ -45,10 +45,10 @@ public class StripePaymentProcessor implements PaymentProcessor {
   private String eventRefundQueue;
 
   @Value("${STRIPE_PUBLIC_KEY}")
-  private static String stripePublicKey;
+  private String stripePublicKey;
 
   @Value("${STRIPE_SECRET_KEY}")
-  private static String stripeSecretKey;
+  private String stripeSecretKey;
 
   public StripePaymentProcessor(
       BasePaymentRepository basePaymentRepository, RabbitMQProducer producer, ObjectMapper mapper) {
