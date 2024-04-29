@@ -14,21 +14,21 @@ import com.bookstore.return_service.repository.ReturnRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.springframework.amqp.rabbit.annotation.RabbitListener;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cloud.client.circuitbreaker.CircuitBreaker;
-import org.springframework.cloud.client.circuitbreaker.CircuitBreakerFactory;
-import org.springframework.data.util.Pair;
-import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.cloud.client.circuitbreaker.CircuitBreaker;
+import org.springframework.cloud.client.circuitbreaker.CircuitBreakerFactory;
+import org.springframework.data.util.Pair;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 @Service
 @Transactional
@@ -38,14 +38,33 @@ public class ReturnService {
   private static final String DUMMY_CTT_URL = "http://dummy-ctt/";
   private static final String ORDER_URL = "http://order-service/order/";
   private static final String PAYMENTS_URL = "http://payment-service/payment/order/";
+  private static final String CB = "circuitbreaker";
 
-  @Autowired ReturnRepository returnRepository;
-  @Autowired ReturnItemRepository returnItemRepository;
-  @Autowired ReturnMapper returnMapper;
-  @Autowired ReturnItemMapper returnItemMapper;
-  @Autowired ObjectMapper objectMapper;
-  @Autowired RestTemplate restTemplate;
-  @Autowired CircuitBreakerFactory circuitBreakerFactory;
+  private final ReturnRepository returnRepository;
+  private final ReturnItemRepository returnItemRepository;
+  private final ReturnMapper returnMapper;
+  private final ReturnItemMapper returnItemMapper;
+  private final ObjectMapper objectMapper;
+  private final RestTemplate restTemplate;
+  private final CircuitBreakerFactory circuitBreakerFactory;
+
+  public ReturnService(
+      ReturnRepository returnRepository,
+      ReturnItemRepository returnItemRepository,
+      ReturnMapper returnMapper,
+      ReturnItemMapper returnItemMapper,
+      ObjectMapper objectMapper,
+      RestTemplate restTemplate,
+      CircuitBreakerFactory circuitBreakerFactory) {
+
+    this.returnRepository = returnRepository;
+    this.returnItemRepository = returnItemRepository;
+    this.returnMapper = returnMapper;
+    this.returnItemMapper = returnItemMapper;
+    this.objectMapper = objectMapper;
+    this.restTemplate = restTemplate;
+    this.circuitBreakerFactory = circuitBreakerFactory;
+  }
 
   /**
    * Create a new return.
@@ -53,8 +72,7 @@ public class ReturnService {
    * @param returnDto the return dto.
    * @return the created return entry.
    */
-  public Map<String, String> createReturn(ReturnDto returnDto)
-      throws JsonProcessingException, ResourceNotFoundException {
+  public Map<String, String> createReturn(ReturnDto returnDto) throws ResourceNotFoundException {
     Return returnEntity = returnRepository.save(returnMapper.toEntity(returnDto));
 
     List<ReturnItem> returnItems = new ArrayList<>();
@@ -68,17 +86,7 @@ public class ReturnService {
             getOriginalOrderInfo(returnDto.getOrderId(), returnItemDto.getBookId());
 
         if (map != null && !map.isEmpty()) {
-          if (Integer.parseInt(map.get("quantity")) >= returnItemDto.getQuantity()) {
-
-            ReturnItem returnItem = returnItemMapper.toEntity(returnItemDto);
-            returnItem.setReturnEntity(returnEntity);
-            returnItem.setOrderUnitPrice(Double.parseDouble(map.get("unitPrice")));
-            returnItem.setUnitWeight(Double.parseDouble(map.get("unitWeight")));
-            amount = amount + (returnItem.getOrderUnitPrice() * returnItemDto.getQuantity());
-            returnItems.add(returnItemRepository.save(returnItem));
-          } else {
-            throw new RuntimeException("Quantity to return is higher than quantity from the order");
-          }
+          amount = getAmount(returnItemDto, map, returnEntity, amount, returnItems);
         } else {
           throw new ResourceNotFoundException(
               String.format("Item from order %s does not exist.", returnDto.getOrderId()));
@@ -93,6 +101,7 @@ public class ReturnService {
         case "STRIPE" -> returnEntity.setRefundType(RefundType.STRIPE);
         case "PAYPAL" -> returnEntity.setRefundType(RefundType.PAYPAL);
         case "CREDIT_CARD" -> returnEntity.setRefundType(RefundType.CREDIT_CARD);
+        default -> {}
       }
 
       returnEntity.setExternalPaymentId(map.get("paymentDetails"));
@@ -113,22 +122,43 @@ public class ReturnService {
     return responseMap;
   }
 
+  private double getAmount(
+      ReturnItemDto returnItemDto,
+      Map<String, String> map,
+      Return returnEntity,
+      double amount,
+      List<ReturnItem> returnItems) {
+
+    if (Integer.parseInt(map.get("quantity")) >= returnItemDto.getQuantity()) {
+
+      ReturnItem returnItem = returnItemMapper.toEntity(returnItemDto);
+      returnItem.setReturnEntity(returnEntity);
+      returnItem.setOrderUnitPrice(Double.parseDouble(map.get("unitPrice")));
+      returnItem.setUnitWeight(Double.parseDouble(map.get("unitWeight")));
+      amount = amount + (returnItem.getOrderUnitPrice() * returnItemDto.getQuantity());
+      returnItems.add(returnItemRepository.save(returnItem));
+    } else {
+      throw new RuntimeException("Quantity to return is higher than quantity from the order");
+    }
+    return amount;
+  }
+
   @RabbitListener(queues = "${rabbitmq.queue.event.refund.name}")
   public void consumeRefundedEvents(String message) {
 
-    LOGGER.info(String.format("received message [%s]", message));
+    LOGGER.log(Level.INFO, "Received message in refund events queue: {}", message);
 
     updateReturnAfterRefund(message);
   }
 
   private Map<String, String> getOriginalOrderInfo(int orderId, int bookId) {
 
-    CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreaker");
+    CircuitBreaker circuitBreaker = circuitBreakerFactory.create(CB);
 
     return circuitBreaker.run(
         () -> restTemplate.getForObject(ORDER_URL + orderId + "/item-details/" + bookId, Map.class),
         throwable -> {
-          LOGGER.warn("Error connecting to Order Service.", throwable);
+          LOGGER.log(Level.WARN, "Error connecting to Order Service.", throwable);
           return null;
         });
   }
@@ -163,25 +193,25 @@ public class ReturnService {
    */
   private String getTrackingCode(int returnId) {
 
-    CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreaker");
+    CircuitBreaker circuitBreaker = circuitBreakerFactory.create(CB);
 
     return circuitBreaker.run(
         () ->
             restTemplate.getForObject(
                 DUMMY_CTT_URL + "return-tracking-code?return_id=" + returnId, String.class),
         throwable -> {
-          LOGGER.warn("Error connecting to dummy ctt.", throwable);
+          LOGGER.log(Level.WARN, "Error connecting to dummy ctt.", throwable);
           return null;
         });
   }
 
   private Map<String, String> getPaymentDetails(int orderId) {
-    CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreaker");
+    CircuitBreaker circuitBreaker = circuitBreakerFactory.create(CB);
 
     return circuitBreaker.run(
         () -> restTemplate.getForObject(PAYMENTS_URL + orderId, Map.class),
         throwable -> {
-          LOGGER.warn("Error connecting to Payment Service.", throwable);
+          LOGGER.log(Level.WARN, "Error connecting to Payment Service.", throwable);
           return null;
         });
   }
