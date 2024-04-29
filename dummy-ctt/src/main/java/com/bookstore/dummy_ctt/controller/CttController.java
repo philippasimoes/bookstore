@@ -1,7 +1,6 @@
 package com.bookstore.dummy_ctt.controller;
 
 import com.bookstore.dummy_ctt.service.CttService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,7 +11,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/ctt")
 public class CttController {
 
-  @Autowired CttService cttService;
+  private final CttService cttService;
+
+  public CttController(CttService cttService) {
+
+    this.cttService = cttService;
+  }
 
   @GetMapping("/tracking-code")
   public ResponseEntity<String> generateTrackingCode(
@@ -28,11 +32,13 @@ public class CttController {
   }
 
   @GetMapping("/return-tracking-code")
-  public ResponseEntity<String> generateReturnTrackingCode(@RequestParam(value="return_id") int returnId){
+  public ResponseEntity<String> generateReturnTrackingCode(
+      @RequestParam(value = "return_id") int returnId) {
     return ResponseEntity.ok(cttService.generateTrackingCode());
   }
 
   public ResponseEntity<Void> returnCollected(@RequestParam(value = "return_id") int returnId) {
+    cttService.returnCollected(returnId);
     return ResponseEntity.ok().build();
   }
 }

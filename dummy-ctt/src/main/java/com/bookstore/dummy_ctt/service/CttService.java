@@ -8,7 +8,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
@@ -16,11 +15,16 @@ import org.springframework.stereotype.Service;
 @Service
 public class CttService {
   private static final Logger LOGGER = LogManager.getLogger(CttService.class);
-  static ObjectMapper objectMapper = new ObjectMapper();
-  @Autowired RabbitMQProducer producer;
-
+  private final ObjectMapper objectMapper;
+  private final RabbitMQProducer producer;
   @Value("${rabbitmq.queue.event.delivered.name}")
   private String eventDeliveredQueue;
+
+  public CttService(ObjectMapper objectMapper, RabbitMQProducer producer) {
+
+    this.objectMapper = objectMapper;
+    this.producer = producer;
+  }
 
   public String generateTrackingCode() {
     return UUID.randomUUID().toString();
