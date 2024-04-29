@@ -12,9 +12,9 @@ import jakarta.transaction.Transactional;
 import java.util.Map;
 import java.util.Optional;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.util.Pair;
 import org.springframework.http.HttpEntity;
@@ -42,16 +42,28 @@ public class StockService {
   private static final String GRANT_TYPE = "client_credentials";
   private static final String BOOK_CONFIRMATION_URL = "http://catalog-service/books/confirmation/";
 
-  @Autowired StockRepository stockRepository;
-  @Autowired ObjectMapper objectMapper;
-  @Autowired RestTemplate restTemplate;
-  @Autowired RabbitMQProducer producer;
+  private final StockRepository stockRepository;
+  private final ObjectMapper objectMapper;
+  private final RestTemplate restTemplate;
+  private final RabbitMQProducer producer;
 
   @Value("${rabbitmq.queue.event.updated.name}")
   private String eventUpdatedQueue;
 
   @Value("${rabbitmq.queue.event.soldout.name}")
   private String eventSoldOutQueue;
+
+  public StockService(
+      StockRepository stockRepository,
+      ObjectMapper objectMapper,
+      RestTemplate restTemplate,
+      RabbitMQProducer producer) {
+
+    this.stockRepository = stockRepository;
+    this.objectMapper = objectMapper;
+    this.restTemplate = restTemplate;
+    this.producer = producer;
+  }
 
   /**
    * Used by catalog-service: when the book is created, a stock entry is created with the new book
@@ -67,7 +79,7 @@ public class StockService {
       newStockEntry.setBookId(bookId);
       stockRepository.save(newStockEntry);
 
-      LOGGER.info(String.format("Stock entry created for book with id %s.", bookId));
+      LOGGER.log(Level.INFO, "Stock entry created for book with id {}.", bookId);
     } else throw new StockFoundException();
   }
 
@@ -93,13 +105,14 @@ public class StockService {
         else return removeAvailableUnitsAndUpdatePendingUnits(stock.get(), units);
 
       } else {
-        LOGGER.error(
+        LOGGER.log(
+            Level.ERROR,
             "Book is not present in catalog. Please insert the book in Catalog Service before adding stock.");
         return StockStatus.BOOK_NOT_FOUND;
       }
 
     } catch (JsonProcessingException e) {
-      LOGGER.error("Error building message", e);
+      LOGGER.log(Level.ERROR, "Error building message", e);
       return StockStatus.MESSAGE_ERROR;
     }
   }
@@ -121,10 +134,11 @@ public class StockService {
     // sending a message to catalog service to update the book available units
     producer.sendMessage(eventUpdatedQueue, buildMessage(stock.getBookId()));
 
-    LOGGER.info(
-        String.format(
-            "Stock updated - book with id %s have %s units",
-            updatedStock.getBookId(), updatedStock.getAvailableUnits()));
+    LOGGER.log(
+        Level.INFO,
+        "Stock updated - book with id {} have {} units",
+        updatedStock.getBookId(),
+        updatedStock.getAvailableUnits());
 
     return StockStatus.UPDATED;
   }
@@ -149,15 +163,15 @@ public class StockService {
       int updatedUnits =
           stock.getAvailableUnits() + units; // because the units is a negative number in this case
       stock.setAvailableUnits(updatedUnits);
-      stock.setPendingUnits(stock.getPendingUnits() + units);
+      stock.setPendingUnits(stock.getPendingUnits() + Math.abs(units));
       Stock updatedStock = stockRepository.save(stock);
 
-      LOGGER.info(
-          String.format(
-              "Stock updated - book with id %s have %s available units. Pending units: %s",
-              updatedStock.getBookId(),
-              updatedStock.getAvailableUnits(),
-              updatedStock.getPendingUnits()));
+      LOGGER.log(
+          Level.INFO,
+          "Stock updated - book with id {} have {} available units. Pending units: {}",
+          updatedStock.getBookId(),
+          updatedStock.getAvailableUnits(),
+          updatedStock.getPendingUnits());
 
       // sending a message to catalog service (the queue is chosen according to the number of
       // available units)
@@ -166,8 +180,7 @@ public class StockService {
         return StockStatus.UPDATED;
       } else {
         producer.sendMessage(eventSoldOutQueue, buildMessage(stock.getBookId()));
-        LOGGER.info(
-            String.format("Stock updated - book with id %s is sold out", stock.getBookId()));
+        LOGGER.log(Level.INFO, "Stock updated - book with id {} is sold out", stock.getBookId());
 
         return StockStatus.SOLD_OUT;
       }
@@ -186,14 +199,17 @@ public class StockService {
     // removing units from pending units
     removePendingUnits(bookId, units);
 
+    Optional<Stock> stock = stockRepository.findByBookId(bookId);
     // adding units to available units again
-    try {
-      addAvailableUnits(stockRepository.findByBookId(bookId).get(), units);
-    } catch (JsonProcessingException e) {
-      LOGGER.error("Error building message", e);
-      return StockStatus.MESSAGE_ERROR;
-    }
-    return StockStatus.UPDATED;
+    if (stock.isPresent()) {
+      try {
+        addAvailableUnits(stock.get(), units);
+      } catch (JsonProcessingException e) {
+        LOGGER.log(Level.ERROR, "Error building message", e);
+        return StockStatus.MESSAGE_ERROR;
+      }
+      return StockStatus.UPDATED;
+    } else throw new StockNotFoundException();
   }
 
   /**
@@ -220,8 +236,10 @@ public class StockService {
    */
   public int getAvailableUnitsByBookId(int bookId) {
 
-    if (stockRepository.findByBookId(bookId).isPresent()) {
-      return stockRepository.findByBookId(bookId).get().getAvailableUnits();
+    Optional<Stock> stock = stockRepository.findByBookId(bookId);
+
+    if (stock.isPresent()) {
+      return stock.get().getAvailableUnits();
     } else throw new StockNotFoundException();
   }
 
@@ -265,10 +283,10 @@ public class StockService {
         keycloakRestTemplate.postForEntity(TOKEN_URL, requestEntity, String.class);
 
     if (response.getStatusCode().is2xxSuccessful()) {
-      LOGGER.info("Authentication successful.");
+      LOGGER.log(Level.INFO, "Authentication successful.");
       return response.getBody();
     } else {
-      LOGGER.error(String.format("Authentication failure. Status: %s.", response.getStatusCode()));
+      LOGGER.log(Level.ERROR, "Authentication failure. Status: {}.", response.getStatusCode());
       return null;
     }
   }

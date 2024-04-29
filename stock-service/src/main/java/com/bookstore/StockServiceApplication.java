@@ -7,7 +7,6 @@ import io.swagger.v3.oas.annotations.security.OAuthFlow;
 import io.swagger.v3.oas.annotations.security.OAuthFlows;
 import io.swagger.v3.oas.annotations.security.OAuthScope;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
-import io.swagger.v3.oas.annotations.security.SecuritySchemes;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -21,24 +20,22 @@ import org.springframework.web.client.RestTemplate;
 @EnableTransactionManagement
 @EnableDiscoveryClient
 @OpenAPIDefinition(info = @Info(title = "Stock Service API", description = "Stock Service API"))
-@SecuritySchemes({
-  @SecurityScheme(
-      name = "admin-only",
-      scheme = "Bearer",
-      type = SecuritySchemeType.OAUTH2,
-      flows =
-          @OAuthFlows(
-              authorizationCode =
-                  @OAuthFlow(
-                      authorizationUrl = "${springdoc.oAuthFlow.authorizationUrl}",
-                      tokenUrl = "${springdoc.oAuthFlow.tokenUrl}",
-                      scopes = {
-                        @OAuthScope(name = "openid"),
-                        @OAuthScope(name = "profile"),
-                        @OAuthScope(name = "email"),
-                        @OAuthScope(name = "roles")
-                      })))
-})
+@SecurityScheme(
+    name = "admin-only",
+    scheme = "Bearer",
+    type = SecuritySchemeType.OAUTH2,
+    flows =
+        @OAuthFlows(
+            authorizationCode =
+                @OAuthFlow(
+                    authorizationUrl = "${springdoc.oAuthFlow.authorizationUrl}",
+                    tokenUrl = "${springdoc.oAuthFlow.tokenUrl}",
+                    scopes = {
+                      @OAuthScope(name = "openid"),
+                      @OAuthScope(name = "profile"),
+                      @OAuthScope(name = "email"),
+                      @OAuthScope(name = "roles")
+                    })))
 public class StockServiceApplication {
 
   public static void main(String[] args) {

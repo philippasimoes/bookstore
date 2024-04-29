@@ -13,5 +13,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface StockRepository extends JpaRepository<Stock, Integer> {
 
-  Optional<Stock> findByBookId(int book_id);
+  Optional<Stock> findByBookId(int bookId);
 }
