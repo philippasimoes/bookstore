@@ -15,7 +15,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jobrunr.scheduling.JobScheduler;
 import org.jobrunr.scheduling.cron.Cron;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -36,15 +35,25 @@ import org.springframework.web.bind.annotation.RestController;
 public class NotificationController {
 
   /** Class logger. */
-  private final Logger LOGGER = LogManager.getLogger(NotificationController.class);
+  private static final Logger LOGGER = LogManager.getLogger(NotificationController.class);
 
   /** Notification Service injection to access the service layer. */
-  @Autowired StockNotificationService stockNotificationService;
+  private final StockNotificationService stockNotificationService;
 
-  @Autowired OrderNotificationService orderNotificationService;
+  private final OrderNotificationService orderNotificationService;
 
   /** Job Scheduler injection to run background jobs. */
-  @Autowired JobScheduler jobScheduler;
+  private final JobScheduler jobScheduler;
+
+  public NotificationController(
+      StockNotificationService stockNotificationService,
+      OrderNotificationService orderNotificationService,
+      JobScheduler jobScheduler) {
+
+    this.stockNotificationService = stockNotificationService;
+    this.orderNotificationService = orderNotificationService;
+    this.jobScheduler = jobScheduler;
+  }
 
   /**
    * Create notification
@@ -96,7 +105,7 @@ public class NotificationController {
   public void verifyNotifications() {
 
     jobScheduler.scheduleRecurrently(
-        Cron.minutely(), () -> stockNotificationService.verifyUnsentNotifications());
+        Cron.minutely(), stockNotificationService::verifyUnsentNotifications);
     LOGGER.info("Notification job has started");
   }
 }

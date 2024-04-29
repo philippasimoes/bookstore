@@ -6,12 +6,13 @@ import com.bookstore.notification_service.model.entity.Notification;
 import com.bookstore.notification_service.repository.NotificationRepository;
 import java.util.List;
 import java.util.Optional;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jobrunr.jobs.annotations.Job;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.circuitbreaker.CircuitBreaker;
 import org.springframework.cloud.client.circuitbreaker.CircuitBreakerFactory;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpMethod;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -32,15 +33,27 @@ public class StockNotificationService {
   private static final String STOCK_URL = "http://stock-service/stock/";
 
   /** NotificationRepository injection to access the database. */
-  @Autowired NotificationRepository notificationRepository;
+  private final NotificationRepository notificationRepository;
 
   /** JavaMailSender injection. */
-  @Autowired JavaMailSender mailSender;
+  private final JavaMailSender mailSender;
 
   /** RestTemplate to communicate with other services. */
-  @Autowired RestTemplate restTemplate;
+  private final RestTemplate restTemplate;
 
-  @Autowired CircuitBreakerFactory circuitBreakerFactory;
+  private final CircuitBreakerFactory circuitBreakerFactory;
+
+  public StockNotificationService(
+      NotificationRepository notificationRepository,
+      JavaMailSender mailSender,
+      RestTemplate restTemplate,
+      CircuitBreakerFactory circuitBreakerFactory) {
+
+    this.notificationRepository = notificationRepository;
+    this.mailSender = mailSender;
+    this.restTemplate = restTemplate;
+    this.circuitBreakerFactory = circuitBreakerFactory;
+  }
 
   /**
    * Create a notification when requested by the user.
@@ -58,7 +71,7 @@ public class StockNotificationService {
       notification.setSent(false);
       notificationRepository.save(notification);
     } else {
-      throw new RuntimeException(
+      throw new DuplicateKeyException(
           "A notification with this book id and customer email already exists");
     }
   }
@@ -116,7 +129,6 @@ public class StockNotificationService {
    * @param subject the e-mail subject.
    * @param body the e-mail body.
    */
-
   public void sendEmail(String to, String subject, String body) {
 
     SimpleMailMessage message = new SimpleMailMessage();
@@ -125,7 +137,7 @@ public class StockNotificationService {
     message.setText(body);
 
     mailSender.send(message);
-    LOGGER.info(String.format("Book available, email sent to %s", to));
+    LOGGER.log(Level.INFO, "Book available, email sent to {}", to);
   }
 
   /**

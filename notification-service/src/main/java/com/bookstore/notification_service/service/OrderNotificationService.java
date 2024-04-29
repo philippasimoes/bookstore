@@ -4,9 +4,10 @@ import com.bookstore.notification_service.model.dto.OrderDto;
 import com.bookstore.notification_service.model.dto.enums.NotificationType;
 import com.bookstore.notification_service.model.entity.Notification;
 import com.bookstore.notification_service.repository.NotificationRepository;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
@@ -18,10 +19,17 @@ public class OrderNotificationService {
   private static final Logger LOGGER = LogManager.getLogger(OrderNotificationService.class);
 
   /** NotificationRepository injection to access the database. */
-  @Autowired NotificationRepository notificationRepository;
+  private final NotificationRepository notificationRepository;
 
   /** JavaMailSender injection. */
-  @Autowired JavaMailSender mailSender;
+  private final JavaMailSender mailSender;
+
+  public OrderNotificationService(
+      NotificationRepository notificationRepository, JavaMailSender mailSender) {
+
+    this.notificationRepository = notificationRepository;
+    this.mailSender = mailSender;
+  }
 
   public void createNotification(OrderDto order, String customerEmail, String trackingNumber) {
     if (notificationRepository
@@ -51,7 +59,7 @@ public class OrderNotificationService {
 
       sendEmail(customerEmail, "Your order from Bookstore was shipped", emailBody);
     } else {
-      throw new RuntimeException(
+      throw new DuplicateKeyException(
           "A notification with this order id and customer email already exists");
     }
   }
@@ -63,6 +71,6 @@ public class OrderNotificationService {
     message.setText(body);
 
     mailSender.send(message);
-    LOGGER.info(String.format("Order shipped, email sent to %s", to));
+    LOGGER.log(Level.INFO, "Order shipped, email sent to {}", to);
   }
 }
