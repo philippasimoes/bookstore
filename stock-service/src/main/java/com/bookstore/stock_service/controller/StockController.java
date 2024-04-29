@@ -112,14 +112,6 @@ public class StockController {
                   schema = @Schema(implementation = String.class))
             }),
         @ApiResponse(
-            responseCode = "403",
-            description = "The user doesn't have permission to create stock.",
-            content = {
-              @Content(
-                  mediaType = "application/json",
-                  schema = @Schema(implementation = String.class))
-            }),
-        @ApiResponse(
             responseCode = "412",
             description =
                 "The number of units sent in the request is greater than the available units. The request cannot be processed.",
@@ -138,8 +130,7 @@ public class StockController {
                   schema = @Schema(implementation = String.class))
             })
       })
-  @SecurityRequirement(name = "admin-only")
-  @PutMapping("/book/{book_id}")
+  @PatchMapping("/update-stock/book/{book_id}")
   public ResponseEntity<String> updateStock(
       @PathVariable("book_id") int bookId, @RequestParam("units") int units) {
 
@@ -153,7 +144,7 @@ public class StockController {
    * @param pendingUnits the units to be removed from the pending units.
    * @return a response entity with the appropriated code and message.
    */
-  @PatchMapping("/book/{book_id}")
+  @PatchMapping("/update-pending-units/book/{book_id}")
   public ResponseEntity<String> removePendingUnits(
       @PathVariable("book_id") int bookId, @RequestParam("pending-units") int pendingUnits) {
 
@@ -168,7 +159,7 @@ public class StockController {
    * @param units the book units.
    * @return a response entity with the appropriated code and message.
    */
-  @PatchMapping("/book/order-cancelled/{book_id}")
+  @PatchMapping("/order-cancelled/book/{book_id}")
   public ResponseEntity<String> removePendingUnitsAndUpdateAvailableUnits(
       @PathVariable("book_id") int bookId, @RequestParam("units") int units) {
     return validateStockStatus(

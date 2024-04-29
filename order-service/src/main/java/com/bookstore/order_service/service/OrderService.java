@@ -94,6 +94,7 @@ public class OrderService {
             Item item = itemMapper.toEntity(itemDto);
             item.setOrder(order);
             itemList.add(itemRepository.save(item));
+            updateStockWhenItemsAreAddedToOrder(itemDto.getBookId(), (-itemDto.getQuantity()));
           } else {
             LOGGER.log(Level.WARN, NOT_ENOUGH_STOCK_MESSAGE, itemDto.getBookId());
           }
@@ -119,14 +120,25 @@ public class OrderService {
   public List<ItemDto> addItems(int orderId, List<ItemDto> itemDtoList) {
     Optional<Order> order = orderRepository.findById(orderId);
 
+    List<Item> itemsToAdd = new ArrayList<>();
+
     if (order.isPresent()) {
-      List<Item> itemsToAdd = itemMapper.toEntityList(itemDtoList);
-      for (Item item : itemsToAdd) {
-        if (confirmStock(item.getBookId(), item.getQuantity())) {
-          item.setOrder(order.get());
-          itemRepository.save(item);
+      for (ItemDto itemDto : itemDtoList) {
+        if (confirmStock(itemDto.getBookId(), itemDto.getQuantity())) {
+          Optional<Item> itemOptional =
+              itemRepository.findByOrderIdAndBookId(orderId, itemDto.getBookId());
+          if (itemOptional.isPresent()) {
+            Item item = itemOptional.get();
+            item.setQuantity(item.getQuantity() + itemDto.getQuantity());
+            itemsToAdd.add(itemRepository.save(item));
+          } else {
+            Item item = itemMapper.toEntity(itemDto);
+            item.setOrder(order.get());
+            itemsToAdd.add(itemRepository.save(item));
+          }
+          updateStockWhenItemsAreAddedToOrder(itemDto.getBookId(), -itemDto.getQuantity());
         } else {
-          LOGGER.log(Level.WARN, NOT_ENOUGH_STOCK_MESSAGE, item.getBookId());
+          LOGGER.log(Level.WARN, NOT_ENOUGH_STOCK_MESSAGE, itemDto.getBookId());
         }
       }
       List<Item> orderItems = order.get().getItems();
@@ -166,7 +178,7 @@ public class OrderService {
         case OPEN -> setOrderStatusToOpen(order.get());
         case READY_TO_PAY -> setOrderStatusToReadyToPay(id);
         case DELIVERED, CANCELLED -> setOrderStatusToDeliveredOrCancelled(orderStatus, order.get());
-        default -> order.get().setStatus(order.get().getStatus());
+        default -> {}
       }
       return orderMapper.toDto(order.get());
     } else {
@@ -446,7 +458,21 @@ public class OrderService {
     circuitBreaker.run(
         () ->
             restTemplate.patchForObject(
-                STOCK_URL + "/book/" + bookId + "?pending-units=" + units, null, String.class),
+                STOCK_URL + "update-pending-units/book/" + bookId + "?pending-units=" + units,
+                null,
+                String.class),
+        throwable -> {
+          LOGGER.log(Level.WARN, ERROR_CONNECTING_STOCK, throwable);
+          return null;
+        });
+  }
+
+  private void updateStockWhenItemsAreAddedToOrder(int bookId, int units) {
+    CircuitBreaker circuitBreaker = circuitBreakerFactory.create(CB_STOCK);
+    String url = STOCK_URL + "update-stock/book/" + bookId + "?units=" + units;
+
+    circuitBreaker.run(
+        () -> restTemplate.patchForObject(url, null, String.class),
         throwable -> {
           LOGGER.log(Level.WARN, ERROR_CONNECTING_STOCK, throwable);
           return null;
@@ -467,7 +493,7 @@ public class OrderService {
     circuitBreaker.run(
         () ->
             restTemplate.patchForObject(
-                STOCK_URL + "/book/order-canceled" + bookId + "?pending-units=" + units,
+                STOCK_URL + "/order-canceled/book/" + bookId + "?pending-units=" + units,
                 null,
                 String.class),
         throwable -> {
