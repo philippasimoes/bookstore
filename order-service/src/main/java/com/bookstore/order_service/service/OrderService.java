@@ -20,10 +20,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.circuitbreaker.CircuitBreaker;
 import org.springframework.cloud.client.circuitbreaker.CircuitBreakerFactory;
 import org.springframework.data.util.Pair;
@@ -35,17 +35,44 @@ import org.springframework.web.client.RestTemplate;
 public class OrderService {
 
   private static final Logger LOGGER = LogManager.getLogger(OrderService.class);
-  @Autowired OrderRepository orderRepository;
-  @Autowired ItemRepository itemRepository;
-  @Autowired OrderMapper orderMapper;
-  @Autowired ItemMapper itemMapper;
-  @Autowired RestTemplate restTemplate;
-  @Autowired ObjectMapper objectMapper;
-  @Autowired CircuitBreakerFactory circuitBreakerFactory;
   private static final String STOCK_URL = "http://stock-service/stock/";
   private static final String NOTIFICATION_URL = "http://notification-service/order";
   private static final String SHIPMENT_URL = "http://shipping-service/shipment/tax?weight=";
   private static final String USER_URL = "http://user-service/user/";
+  private static final String ORDER_NOT_FOUND_MESSAGE = "Order not found";
+  private static final String ITEM_NOT_FOUND_MESSAGE = "Item not found";
+  private static final String NOT_ENOUGH_STOCK_MESSAGE =
+      "Book with id {} not added - not enough stock.";
+  private static final String ERROR_CONNECTING_STOCK = "Error connecting to stock service.";
+  private static final String ERROR_CONNECTING_USER = "Error connecting to user service.";
+  private static final String CB_STOCK = "circuitbreaker-stock";
+  private static final String CB_USER = "circuitbreaker-user";
+
+  private final OrderRepository orderRepository;
+  private final ItemRepository itemRepository;
+  private final OrderMapper orderMapper;
+  private final ItemMapper itemMapper;
+  private final RestTemplate restTemplate;
+  private final ObjectMapper objectMapper;
+  private final CircuitBreakerFactory circuitBreakerFactory;
+
+  public OrderService(
+      OrderRepository orderRepository,
+      ItemRepository itemRepository,
+      OrderMapper orderMapper,
+      ItemMapper itemMapper,
+      RestTemplate restTemplate,
+      ObjectMapper objectMapper,
+      CircuitBreakerFactory circuitBreakerFactory) {
+
+    this.orderRepository = orderRepository;
+    this.itemRepository = itemRepository;
+    this.orderMapper = orderMapper;
+    this.itemMapper = itemMapper;
+    this.restTemplate = restTemplate;
+    this.objectMapper = objectMapper;
+    this.circuitBreakerFactory = circuitBreakerFactory;
+  }
 
   /**
    * Create new order and order items.
@@ -68,9 +95,7 @@ public class OrderService {
             item.setOrder(order);
             itemList.add(itemRepository.save(item));
           } else {
-            LOGGER.warn(
-                String.format(
-                    "Book with id %s not added - not enough stock.", itemDto.getBookId()));
+            LOGGER.log(Level.WARN, NOT_ENOUGH_STOCK_MESSAGE, itemDto.getBookId());
           }
         }
       }
@@ -101,8 +126,7 @@ public class OrderService {
           item.setOrder(order.get());
           itemRepository.save(item);
         } else {
-          LOGGER.warn(
-              String.format("Book with id %s not added - not enough stock.", item.getBookId()));
+          LOGGER.log(Level.WARN, NOT_ENOUGH_STOCK_MESSAGE, item.getBookId());
         }
       }
       List<Item> orderItems = order.get().getItems();
@@ -113,7 +137,7 @@ public class OrderService {
 
       return getOrderItems(orderId);
     } else {
-      throw new ResourceNotFoundException("Order not found");
+      throw new ResourceNotFoundException(ORDER_NOT_FOUND_MESSAGE);
     }
   }
 
@@ -135,17 +159,18 @@ public class OrderService {
           || order.get().getStatus().equals(OrderStatus.DELIVERED)
           || order.get().getStatus().equals(OrderStatus.CANCELLED)
           || order.get().getStatus().equals(OrderStatus.PAID)) {
-        LOGGER.error("The order can't be edited");
+        LOGGER.log(Level.ERROR, "The order can't be edited");
       }
 
       switch (orderStatus) {
         case OPEN -> setOrderStatusToOpen(order.get());
         case READY_TO_PAY -> setOrderStatusToReadyToPay(id);
         case DELIVERED, CANCELLED -> setOrderStatusToDeliveredOrCancelled(orderStatus, order.get());
+        default -> order.get().setStatus(order.get().getStatus());
       }
       return orderMapper.toDto(order.get());
     } else {
-      throw new ResourceNotFoundException("Order not found");
+      throw new ResourceNotFoundException(ORDER_NOT_FOUND_MESSAGE);
     }
   }
 
@@ -211,7 +236,7 @@ public class OrderService {
         }
       }
       return itemMapper.toDtoList(returnableItems);
-    } else throw new ResourceNotFoundException("Order not found.");
+    } else throw new ResourceNotFoundException(ORDER_NOT_FOUND_MESSAGE);
   }
 
   /**
@@ -231,16 +256,16 @@ public class OrderService {
         if (itemDto.getQuantity() == 0) {
           itemRepository.deleteById(itemDto.getId());
         } else if (!confirmStock(itemDto.getBookId(), itemDto.getQuantity())) {
-          LOGGER.warn(
-              String.format(
-                  "Order could not be updated: book with id %s not added - not enough stock.",
-                  itemDto.getBookId()));
+          LOGGER.log(
+              Level.WARN,
+              "Order could not be updated: book with id {} not added - not enough stock.",
+              itemDto.getBookId());
         } else {
           itemRepository.save(itemMapper.toEntity(itemDto));
         }
 
         return orderMapper.toDto(order.get());
-      } else throw new ResourceNotFoundException("Item not found");
+      } else throw new ResourceNotFoundException(ORDER_NOT_FOUND_MESSAGE);
     } else throw new ResourceNotFoundException("Order not found or not editable");
   }
 
@@ -263,19 +288,17 @@ public class OrderService {
           adjustStockWhenOrderIsCancelledOrItemIsRemovedFromOrder(
               itemDto.getBookId(), itemDto.getQuantity());
         } else {
-          throw new ResourceNotFoundException("Item not found");
+          throw new ResourceNotFoundException(ITEM_NOT_FOUND_MESSAGE);
         }
       }
     } else {
-      throw new ResourceNotFoundException("Order not found");
+      throw new ResourceNotFoundException(ORDER_NOT_FOUND_MESSAGE);
     }
 
     return orderMapper.toDto(order.get());
   }
 
   public Map<String, String> getItemData(int orderId, int bookId) {
-    Optional<Order> order = orderRepository.findById(orderId);
-
     Optional<Item> item = itemRepository.findByOrderIdAndBookId(orderId, bookId);
 
     if (item.isPresent()) {
@@ -287,7 +310,7 @@ public class OrderService {
       map.put("unitWeight", String.valueOf(item.get().getUnitWeight()));
 
       return map;
-    } else throw new ResourceNotFoundException("Item not found");
+    } else throw new ResourceNotFoundException(ITEM_NOT_FOUND_MESSAGE);
   }
 
   /**
@@ -298,12 +321,12 @@ public class OrderService {
   @RabbitListener(queues = "${rabbitmq.queue.event.shipped.name}")
   public void consumeShippedEvents(String message) {
 
-    LOGGER.info(String.format("received message [%s]", message));
+    LOGGER.log(Level.INFO, "Received Message in shipped events queue: {}", message);
 
     try {
       setOrderStatusToShipped(message);
     } catch (JsonProcessingException e) {
-      LOGGER.error("Error processing message");
+      LOGGER.log(Level.ERROR, "Error processing message", e);
       e.getMessage();
     }
   }
@@ -316,12 +339,12 @@ public class OrderService {
   @RabbitListener(queues = "${rabbitmq.queue.event.paid.name}")
   public void consumePaidEvents(String message) {
 
-    LOGGER.info(String.format("received message [%s]", message));
+    LOGGER.log(Level.INFO, "Received Message in paid events queue: {}", message);
 
-    try{
-    setOrderStatusToPaid(message);
+    try {
+      setOrderStatusToPaid(message);
     } catch (JsonProcessingException e) {
-      LOGGER.error("Error processing message");
+      LOGGER.log(Level.ERROR, "Error processing message", e);
       e.getMessage();
     }
   }
@@ -335,7 +358,7 @@ public class OrderService {
    */
   private boolean confirmStock(int bookId, int quantity) {
 
-    CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreakerstock");
+    CircuitBreaker circuitBreaker = circuitBreakerFactory.create(CB_STOCK);
 
     int availableUnits =
         circuitBreaker.run(
@@ -344,7 +367,7 @@ public class OrderService {
                     .exchange(STOCK_URL + bookId, HttpMethod.GET, null, Integer.class)
                     .getBody(),
             throwable -> {
-              LOGGER.warn("Error connecting to stock service.", throwable);
+              LOGGER.log(Level.WARN, ERROR_CONNECTING_STOCK, throwable);
               return 0;
             });
 
@@ -382,7 +405,7 @@ public class OrderService {
         updateStockWhenOrderIsShipped(item.getBookId(), item.getQuantity());
       }
 
-    } else throw new ResourceNotFoundException("Order not found");
+    } else throw new ResourceNotFoundException(ORDER_NOT_FOUND_MESSAGE);
   }
 
   /**
@@ -418,14 +441,14 @@ public class OrderService {
    */
   private void updateStockWhenOrderIsShipped(int bookId, int units) {
 
-    CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreakerstock");
+    CircuitBreaker circuitBreaker = circuitBreakerFactory.create(CB_STOCK);
 
     circuitBreaker.run(
         () ->
             restTemplate.patchForObject(
                 STOCK_URL + "/book/" + bookId + "?pending-units=" + units, null, String.class),
         throwable -> {
-          LOGGER.warn("Error connecting to stock service.", throwable);
+          LOGGER.log(Level.WARN, ERROR_CONNECTING_STOCK, throwable);
           return null;
         });
   }
@@ -439,7 +462,7 @@ public class OrderService {
    */
   private void adjustStockWhenOrderIsCancelledOrItemIsRemovedFromOrder(int bookId, int units) {
 
-    CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreakerstock");
+    CircuitBreaker circuitBreaker = circuitBreakerFactory.create(CB_STOCK);
 
     circuitBreaker.run(
         () ->
@@ -448,7 +471,7 @@ public class OrderService {
                 null,
                 String.class),
         throwable -> {
-          LOGGER.warn("Error connecting to stock service.", throwable);
+          LOGGER.log(Level.WARN, ERROR_CONNECTING_STOCK, throwable);
           return null;
         });
   }
@@ -461,30 +484,29 @@ public class OrderService {
    */
   private void setOrderStatusToReadyToPay(int id) {
 
-    if (orderRepository.findById(id).isPresent()) {
+    Optional<Order> order = orderRepository.findById(id);
+    if (order.isPresent()) {
 
-      Order order = orderRepository.findById(id).get();
-
-      order.setStatus(OrderStatus.READY_TO_PAY);
+      order.get().setStatus(OrderStatus.READY_TO_PAY);
 
       double totalPrice = 0;
       double totalWeight = 0;
-      for (Item item : order.getItems()) {
+      for (Item item : order.get().getItems()) {
 
         totalPrice = totalPrice + (item.getQuantity() * item.getUnitPrice());
         totalWeight = totalWeight + (item.getQuantity() * item.getUnitWeight());
       }
-      order.setTotalPriceItems(totalPrice);
-      order.setTotalWeight(totalWeight);
+      order.get().setTotalPriceItems(totalPrice);
+      order.get().setTotalWeight(totalWeight);
 
-      order.setTax(calculateTax(totalWeight));
+      order.get().setTax(calculateTax(totalWeight));
 
-      order.setTotalPriceOrder(order.getTotalPriceItems() + order.getTax());
-      order.setEditable(false);
+      order.get().setTotalPriceOrder(order.get().getTotalPriceItems() + order.get().getTax());
+      order.get().setEditable(false);
 
-      orderRepository.save(order);
+      orderRepository.save(order.get());
     } else {
-      throw new ResourceNotFoundException("Order not found");
+      throw new ResourceNotFoundException(ORDER_NOT_FOUND_MESSAGE);
     }
   }
 
@@ -506,7 +528,7 @@ public class OrderService {
       order.get().setEditable(false);
       orderRepository.save(order.get());
 
-    } else throw new ResourceNotFoundException("Order not found");
+    } else throw new ResourceNotFoundException(ORDER_NOT_FOUND_MESSAGE);
   }
 
   /**
@@ -517,7 +539,7 @@ public class OrderService {
    */
   private Double calculateTax(double orderWeight) {
 
-    CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreakertax");
+    CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreaker-tax");
 
     return circuitBreaker.run(
         () ->
@@ -525,7 +547,7 @@ public class OrderService {
                 .exchange(SHIPMENT_URL + orderWeight, HttpMethod.GET, null, Double.class)
                 .getBody(),
         throwable -> {
-          LOGGER.warn("Error connecting to stock service.", throwable);
+          LOGGER.log(Level.WARN, ERROR_CONNECTING_STOCK, throwable);
           return 0.0;
         });
   }
@@ -538,7 +560,7 @@ public class OrderService {
    */
   private String getCustomerEmail(int customerId) {
 
-    CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreakeruser");
+    CircuitBreaker circuitBreaker = circuitBreakerFactory.create(CB_USER);
 
     // get client email
     return circuitBreaker.run(
@@ -547,14 +569,14 @@ public class OrderService {
                 .exchange(USER_URL + "email/" + customerId, HttpMethod.GET, null, String.class)
                 .getBody(),
         throwable -> {
-          LOGGER.warn("Error connecting to user service.", throwable);
+          LOGGER.log(Level.WARN, ERROR_CONNECTING_USER, throwable);
           return null;
         });
   }
 
   private boolean customerExists(int customerId) {
 
-    CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreakeruser");
+    CircuitBreaker circuitBreaker = circuitBreakerFactory.create(CB_USER);
 
     return circuitBreaker.run(
         () ->
@@ -562,7 +584,7 @@ public class OrderService {
                 .exchange(USER_URL + customerId, HttpMethod.GET, null, Boolean.class)
                 .getBody(),
         throwable -> {
-          LOGGER.warn("Error connecting to user service.", throwable);
+          LOGGER.log(Level.WARN, ERROR_CONNECTING_USER, throwable);
           return null;
         });
   }
@@ -577,7 +599,7 @@ public class OrderService {
   private void createNotificationToSendEmail(
       OrderDto orderDto, String customerEmail, String trackingCode) {
 
-    CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreakernotification");
+    CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreaker-notification");
     // create notification and send email to the client
     circuitBreaker.run(
         () ->
@@ -590,7 +612,7 @@ public class OrderService {
                 orderDto,
                 String.class),
         throwable -> {
-          LOGGER.warn("Error connecting to notification service.", throwable);
+          LOGGER.log(Level.WARN, "Error connecting to notification service.", throwable);
           return null;
         });
   }

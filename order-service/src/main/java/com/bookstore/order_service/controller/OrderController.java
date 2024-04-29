@@ -6,7 +6,6 @@ import com.bookstore.order_service.model.dto.enums.OrderStatus;
 import com.bookstore.order_service.service.OrderService;
 import java.util.List;
 import java.util.Map;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,8 +21,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/order")
 public class OrderController {
 
-  // TODO: falta cenário de pre-order
-  @Autowired OrderService orderService;
+  private final OrderService orderService;
+
+  public OrderController(OrderService orderService) {
+
+    this.orderService = orderService;
+  }
 
   @PostMapping
   public ResponseEntity<OrderDto> createNewOrder(@RequestBody OrderDto orderDto) {
