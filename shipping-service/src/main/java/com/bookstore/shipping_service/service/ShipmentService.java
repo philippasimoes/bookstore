@@ -15,9 +15,10 @@ import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.client.circuitbreaker.CircuitBreaker;
 import org.springframework.cloud.client.circuitbreaker.CircuitBreakerFactory;
@@ -28,17 +29,31 @@ import org.springframework.web.client.RestTemplate;
 @Transactional
 public class ShipmentService {
   private static final Logger LOGGER = LogManager.getLogger(ShipmentService.class);
-  private static final String GEOAPI_URL = "https://geoapi.pt/cp/";
+  private static final String GEO_API_URL = "https://geoapi.pt/cp/";
   private static final String DUMMY_CTT_URL = "http://dummy-ctt/ctt/tracking-code";
 
   @Value("${rabbitmq.queue.event.shipped.name}")
   private String eventShippedQueue;
 
-  @Autowired RestTemplate restTemplate;
-  @Autowired CircuitBreakerFactory circuitBreakerFactory;
-  @Autowired ObjectMapper objectMapper;
-  @Autowired ShipmentRepository shipmentRepository;
-  @Autowired RabbitMQProducer producer;
+  private final RestTemplate restTemplate;
+  private final CircuitBreakerFactory circuitBreakerFactory;
+  private final ObjectMapper objectMapper;
+  private final ShipmentRepository shipmentRepository;
+  private final RabbitMQProducer producer;
+
+  public ShipmentService(
+      RestTemplate restTemplate,
+      CircuitBreakerFactory circuitBreakerFactory,
+      ObjectMapper objectMapper,
+      ShipmentRepository shipmentRepository,
+      RabbitMQProducer producer) {
+
+    this.restTemplate = restTemplate;
+    this.circuitBreakerFactory = circuitBreakerFactory;
+    this.objectMapper = objectMapper;
+    this.shipmentRepository = shipmentRepository;
+    this.producer = producer;
+  }
 
   /**
    * Validate address.
@@ -58,9 +73,9 @@ public class ShipmentService {
         circuitBreaker.run(
             () ->
                 geoRestTemplate.getForObject(
-                    GEOAPI_URL + address.postalCode() + "?json=1", String.class),
+                    GEO_API_URL + address.postalCode() + "?json=1", String.class),
             throwable -> {
-              LOGGER.warn("Error connecting to geoapi.", throwable);
+              LOGGER.log(Level.WARN, "Error connecting to geoapi.", throwable);
               return null;
             });
 
@@ -76,7 +91,7 @@ public class ShipmentService {
       }
 
     } catch (JsonProcessingException e) {
-      LOGGER.error("Error parsing json object");
+      LOGGER.log(Level.ERROR, "Error parsing json object");
       e.getMessage();
     }
 
@@ -108,7 +123,7 @@ public class ShipmentService {
     if (shipment.isEmpty()) {
       String trackingNumber = getTrackingNumber(orderId);
 
-      //dummy date because we don't have any external integration for shipment.
+      // dummy date because we don't have any external integration for shipment.
       Timestamp shipmentDate = new Timestamp(System.currentTimeMillis());
 
       Shipment newShipment = new Shipment();
@@ -136,16 +151,14 @@ public class ShipmentService {
 
     CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreaker-shipment");
 
-    String trackingNumber =
-        circuitBreaker.run(
-            () ->
-                restTemplate.getForObject(
-                    DUMMY_CTT_URL + "?client_id=bookstore&order_id=" + orderId, String.class),
-            throwable -> {
-              LOGGER.warn("Error connecting to dummy ctt.", throwable);
-              return null;
-            });
-    return trackingNumber;
+    return circuitBreaker.run(
+        () ->
+            restTemplate.getForObject(
+                DUMMY_CTT_URL + "?client_id=bookstore&order_id=" + orderId, String.class),
+        throwable -> {
+          LOGGER.log(Level.WARN, "Error connecting to dummy ctt.", throwable);
+          return null;
+        });
   }
 
   /**
@@ -166,7 +179,7 @@ public class ShipmentService {
     try {
       return objectMapper.writeValueAsString(map);
     } catch (JsonProcessingException e) {
-      LOGGER.error("Error building message", e);
+      LOGGER.log(Level.ERROR, "Error building message", e);
       return null;
     }
   }

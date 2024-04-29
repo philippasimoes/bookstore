@@ -2,9 +2,7 @@ package com.bookstore.shipping_service.controller;
 
 import com.bookstore.shipping_service.model.dto.Address;
 import com.bookstore.shipping_service.service.ShipmentService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,11 +16,15 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Shipment endpoints")
 public class ShipmentController {
 
-  @Autowired ShipmentService shipmentService;
+  private final ShipmentService shipmentService;
+
+  public ShipmentController(ShipmentService shipmentService) {
+
+    this.shipmentService = shipmentService;
+  }
 
   @GetMapping("/address-validator")
-  public ResponseEntity<Void> validateAddress(@RequestBody Address address)
-      throws JsonProcessingException {
+  public ResponseEntity<Void> validateAddress(@RequestBody Address address) {
 
     if (shipmentService.validateAddress(address)) return ResponseEntity.ok().build();
     else return ResponseEntity.notFound().build();
