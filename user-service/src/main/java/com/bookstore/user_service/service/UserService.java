@@ -7,16 +7,14 @@ import com.bookstore.user_service.model.entity.User;
 import com.bookstore.user_service.model.mapper.UserMapper;
 import com.bookstore.user_service.repository.UserRepository;
 import jakarta.transaction.Transactional;
+import java.util.Optional;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.util.Optional;
 
 /**
  * User service class.
@@ -29,9 +27,14 @@ public class UserService implements UserDetailsService {
 
   private static final Logger LOGGER = LogManager.getLogger(UserService.class);
 
-  @Autowired UserRepository userRepository;
+  private final UserRepository userRepository;
+  private final UserMapper userMapper;
 
-  @Autowired UserMapper userMapper;
+  public UserService(UserRepository userRepository, UserMapper userMapper) {
+
+    this.userRepository = userRepository;
+    this.userMapper = userMapper;
+  }
 
   @Override
   public UserDetails loadUserByUsername(String username) {
@@ -107,6 +110,6 @@ public class UserService implements UserDetailsService {
    */
   public boolean userExists(int userId) {
     Optional<User> user = userRepository.findById(userId);
-      return user.isPresent();
+    return user.isPresent();
   }
 }

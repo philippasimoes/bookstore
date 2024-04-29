@@ -1,6 +1,5 @@
 package com.bookstore.user_service.infrastructure.security;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -25,7 +24,12 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Profile(value = {"dev", "prod"})
 public class SecurityConfig {
 
-  @Autowired SecurityFilter securityFilter;
+  private final SecurityFilter securityFilter;
+
+  public SecurityConfig(SecurityFilter securityFilter) {
+
+    this.securityFilter = securityFilter;
+  }
 
   @Bean
   public SecurityFilterChain configure(HttpSecurity http) throws Exception {

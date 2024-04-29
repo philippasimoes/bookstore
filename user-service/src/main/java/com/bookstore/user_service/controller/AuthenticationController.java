@@ -8,7 +8,6 @@ import com.bookstore.user_service.model.dto.UserDto;
 import com.bookstore.user_service.service.UserService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -27,8 +26,14 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Register and authentication endpoints")
 public class AuthenticationController {
 
-  @Autowired TokenService tokenService;
-  @Autowired UserService userService;
+  private final TokenService tokenService;
+  private final UserService userService;
+
+  public AuthenticationController(TokenService tokenService, UserService userService) {
+
+    this.tokenService = tokenService;
+    this.userService = userService;
+  }
 
   @PostMapping("/login")
   public ResponseEntity<LoginResponseDto> login(
