@@ -4,9 +4,11 @@ import com.bookstore.notification_service.model.dto.OrderDto;
 import com.bookstore.notification_service.model.dto.enums.NotificationType;
 import com.bookstore.notification_service.model.entity.Notification;
 import com.bookstore.notification_service.repository.NotificationRepository;
+import com.netflix.discovery.converters.Auto;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -15,21 +17,13 @@ import org.springframework.stereotype.Service;
 @Service
 public class OrderNotificationService {
 
-  /** Class logger. */
   private static final Logger LOGGER = LogManager.getLogger(OrderNotificationService.class);
 
   /** NotificationRepository injection to access the database. */
-  private final NotificationRepository notificationRepository;
+  @Autowired NotificationRepository notificationRepository;
 
   /** JavaMailSender injection. */
-  private final JavaMailSender mailSender;
-
-  public OrderNotificationService(
-      NotificationRepository notificationRepository, JavaMailSender mailSender) {
-
-    this.notificationRepository = notificationRepository;
-    this.mailSender = mailSender;
-  }
+  @Autowired JavaMailSender mailSender;
 
   public void createNotification(OrderDto order, String customerEmail, String trackingNumber) {
     if (notificationRepository

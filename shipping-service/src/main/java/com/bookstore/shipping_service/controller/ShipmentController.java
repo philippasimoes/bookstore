@@ -3,6 +3,7 @@ package com.bookstore.shipping_service.controller;
 import com.bookstore.shipping_service.model.dto.Address;
 import com.bookstore.shipping_service.service.ShipmentService;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,12 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Shipment endpoints")
 public class ShipmentController {
 
-  private final ShipmentService shipmentService;
-
-  public ShipmentController(ShipmentService shipmentService) {
-
-    this.shipmentService = shipmentService;
-  }
+  @Autowired ShipmentService shipmentService;
 
   @GetMapping("/address-validator")
   public ResponseEntity<Void> validateAddress(@RequestBody Address address) {

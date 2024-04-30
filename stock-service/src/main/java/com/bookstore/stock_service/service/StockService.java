@@ -15,6 +15,7 @@ import java.util.Optional;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.util.Pair;
 import org.springframework.http.HttpEntity;
@@ -40,12 +41,12 @@ public class StockService {
   private static final String CATALOG_SERVICE_ID = "catalog-service";
   private static final String CATALOG_SERVICE_SECRET = "FD3bZqrV67ZGFktuQnX02qaPMuE3V71v";
   private static final String GRANT_TYPE = "client_credentials";
-  private static final String BOOK_CONFIRMATION_URL = "http://catalog-service/books/confirmation/";
+  private static final String BOOK_CONFIRMATION_URL = "http://catalog-service:10000/books/confirmation/";
 
-  private final StockRepository stockRepository;
-  private final ObjectMapper objectMapper;
-  private final RestTemplate restTemplate;
-  private final RabbitMQProducer producer;
+  @Autowired StockRepository stockRepository;
+  @Autowired ObjectMapper objectMapper;
+  @Autowired RestTemplate restTemplate;
+  @Autowired RabbitMQProducer producer;
 
   @Value("${rabbitmq.queue.event.updated.name}")
   private String eventUpdatedQueue;
@@ -53,17 +54,6 @@ public class StockService {
   @Value("${rabbitmq.queue.event.soldout.name}")
   private String eventSoldOutQueue;
 
-  public StockService(
-      StockRepository stockRepository,
-      ObjectMapper objectMapper,
-      RestTemplate restTemplate,
-      RabbitMQProducer producer) {
-
-    this.stockRepository = stockRepository;
-    this.objectMapper = objectMapper;
-    this.restTemplate = restTemplate;
-    this.producer = producer;
-  }
 
   /**
    * Used by catalog-service: when the book is created, a stock entry is created with the new book
@@ -97,7 +87,7 @@ public class StockService {
     Optional<Stock> stock = stockRepository.findByBookId(bookId);
 
     try {
-      if (bookExists(bookId) && stock.isPresent()) {
+      if (stock.isPresent()) {
 
         // add books to stock
         if (units > 0) return addAvailableUnits(stock.get(), units);
@@ -115,6 +105,62 @@ public class StockService {
       LOGGER.log(Level.ERROR, "Error building message", e);
       return StockStatus.MESSAGE_ERROR;
     }
+  }
+
+  /**
+   * Removing the number of units from pending units and add them to the available units - used when
+   * order is cancelled or items are removed from the order.
+   *
+   * @param bookId the book identifier.
+   * @param units the number of units to remove from pending units and added to the available units.
+   * @return UPDATED {@link StockStatus}
+   */
+  public StockStatus removePendingUnitsAndUpdateAvailableUnits(int bookId, int units) {
+    // removing units from pending units
+    removePendingUnits(bookId, units);
+
+    Optional<Stock> stock = stockRepository.findByBookId(bookId);
+    // adding units to available units again
+    if (stock.isPresent()) {
+      try {
+        addAvailableUnits(stock.get(), units);
+      } catch (JsonProcessingException e) {
+        LOGGER.log(Level.ERROR, "Error building message", e);
+        return StockStatus.MESSAGE_ERROR;
+      }
+      return StockStatus.UPDATED;
+    } else throw new StockNotFoundException();
+  }
+
+  /**
+   * Order is shipped and the books are not in the physical stock - removing the units from pending
+   * units.
+   *
+   * @param bookId the book identifier.
+   * @param units the book units to be removed from pending units.
+   */
+  public StockStatus removePendingUnits(int bookId, int units) {
+    Optional<Stock> stock = stockRepository.findByBookId(bookId);
+    if (stock.isPresent()) {
+      stock.get().setPendingUnits(stock.get().getPendingUnits() - units);
+      stockRepository.save(stock.get());
+      return StockStatus.UPDATED;
+    } else throw new StockNotFoundException();
+  }
+
+  /**
+   * Get the book available units.
+   *
+   * @param bookId the book identifier.
+   * @return the number of available units.
+   */
+  public int getAvailableUnitsByBookId(int bookId) {
+
+    Optional<Stock> stock = stockRepository.findByBookId(bookId);
+
+    if (stock.isPresent()) {
+      return stock.get().getAvailableUnits();
+    } else throw new StockNotFoundException();
   }
 
   /**
@@ -185,62 +231,6 @@ public class StockService {
         return StockStatus.SOLD_OUT;
       }
     }
-  }
-
-  /**
-   * Removing the number of units from pending units and add them to the available units - used when
-   * order is cancelled or items are removed from the order.
-   *
-   * @param bookId the book identifier.
-   * @param units the number of units to remove from pending units and added to the available units.
-   * @return UPDATED {@link StockStatus}
-   */
-  public StockStatus removePendingUnitsAndUpdateAvailableUnits(int bookId, int units) {
-    // removing units from pending units
-    removePendingUnits(bookId, units);
-
-    Optional<Stock> stock = stockRepository.findByBookId(bookId);
-    // adding units to available units again
-    if (stock.isPresent()) {
-      try {
-        addAvailableUnits(stock.get(), units);
-      } catch (JsonProcessingException e) {
-        LOGGER.log(Level.ERROR, "Error building message", e);
-        return StockStatus.MESSAGE_ERROR;
-      }
-      return StockStatus.UPDATED;
-    } else throw new StockNotFoundException();
-  }
-
-  /**
-   * Order is shipped and the books are not in the physical stock - removing the units from pending
-   * units.
-   *
-   * @param bookId the book identifier.
-   * @param units the book units to be removed from pending units.
-   */
-  public StockStatus removePendingUnits(int bookId, int units) {
-    Optional<Stock> stock = stockRepository.findByBookId(bookId);
-    if (stock.isPresent()) {
-      stock.get().setPendingUnits(stock.get().getPendingUnits() - units);
-      stockRepository.save(stock.get());
-      return StockStatus.UPDATED;
-    } else throw new StockNotFoundException();
-  }
-
-  /**
-   * Get the book available units.
-   *
-   * @param bookId the book identifier.
-   * @return the number of available units.
-   */
-  public int getAvailableUnitsByBookId(int bookId) {
-
-    Optional<Stock> stock = stockRepository.findByBookId(bookId);
-
-    if (stock.isPresent()) {
-      return stock.get().getAvailableUnits();
-    } else throw new StockNotFoundException();
   }
 
   /**

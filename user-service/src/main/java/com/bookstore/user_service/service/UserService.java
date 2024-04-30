@@ -8,8 +8,11 @@ import com.bookstore.user_service.model.mapper.UserMapper;
 import com.bookstore.user_service.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import java.util.Optional;
+
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -27,14 +30,8 @@ public class UserService implements UserDetailsService {
 
   private static final Logger LOGGER = LogManager.getLogger(UserService.class);
 
-  private final UserRepository userRepository;
-  private final UserMapper userMapper;
-
-  public UserService(UserRepository userRepository, UserMapper userMapper) {
-
-    this.userRepository = userRepository;
-    this.userMapper = userMapper;
-  }
+  @Autowired UserRepository userRepository;
+  @Autowired UserMapper userMapper;
 
   @Override
   public UserDetails loadUserByUsername(String username) {
@@ -42,7 +39,7 @@ public class UserService implements UserDetailsService {
     try {
       userRepository.findByUsername(username);
     } catch (UsernameNotFoundException e) {
-      LOGGER.error(e.getStackTrace());
+      LOGGER.log(Level.ERROR, e.getStackTrace());
     }
     return null;
   }

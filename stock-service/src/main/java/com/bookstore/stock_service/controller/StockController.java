@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,12 +24,8 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Stock endpoints")
 public class StockController {
 
-  private final StockService stockService;
-
-  public StockController(StockService stockService) {
-
-    this.stockService = stockService;
-  }
+  @Autowired
+  StockService stockService;
 
   /**
    * Create a stock entry in the database. This method is to be used by Catalog Service when

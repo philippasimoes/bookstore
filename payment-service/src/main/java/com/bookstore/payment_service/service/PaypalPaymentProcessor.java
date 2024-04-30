@@ -27,6 +27,7 @@ import java.util.Optional;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -34,28 +35,18 @@ import org.springframework.stereotype.Service;
 public class PaypalPaymentProcessor implements PaymentProcessor {
 
   private static final Logger LOGGER = LogManager.getLogger(PaypalPaymentProcessor.class);
-  static final String CANCEL_URL = "http://localhost:10004/payment/paypal/cancel";
-  static final String SUCCESS_URL = "http://localhost:10004/payment/paypal/success";
+  private static final String CANCEL_URL = "http://localhost:10004/payment/paypal/cancel";
+  private static final String SUCCESS_URL = "http://localhost:10004/payment/paypal/success";
 
-  private final RabbitMQProducer producer;
-  private final BasePaymentRepository basePaymentRepository;
-  private final APIContext apiContext;
-  private final ObjectMapper mapper;
+  @Autowired
+  RabbitMQProducer producer;
+  @Autowired BasePaymentRepository basePaymentRepository;
+  @Autowired APIContext apiContext;
+  @Autowired ObjectMapper mapper;
 
   @Value("${rabbitmq.queue.event.paid.name}")
   private String eventPaidQueue;
 
-  public PaypalPaymentProcessor(
-      RabbitMQProducer producer,
-      BasePaymentRepository basePaymentRepository,
-      APIContext apiContext,
-      ObjectMapper mapper) {
-
-    this.producer = producer;
-    this.basePaymentRepository = basePaymentRepository;
-    this.apiContext = apiContext;
-    this.mapper = mapper;
-  }
 
   @Override
   public Object createPayment(Map<String, Object> request) throws PayPalRESTException {

@@ -23,6 +23,7 @@ import java.util.Map;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -34,9 +35,10 @@ public class StripePaymentProcessor implements PaymentProcessor {
   private static final String RETURN_ID = "returnId";
   private static final String EXT_PAYMENT_ID = "externalPaymentId";
 
-  private final BasePaymentRepository basePaymentRepository;
-  private final RabbitMQProducer producer;
-  private final ObjectMapper mapper;
+  @Autowired
+  BasePaymentRepository basePaymentRepository;
+  @Autowired RabbitMQProducer producer;
+  @Autowired ObjectMapper mapper;
 
   @Value("${rabbitmq.queue.event.paid.name}") // order service
   private String eventPaidQueue;
@@ -49,14 +51,6 @@ public class StripePaymentProcessor implements PaymentProcessor {
 
   @Value("${STRIPE_SECRET_KEY}")
   private String stripeSecretKey;
-
-  public StripePaymentProcessor(
-      BasePaymentRepository basePaymentRepository, RabbitMQProducer producer, ObjectMapper mapper) {
-
-    this.basePaymentRepository = basePaymentRepository;
-    this.producer = producer;
-    this.mapper = mapper;
-  }
 
   /**
    * Gets a token for the used card.

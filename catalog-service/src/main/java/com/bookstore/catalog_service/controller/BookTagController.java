@@ -13,6 +13,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.Set;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,12 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Book Tag endpoints")
 public class BookTagController {
 
-  private final BookTagService bookTagService;
-
-  public BookTagController(BookTagService bookTagService) {
-
-    this.bookTagService = bookTagService;
-  }
+  @Autowired BookTagService bookTagService;
 
   @Operation(summary = "Get all tags.")
   @ApiResponses(

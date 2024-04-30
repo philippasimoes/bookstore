@@ -11,10 +11,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.PostConstruct;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jobrunr.scheduling.JobScheduler;
 import org.jobrunr.scheduling.cron.Cron;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -34,26 +36,12 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Notification endpoints")
 public class NotificationController {
 
-  /** Class logger. */
   private static final Logger LOGGER = LogManager.getLogger(NotificationController.class);
 
-  /** Notification Service injection to access the service layer. */
-  private final StockNotificationService stockNotificationService;
-
-  private final OrderNotificationService orderNotificationService;
-
-  /** Job Scheduler injection to run background jobs. */
-  private final JobScheduler jobScheduler;
-
-  public NotificationController(
-      StockNotificationService stockNotificationService,
-      OrderNotificationService orderNotificationService,
-      JobScheduler jobScheduler) {
-
-    this.stockNotificationService = stockNotificationService;
-    this.orderNotificationService = orderNotificationService;
-    this.jobScheduler = jobScheduler;
-  }
+  @Autowired
+  StockNotificationService stockNotificationService;
+  @Autowired OrderNotificationService orderNotificationService;
+  @Autowired JobScheduler jobScheduler;
 
   /**
    * Create notification
@@ -106,6 +94,6 @@ public class NotificationController {
 
     jobScheduler.scheduleRecurrently(
         Cron.minutely(), stockNotificationService::verifyUnsentNotifications);
-    LOGGER.info("Notification job has started");
+    LOGGER.log(Level.INFO, "Notification job has started");
   }
 }

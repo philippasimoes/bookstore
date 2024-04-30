@@ -14,9 +14,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.util.List;
-import net.sf.jasperreports.engine.JRException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -40,12 +39,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Book endpoints")
 public class BookController {
 
-  private final BookService bookService;
-
-  public BookController(BookService bookService) {
-
-    this.bookService = bookService;
-  }
+  @Autowired BookService bookService;
 
   @Operation(summary = "Get all books.")
   @ApiResponses(
@@ -84,7 +78,7 @@ public class BookController {
       })
   @GetMapping("/{id}")
   public ResponseEntity<BookDto> getBookById(@PathVariable int id) {
-    return ResponseEntity.status(HttpStatus.OK).body(bookService.getBookByID(id));
+    return ResponseEntity.status(HttpStatus.OK).body(bookService.getBookById(id));
   }
 
   @Operation(summary = "Get all available books.")
@@ -435,11 +429,11 @@ public class BookController {
   @SecurityRequirement(name = "admin-only")
   @GetMapping("/confirmation/{id}")
   public ResponseEntity<Integer> existsById(@PathVariable int id) {
-    return ResponseEntity.status(HttpStatus.OK).body(bookService.getBookByID(id).getId());
+    return ResponseEntity.status(HttpStatus.OK).body(bookService.getBookById(id).getId());
   }
 
   @GetMapping("/report")
-  public void generateReport(HttpServletResponse response) throws IOException, JRException {
+  public void generateReport(HttpServletResponse response) {
     bookService.exportReport(response);
   }
 }

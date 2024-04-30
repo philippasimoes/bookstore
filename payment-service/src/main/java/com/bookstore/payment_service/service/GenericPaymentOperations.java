@@ -5,17 +5,16 @@ import com.bookstore.payment_service.repository.BasePaymentRepository;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class GenericPaymentOperations {
 
-  private final BasePaymentRepository basePaymentRepository;
+  @Autowired
+  BasePaymentRepository basePaymentRepository;
 
-  public GenericPaymentOperations(BasePaymentRepository basePaymentRepository) {
-
-    this.basePaymentRepository = basePaymentRepository;
-  }
 
   public Map<String, String> getPaymentDetails(int orderId) {
 

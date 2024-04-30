@@ -4,6 +4,8 @@ import com.bookstore.return_service.model.dto.ReturnDto;
 import com.bookstore.return_service.service.ReturnService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -15,12 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Return endpoints")
 public class ReturnController {
 
-  private final ReturnService returnService;
-
-  public ReturnController(ReturnService returnService) {
-
-    this.returnService = returnService;
-  }
+  @Autowired ReturnService returnService;
 
   @PostMapping
   public ResponseEntity<Map<String, String>> createReturn(@RequestBody ReturnDto returnDto) {

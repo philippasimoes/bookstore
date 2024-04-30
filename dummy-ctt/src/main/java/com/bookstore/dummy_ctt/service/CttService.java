@@ -6,8 +6,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
+
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
@@ -15,8 +18,10 @@ import org.springframework.stereotype.Service;
 @Service
 public class CttService {
   private static final Logger LOGGER = LogManager.getLogger(CttService.class);
-  private final ObjectMapper objectMapper;
-  private final RabbitMQProducer producer;
+
+  @Autowired ObjectMapper objectMapper;
+  @Autowired RabbitMQProducer producer;
+
   @Value("${rabbitmq.queue.event.delivered.name}")
   private String eventDeliveredQueue;
 
@@ -37,7 +42,7 @@ public class CttService {
       Pair<Integer, String> pair = Pair.of(orderId, dtf.format(now));
       producer.sendMessage(eventDeliveredQueue, objectMapper.writeValueAsString(pair));
     } catch (JsonProcessingException e) {
-      LOGGER.error("Error building message", e);
+      LOGGER.log(Level.ERROR, "Error building message", e);
     }
   }
 
@@ -46,7 +51,7 @@ public class CttService {
       Pair<String, Integer> pair = Pair.of("returnId", returnId);
       producer.sendMessage(eventDeliveredQueue, objectMapper.writeValueAsString(pair));
     } catch (JsonProcessingException e) {
-      LOGGER.error("Error building message", e);
+      LOGGER.log(Level.ERROR, "Error building message", e);
     }
   }
 }

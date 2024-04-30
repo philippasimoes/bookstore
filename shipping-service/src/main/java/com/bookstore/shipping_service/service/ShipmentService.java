@@ -19,6 +19,7 @@ import java.util.Optional;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.client.circuitbreaker.CircuitBreaker;
 import org.springframework.cloud.client.circuitbreaker.CircuitBreakerFactory;
@@ -30,30 +31,17 @@ import org.springframework.web.client.RestTemplate;
 public class ShipmentService {
   private static final Logger LOGGER = LogManager.getLogger(ShipmentService.class);
   private static final String GEO_API_URL = "https://geoapi.pt/cp/";
-  private static final String DUMMY_CTT_URL = "http://dummy-ctt/ctt/tracking-code";
+  private static final String DUMMY_CTT_URL = "http://dummy-ctt:10008/ctt/tracking-code";
+
+  @Autowired
+  RestTemplate restTemplate;
+  @Autowired CircuitBreakerFactory circuitBreakerFactory;
+  @Autowired ObjectMapper objectMapper;
+  @Autowired ShipmentRepository shipmentRepository;
+  @Autowired RabbitMQProducer producer;
 
   @Value("${rabbitmq.queue.event.shipped.name}")
   private String eventShippedQueue;
-
-  private final RestTemplate restTemplate;
-  private final CircuitBreakerFactory circuitBreakerFactory;
-  private final ObjectMapper objectMapper;
-  private final ShipmentRepository shipmentRepository;
-  private final RabbitMQProducer producer;
-
-  public ShipmentService(
-      RestTemplate restTemplate,
-      CircuitBreakerFactory circuitBreakerFactory,
-      ObjectMapper objectMapper,
-      ShipmentRepository shipmentRepository,
-      RabbitMQProducer producer) {
-
-    this.restTemplate = restTemplate;
-    this.circuitBreakerFactory = circuitBreakerFactory;
-    this.objectMapper = objectMapper;
-    this.shipmentRepository = shipmentRepository;
-    this.producer = producer;
-  }
 
   /**
    * Validate address.

@@ -15,6 +15,7 @@ import java.util.UUID;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -23,22 +24,12 @@ public class CreditCardPaymentProcessor implements PaymentProcessor {
 
   private static final Logger LOGGER = LogManager.getLogger(CreditCardPaymentProcessor.class);
 
-  private final BasePaymentRepository basePaymentRepository;
-  private final RabbitMQProducer producer;
-  private final ObjectMapper objectMapper;
+  @Autowired BasePaymentRepository basePaymentRepository;
+  @Autowired RabbitMQProducer producer;
+  @Autowired ObjectMapper objectMapper;
 
   @Value("${rabbitmq.queue.event.paid.name}")
   private String eventPaidQueue;
-
-  public CreditCardPaymentProcessor(
-      BasePaymentRepository basePaymentRepository,
-      RabbitMQProducer producer,
-      ObjectMapper objectMapper) {
-
-    this.basePaymentRepository = basePaymentRepository;
-    this.producer = producer;
-    this.objectMapper = objectMapper;
-  }
 
   // dummy method, just for testing
   @Override

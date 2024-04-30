@@ -15,6 +15,7 @@ import java.util.Map;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,22 +33,10 @@ public class PaymentController {
 
   private static final Logger LOGGER = LogManager.getLogger(PaymentController.class);
 
-  private final PaypalPaymentProcessor paypalPaymentProcessor;
-  private final CreditCardPaymentProcessor creditCardPaymentProcessor;
-  private final StripePaymentProcessor stripePaymentProcessor;
-  private final GenericPaymentOperations genericPaymentOperations;
-
-  public PaymentController(
-      PaypalPaymentProcessor paypalPaymentProcessor,
-      CreditCardPaymentProcessor creditCardPaymentProcessor,
-      StripePaymentProcessor stripePaymentProcessor,
-      GenericPaymentOperations genericPaymentOperations) {
-
-    this.paypalPaymentProcessor = paypalPaymentProcessor;
-    this.creditCardPaymentProcessor = creditCardPaymentProcessor;
-    this.stripePaymentProcessor = stripePaymentProcessor;
-    this.genericPaymentOperations = genericPaymentOperations;
-  }
+  @Autowired PaypalPaymentProcessor paypalPaymentProcessor;
+  @Autowired CreditCardPaymentProcessor creditCardPaymentProcessor;
+  @Autowired StripePaymentProcessor stripePaymentProcessor;
+  @Autowired GenericPaymentOperations genericPaymentOperations;
 
   // ########################################### PAYPAL ###########################################
 

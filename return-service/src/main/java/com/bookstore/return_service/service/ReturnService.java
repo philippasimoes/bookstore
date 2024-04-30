@@ -24,6 +24,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.circuitbreaker.CircuitBreaker;
 import org.springframework.cloud.client.circuitbreaker.CircuitBreakerFactory;
 import org.springframework.data.util.Pair;
@@ -35,36 +36,18 @@ import org.springframework.web.client.RestTemplate;
 public class ReturnService {
 
   private static final Logger LOGGER = LogManager.getLogger(ReturnService.class);
-  private static final String DUMMY_CTT_URL = "http://dummy-ctt/";
-  private static final String ORDER_URL = "http://order-service/order/";
-  private static final String PAYMENTS_URL = "http://payment-service/payment/order/";
+  private static final String DUMMY_CTT_URL = "http://dummy-ctt:10008/";
+  private static final String ORDER_URL = "http://order-service:10003/order/";
+  private static final String PAYMENTS_URL = "http://payment-service:10004/payment/order/";
   private static final String CB = "circuitbreaker";
 
-  private final ReturnRepository returnRepository;
-  private final ReturnItemRepository returnItemRepository;
-  private final ReturnMapper returnMapper;
-  private final ReturnItemMapper returnItemMapper;
-  private final ObjectMapper objectMapper;
-  private final RestTemplate restTemplate;
-  private final CircuitBreakerFactory circuitBreakerFactory;
-
-  public ReturnService(
-      ReturnRepository returnRepository,
-      ReturnItemRepository returnItemRepository,
-      ReturnMapper returnMapper,
-      ReturnItemMapper returnItemMapper,
-      ObjectMapper objectMapper,
-      RestTemplate restTemplate,
-      CircuitBreakerFactory circuitBreakerFactory) {
-
-    this.returnRepository = returnRepository;
-    this.returnItemRepository = returnItemRepository;
-    this.returnMapper = returnMapper;
-    this.returnItemMapper = returnItemMapper;
-    this.objectMapper = objectMapper;
-    this.restTemplate = restTemplate;
-    this.circuitBreakerFactory = circuitBreakerFactory;
-  }
+  @Autowired ReturnRepository returnRepository;
+  @Autowired ReturnItemRepository returnItemRepository;
+  @Autowired ReturnMapper returnMapper;
+  @Autowired ReturnItemMapper returnItemMapper;
+  @Autowired ObjectMapper objectMapper;
+  @Autowired RestTemplate restTemplate;
+  @Autowired CircuitBreakerFactory circuitBreakerFactory;
 
   /**
    * Create a new return.
@@ -122,6 +105,26 @@ public class ReturnService {
     return responseMap;
   }
 
+  @RabbitListener(queues = "${rabbitmq.queue.event.refund.name}")
+  public void consumeRefundedEvents(String message) {
+
+    LOGGER.log(Level.INFO, "Received message in refund events queue: {}", message);
+
+    updateReturnAfterRefund(message);
+  }
+
+  private Map<String, String> getOriginalOrderInfo(int orderId, int bookId) {
+
+    CircuitBreaker circuitBreaker = circuitBreakerFactory.create(CB);
+
+    return circuitBreaker.run(
+        () -> restTemplate.getForObject(ORDER_URL + orderId + "/item-details/" + bookId, Map.class),
+        throwable -> {
+          LOGGER.log(Level.WARN, "Error connecting to Order Service.", throwable);
+          return null;
+        });
+  }
+
   private double getAmount(
       ReturnItemDto returnItemDto,
       Map<String, String> map,
@@ -141,26 +144,6 @@ public class ReturnService {
       throw new RuntimeException("Quantity to return is higher than quantity from the order");
     }
     return amount;
-  }
-
-  @RabbitListener(queues = "${rabbitmq.queue.event.refund.name}")
-  public void consumeRefundedEvents(String message) {
-
-    LOGGER.log(Level.INFO, "Received message in refund events queue: {}", message);
-
-    updateReturnAfterRefund(message);
-  }
-
-  private Map<String, String> getOriginalOrderInfo(int orderId, int bookId) {
-
-    CircuitBreaker circuitBreaker = circuitBreakerFactory.create(CB);
-
-    return circuitBreaker.run(
-        () -> restTemplate.getForObject(ORDER_URL + orderId + "/item-details/" + bookId, Map.class),
-        throwable -> {
-          LOGGER.log(Level.WARN, "Error connecting to Order Service.", throwable);
-          return null;
-        });
   }
 
   /**

@@ -24,6 +24,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.circuitbreaker.CircuitBreaker;
 import org.springframework.cloud.client.circuitbreaker.CircuitBreakerFactory;
 import org.springframework.data.util.Pair;
@@ -35,10 +36,10 @@ import org.springframework.web.client.RestTemplate;
 public class OrderService {
 
   private static final Logger LOGGER = LogManager.getLogger(OrderService.class);
-  private static final String STOCK_URL = "http://stock-service/stock/";
-  private static final String NOTIFICATION_URL = "http://notification-service/order";
-  private static final String SHIPMENT_URL = "http://shipping-service/shipment/tax?weight=";
-  private static final String USER_URL = "http://user-service/user/";
+  private static final String STOCK_URL = "http://stock-service:10001/stock/";
+  private static final String NOTIFICATION_URL = "http://notification-service:10002/order";
+  private static final String SHIPMENT_URL = "http://shipping-service:10006/shipment/tax?weight=";
+  private static final String USER_URL = "http://user-service:10007/user/";
   private static final String ORDER_NOT_FOUND_MESSAGE = "Order not found";
   private static final String ITEM_NOT_FOUND_MESSAGE = "Item not found";
   private static final String NOT_ENOUGH_STOCK_MESSAGE =
@@ -48,31 +49,14 @@ public class OrderService {
   private static final String CB_STOCK = "circuitbreaker-stock";
   private static final String CB_USER = "circuitbreaker-user";
 
-  private final OrderRepository orderRepository;
-  private final ItemRepository itemRepository;
-  private final OrderMapper orderMapper;
-  private final ItemMapper itemMapper;
-  private final RestTemplate restTemplate;
-  private final ObjectMapper objectMapper;
-  private final CircuitBreakerFactory circuitBreakerFactory;
-
-  public OrderService(
-      OrderRepository orderRepository,
-      ItemRepository itemRepository,
-      OrderMapper orderMapper,
-      ItemMapper itemMapper,
-      RestTemplate restTemplate,
-      ObjectMapper objectMapper,
-      CircuitBreakerFactory circuitBreakerFactory) {
-
-    this.orderRepository = orderRepository;
-    this.itemRepository = itemRepository;
-    this.orderMapper = orderMapper;
-    this.itemMapper = itemMapper;
-    this.restTemplate = restTemplate;
-    this.objectMapper = objectMapper;
-    this.circuitBreakerFactory = circuitBreakerFactory;
-  }
+  @Autowired
+  OrderRepository orderRepository;
+  @Autowired ItemRepository itemRepository;
+  @Autowired OrderMapper orderMapper;
+  @Autowired ItemMapper itemMapper;
+  @Autowired RestTemplate restTemplate;
+  @Autowired ObjectMapper objectMapper;
+  @Autowired CircuitBreakerFactory circuitBreakerFactory;
 
   /**
    * Create new order and order items.
