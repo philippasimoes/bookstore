@@ -20,15 +20,26 @@ public class RabbitMQConfig {
   @Value("${rabbitmq.queue.event.delivered.name}")
   private String eventDeliveredQueue;
 
+  @Value("${rabbitmq.queue.event.returned.name}")
+  private String eventReturnedQueue;
+
   @Value("${rabbitmq.exchange.name}")
   private String exchange;
 
-  @Value("${rabbitmq.routing.key}")
-  private String routingKey;
+  @Value("${rabbitmq.delivered.routing.key}")
+  private String deliveredRoutingKey;
+
+  @Value("${rabbitmq.returned.routing.key}")
+  private String returnedRoutingKey;
 
   @Bean
   public Queue eventDeliveredQueue() {
     return new Queue(eventDeliveredQueue);
+  }
+
+  @Bean
+  public Queue eventReturnedQueue() {
+    return new Queue(eventReturnedQueue);
   }
 
   @Bean
@@ -37,7 +48,12 @@ public class RabbitMQConfig {
   }
 
   @Bean
-  public Binding updatedBinding(@Qualifier("eventDeliveredQueue") Queue queue, TopicExchange exchange) {
-    return BindingBuilder.bind(queue).to(exchange).with(routingKey);
+  public Binding updatedDeliveredBinding(@Qualifier("eventDeliveredQueue") Queue queue, TopicExchange exchange) {
+    return BindingBuilder.bind(queue).to(exchange).with(deliveredRoutingKey);
+  }
+
+  @Bean
+  public Binding updatedReturnedBinding(@Qualifier("eventReturnedQueue") Queue queue, TopicExchange exchange) {
+    return BindingBuilder.bind(queue).to(exchange).with(returnedRoutingKey);
   }
 }

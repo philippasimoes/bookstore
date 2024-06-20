@@ -22,6 +22,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.apache.logging.log4j.Level;
@@ -32,7 +33,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.Resource;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
 /**
@@ -365,14 +365,14 @@ public class BookService {
    */
   private void updateBookFromMessage(String message, Availability availability) {
 
-    Pair<Integer, Integer> pair = BookServiceUtils.readMessage(message);
+    Map<String, Integer> map = BookServiceUtils.readMessage(message);
 
-    if (pair != null) {
+    if (!map.isEmpty()) {
       Book book =
           bookRepository
-              .findById(pair.getFirst())
+              .findById(map.get("bookId"))
               .orElseThrow(() -> new ResourceNotFoundException(BOOK_NOT_FOUND_MESSAGE));
-      book.setStockAvailable(pair.getSecond());
+      book.setStockAvailable(map.get("availableUnits"));
       book.setAvailability(availability);
       Book updatedBook = bookRepository.save(book);
 

@@ -9,6 +9,8 @@ import com.bookstore.stock_service.utils.StockStatus;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
+
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -35,13 +37,6 @@ import org.springframework.web.client.RestTemplate;
 @Transactional
 public class StockService {
   private static final Logger LOGGER = LogManager.getLogger(StockService.class);
-
-  private static final String TOKEN_URL =
-      "http://keycloak:8080/realms/bookstore/protocol/openid-connect/token";
-  private static final String CATALOG_SERVICE_ID = "catalog-service";
-  private static final String CATALOG_SERVICE_SECRET = "FD3bZqrV67ZGFktuQnX02qaPMuE3V71v";
-  private static final String GRANT_TYPE = "client_credentials";
-  private static final String BOOK_CONFIRMATION_URL = "http://catalog-service:10000/books/confirmation/";
 
   @Autowired StockRepository stockRepository;
   @Autowired ObjectMapper objectMapper;
@@ -242,66 +237,10 @@ public class StockService {
    */
   private String buildMessage(int bookId) throws JsonProcessingException {
 
-    Pair<Integer, Integer> pair = Pair.of(bookId, getAvailableUnitsByBookId(bookId));
+    Map<String, Integer> map = new HashMap<>();
+    map.put("bookId", bookId);
+    map.put("availableUnits",getAvailableUnitsByBookId(bookId));
 
-    return objectMapper.writeValueAsString(pair);
-  }
-
-  /**
-   * Authenticate in catalog service.
-   *
-   * @return a jwt token.
-   */
-  private String authenticateAndGetJwtToken() {
-
-    HttpHeaders authHeaders = new HttpHeaders();
-    authHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-
-    String requestBody =
-        "grant_type="
-            + GRANT_TYPE
-            + "&client_id="
-            + CATALOG_SERVICE_ID
-            + "&client_secret="
-            + CATALOG_SERVICE_SECRET;
-
-    HttpEntity<String> requestEntity = new HttpEntity<>(requestBody, authHeaders);
-
-    RestTemplate keycloakRestTemplate = new RestTemplate();
-
-    ResponseEntity<String> response =
-        keycloakRestTemplate.postForEntity(TOKEN_URL, requestEntity, String.class);
-
-    if (response.getStatusCode().is2xxSuccessful()) {
-      LOGGER.log(Level.INFO, "Authentication successful.");
-      return response.getBody();
-    } else {
-      LOGGER.log(Level.ERROR, "Authentication failure. Status: {}.", response.getStatusCode());
-      return null;
-    }
-  }
-
-  /**
-   * Validate if a book is registered in the catalog service.
-   *
-   * @param bookId the book identifier.
-   * @return true if the book exists.
-   * @throws JsonProcessingException when there's an error reading the jwt token.
-   */
-  private boolean bookExists(int bookId) throws JsonProcessingException {
-
-    HttpHeaders headers = new HttpHeaders();
-    headers.set(
-        "Authorization",
-        "Bearer "
-            + objectMapper.readValue(authenticateAndGetJwtToken(), Map.class).get("access_token"));
-
-    HttpEntity<String> requestEntity = new HttpEntity<>(headers);
-
-    ResponseEntity<Boolean> response =
-        restTemplate.exchange(
-            BOOK_CONFIRMATION_URL + bookId, HttpMethod.GET, requestEntity, Boolean.class);
-
-    return response.getStatusCode().is2xxSuccessful();
+    return objectMapper.writeValueAsString(map);
   }
 }

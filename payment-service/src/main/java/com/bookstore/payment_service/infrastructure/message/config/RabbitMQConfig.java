@@ -20,7 +20,7 @@ public class RabbitMQConfig {
   @Value("${rabbitmq.queue.event.paid.name}")
   private String eventPaidQueue;
 
-  @Value("${rabbitmq.queue.event.refund.name}")
+  @Value("${rabbitmq.queue.event.refunded.name}")
   private String eventRefundedQueue;
 
   @Value("${rabbitmq.exchange.name}")
@@ -29,7 +29,7 @@ public class RabbitMQConfig {
   @Value("${rabbitmq.payment.routing.key}")
   private String paymentRoutingKey;
 
-  @Value("${rabbitmq.refund.routing.key}")
+  @Value("${rabbitmq.refunded.routing.key}")
   private String refundedRoutingKey;
 
   @Bean

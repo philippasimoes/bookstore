@@ -43,8 +43,8 @@ public class StripePaymentProcessor implements PaymentProcessor {
   @Value("${rabbitmq.queue.event.paid.name}") // order service
   private String eventPaidQueue;
 
-  @Value("${rabbitmq.queue.event.refund.name}") // return service
-  private String eventRefundQueue;
+  @Value("${rabbitmq.queue.event.refunded.name}") // return service
+  private String eventRefundedQueue;
 
   @Value("${STRIPE_PUBLIC_KEY}")
   private String stripePublicKey;
@@ -182,7 +182,7 @@ public class StripePaymentProcessor implements PaymentProcessor {
     if (refund1.getStatus().equals("succeeded")) {
       try {
         producer.sendMessage(
-            eventRefundQueue,
+                eventRefundedQueue,
             PaymentUtils.buildMessage(RETURN_ID, Integer.parseInt(map.get(RETURN_ID))));
       } catch (JsonProcessingException e) {
         LOGGER.log(Level.ERROR, "Error building message", e);

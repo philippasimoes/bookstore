@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import net.sf.jasperreports.engine.JRException;
@@ -46,14 +47,14 @@ public final class BookServiceUtils {
    *
    * @param message the message from StockService.
    */
-  public static Pair<Integer, Integer> readMessage(String message) {
+  public static Map readMessage(String message) {
 
     LOGGER.log(Level.INFO, "Received Message: {}", message);
     try {
-      return objectMapper.readValue(message, Pair.class);
+      return objectMapper.readValue(message, Map.class);
     } catch (JsonProcessingException e) {
-      LOGGER.log(Level.ERROR, "Could not read pair from message", e);
-      return null;
+      LOGGER.log(Level.ERROR, "Could not read map from message", e);
+      return new HashMap<>();
     }
   }
 
@@ -79,8 +80,6 @@ public final class BookServiceUtils {
 
             restTemplate.exchange(
                 STOCK_CREATION_URL + bookId, HttpMethod.POST, requestEntity, String.class);
-
-      //restTemplate.postForEntity(STOCK_CREATION_URL + bookId, requestEntity, Object.class);
     } catch (JsonProcessingException e) {
       LOGGER.log(Level.ERROR, e.getMessage());
     }

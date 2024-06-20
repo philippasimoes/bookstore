@@ -21,48 +21,65 @@ import org.springframework.messaging.handler.annotation.support.DefaultMessageHa
 @Configuration
 public class RabbitMQConfig implements RabbitListenerConfigurer {
 
-  @Value("${rabbitmq.queue.event.refund.name}")
-  private String eventRefundedQueue;
+    @Value("${rabbitmq.queue.event.refunded.name}")
+    private String eventRefundedQueue;
 
-  @Value("${rabbitmq.exchange.name}")
-  private String exchange;
+    @Value("${rabbitmq.queue.event.returned.name}")
+    private String eventReturnedQueue;
 
-  @Value("${rabbitmq.routing.key}")
-  private String routingKey;
+    @Value("${rabbitmq.exchange.name}")
+    private String exchange;
 
-  @Bean
-  public Queue eventRefundedQueue() {
-    return new Queue(eventRefundedQueue);
-  }
+    @Value("${rabbitmq.returned.routing.key}")
+    private String returnedRoutingKey;
 
-  @Bean
-  public TopicExchange exchange() {
-    return new TopicExchange(exchange);
-  }
+    @Value("${rabbitmq.refunded.routing.key}")
+    private String refundedRoutingKey;
 
-  @Bean
-  public Binding updatedBinding(
-      @Qualifier("eventRefundedQueue") Queue queue, TopicExchange exchange) {
-    return BindingBuilder.bind(queue).to(exchange).with(routingKey);
-  }
+    @Bean
+    public Queue eventRefundedQueue() {
+        return new Queue(eventRefundedQueue);
+    }
 
-  @Bean
-  MappingJackson2MessageConverter jackson2Converter() {
+    @Bean
+    public Queue eventReturnedQueue() {
+        return new Queue(eventReturnedQueue);
+    }
 
-      return new MappingJackson2MessageConverter();
-  }
+    @Bean
+    public TopicExchange exchange() {
+        return new TopicExchange(exchange);
+    }
 
-  @Bean
-  DefaultMessageHandlerMethodFactory jsonMessageHandlerMethod() {
-    DefaultMessageHandlerMethodFactory factory = new DefaultMessageHandlerMethodFactory();
-    factory.setMessageConverter(jackson2Converter());
+    @Bean
+    public Binding updatedRefundedBinding(
+            @Qualifier("eventRefundedQueue") Queue queue, TopicExchange exchange) {
+        return BindingBuilder.bind(queue).to(exchange).with(refundedRoutingKey);
+    }
 
-    return factory;
-  }
+    @Bean
+    public Binding updatedReturnedBinding(
+            @Qualifier("eventReturnedQueue") Queue queue, TopicExchange exchange) {
+        return BindingBuilder.bind(queue).to(exchange).with(returnedRoutingKey);
+    }
 
-  @Override
-  public void configureRabbitListeners(
-      RabbitListenerEndpointRegistrar rabbitListenerEndpointRegistrar) {
-    rabbitListenerEndpointRegistrar.setMessageHandlerMethodFactory(jsonMessageHandlerMethod());
-  }
+    @Bean
+    MappingJackson2MessageConverter jackson2Converter() {
+
+        return new MappingJackson2MessageConverter();
+    }
+
+    @Bean
+    DefaultMessageHandlerMethodFactory jsonMessageHandlerMethod() {
+        DefaultMessageHandlerMethodFactory factory = new DefaultMessageHandlerMethodFactory();
+        factory.setMessageConverter(jackson2Converter());
+
+        return factory;
+    }
+
+    @Override
+    public void configureRabbitListeners(
+            RabbitListenerEndpointRegistrar rabbitListenerEndpointRegistrar) {
+        rabbitListenerEndpointRegistrar.setMessageHandlerMethodFactory(jsonMessageHandlerMethod());
+    }
 }

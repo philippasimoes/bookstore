@@ -16,7 +16,6 @@ public class UserDto {
     private String postalCode;
     private String role;
     private boolean enabled;
-    private double storeCredit;
     private Timestamp creationDate;
     private Timestamp updateDate;
 }

@@ -14,6 +14,7 @@ import com.bookstore.return_service.repository.ReturnRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,167 +36,176 @@ import org.springframework.web.client.RestTemplate;
 @Transactional
 public class ReturnService {
 
-  private static final Logger LOGGER = LogManager.getLogger(ReturnService.class);
-  private static final String DUMMY_CTT_URL = "http://dummy-ctt:10008/";
-  private static final String ORDER_URL = "http://order-service:10003/order/";
-  private static final String PAYMENTS_URL = "http://payment-service:10004/payment/order/";
-  private static final String CB = "circuitbreaker";
+    private static final Logger LOGGER = LogManager.getLogger(ReturnService.class);
+    private static final String DUMMY_CTT_URL = "http://dummy-ctt:10008/";
+    private static final String ORDER_URL = "http://order-service:10003/order/";
+    private static final String PAYMENTS_URL = "http://payment-service:10004/payment/order/";
+    private static final String CB = "circuitbreaker";
+    private static final String RETURN_ID = "returnId";
 
-  @Autowired ReturnRepository returnRepository;
-  @Autowired ReturnItemRepository returnItemRepository;
-  @Autowired ReturnMapper returnMapper;
-  @Autowired ReturnItemMapper returnItemMapper;
-  @Autowired ObjectMapper objectMapper;
-  @Autowired RestTemplate restTemplate;
-  @Autowired CircuitBreakerFactory circuitBreakerFactory;
+    @Autowired
+    ReturnRepository returnRepository;
+    @Autowired
+    ReturnItemRepository returnItemRepository;
+    @Autowired
+    ReturnMapper returnMapper;
+    @Autowired
+    ReturnItemMapper returnItemMapper;
+    @Autowired
+    ObjectMapper objectMapper;
+    @Autowired
+    RestTemplate restTemplate;
+    @Autowired
+    CircuitBreakerFactory circuitBreakerFactory;
 
-  /**
-   * Create a new return.
-   *
-   * @param returnDto the return dto.
-   * @return the created return entry.
-   */
-  public Map<String, String> createReturn(ReturnDto returnDto) throws ResourceNotFoundException {
-    Return returnEntity = returnRepository.save(returnMapper.toEntity(returnDto));
+    /**
+     * Create a new return.
+     *
+     * @param returnDto the return dto.
+     * @return the created return entry.
+     */
+    public Map<String, String> createReturn(ReturnDto returnDto) throws ResourceNotFoundException {
+        Return returnEntity = returnRepository.save(returnMapper.toEntity(returnDto));
 
-    List<ReturnItem> returnItems = new ArrayList<>();
-    Map<String, String> responseMap = new HashMap<>();
+        List<ReturnItem> returnItems = new ArrayList<>();
+        Map<String, String> responseMap = new HashMap<>();
 
-    double amount = 0;
+        double amount = 0;
 
-    if (!returnDto.getReturnItems().isEmpty()) {
-      for (ReturnItemDto returnItemDto : returnDto.getReturnItems()) {
-        Map<String, String> map =
-            getOriginalOrderInfo(returnDto.getOrderId(), returnItemDto.getBookId());
+        if (!returnDto.getReturnItems().isEmpty()) {
+            for (ReturnItemDto returnItemDto : returnDto.getReturnItems()) {
+                Map<String, String> map =
+                        getOriginalOrderInfo(returnDto.getOrderId(), returnItemDto.getBookId());
+
+                if (map != null && !map.isEmpty()) {
+                    amount = getAmount(returnItemDto, map, returnEntity, amount, returnItems);
+                } else {
+                    throw new ResourceNotFoundException(
+                            String.format("Item from order %s does not exist.", returnDto.getOrderId()));
+                }
+            }
+        }
+
+        Map<String, String> map = getPaymentDetails(returnDto.getOrderId());
 
         if (map != null && !map.isEmpty()) {
-          amount = getAmount(returnItemDto, map, returnEntity, amount, returnItems);
-        } else {
-          throw new ResourceNotFoundException(
-              String.format("Item from order %s does not exist.", returnDto.getOrderId()));
+            switch (map.get("method")) {
+                case "STRIPE" -> returnEntity.setRefundType(RefundType.STRIPE);
+                case "PAYPAL" -> returnEntity.setRefundType(RefundType.PAYPAL);
+                case "CREDIT_CARD" -> returnEntity.setRefundType(RefundType.CREDIT_CARD);
+                default -> {
+                }
+            }
+
+            returnEntity.setExternalPaymentId(map.get("paymentDetails"));
+            responseMap.put("method", returnEntity.getRefundType().name());
+            responseMap.put("externalPaymentId", map.get("paymentDetails"));
         }
-      }
+
+        returnEntity.setCustomerId(returnDto.getCustomerId());
+        returnEntity.setAmountToRefund(amount);
+        returnEntity.setReturnStatus(ReturnStatus.OPEN);
+        returnEntity.setReturnItems(returnItems);
+        Return savedReturn = returnRepository.save(returnEntity);
+
+        responseMap.put("customerId", String.valueOf(returnDto.getCustomerId()));
+        responseMap.put(RETURN_ID, String.valueOf(savedReturn.getId()));
+        responseMap.put("amount", String.valueOf(amount));
+
+        return responseMap;
     }
 
-    Map<String, String> map = getPaymentDetails(returnDto.getOrderId());
+    @RabbitListener(queues = "${rabbitmq.queue.event.refunded.name}")
+    public void consumeRefundedEvents(String message) {
 
-    if (map != null && !map.isEmpty()) {
-      switch (map.get("method")) {
-        case "STRIPE" -> returnEntity.setRefundType(RefundType.STRIPE);
-        case "PAYPAL" -> returnEntity.setRefundType(RefundType.PAYPAL);
-        case "CREDIT_CARD" -> returnEntity.setRefundType(RefundType.CREDIT_CARD);
-        default -> {}
-      }
+        LOGGER.log(Level.INFO, "Received message in refund events queue: {}", message);
 
-      returnEntity.setExternalPaymentId(map.get("paymentDetails"));
-      responseMap.put("method", returnEntity.getRefundType().name());
-      responseMap.put("externalPaymentId", map.get("paymentDetails"));
+        updateReturnAfterRefund(message);
     }
 
-    returnEntity.setCustomerId(returnDto.getCustomerId());
-    returnEntity.setAmountToRefund(amount);
-    returnEntity.setReturnStatus(ReturnStatus.OPEN);
-    returnEntity.setReturnItems(returnItems);
-    Return savedReturn = returnRepository.save(returnEntity);
+    private Map<String, String> getOriginalOrderInfo(int orderId, int bookId) {
 
-    responseMap.put("customerId", String.valueOf(returnDto.getCustomerId()));
-    responseMap.put("returnId", String.valueOf(savedReturn.getId()));
-    responseMap.put("amount", String.valueOf(amount));
+        CircuitBreaker circuitBreaker = circuitBreakerFactory.create(CB);
 
-    return responseMap;
-  }
-
-  @RabbitListener(queues = "${rabbitmq.queue.event.refund.name}")
-  public void consumeRefundedEvents(String message) {
-
-    LOGGER.log(Level.INFO, "Received message in refund events queue: {}", message);
-
-    updateReturnAfterRefund(message);
-  }
-
-  private Map<String, String> getOriginalOrderInfo(int orderId, int bookId) {
-
-    CircuitBreaker circuitBreaker = circuitBreakerFactory.create(CB);
-
-    return circuitBreaker.run(
-        () -> restTemplate.getForObject(ORDER_URL + orderId + "/item-details/" + bookId, Map.class),
-        throwable -> {
-          LOGGER.log(Level.WARN, "Error connecting to Order Service.", throwable);
-          return null;
-        });
-  }
-
-  private double getAmount(
-      ReturnItemDto returnItemDto,
-      Map<String, String> map,
-      Return returnEntity,
-      double amount,
-      List<ReturnItem> returnItems) {
-
-    if (Integer.parseInt(map.get("quantity")) >= returnItemDto.getQuantity()) {
-
-      ReturnItem returnItem = returnItemMapper.toEntity(returnItemDto);
-      returnItem.setReturnEntity(returnEntity);
-      returnItem.setOrderUnitPrice(Double.parseDouble(map.get("unitPrice")));
-      returnItem.setUnitWeight(Double.parseDouble(map.get("unitWeight")));
-      amount = amount + (returnItem.getOrderUnitPrice() * returnItemDto.getQuantity());
-      returnItems.add(returnItemRepository.save(returnItem));
-    } else {
-      throw new RuntimeException("Quantity to return is higher than quantity from the order");
+        return circuitBreaker.run(
+                () -> restTemplate.getForObject(ORDER_URL + orderId + "/item-details/" + bookId, Map.class),
+                throwable -> {
+                    LOGGER.log(Level.WARN, "Error connecting to Order Service.", throwable);
+                    return null;
+                });
     }
-    return amount;
-  }
 
-  /**
-   * Update the {@link ReturnStatus} to REFUNDED and the tracking code.
-   *
-   * @param message the message from payment service.
-   */
-  private void updateReturnAfterRefund(String message) {
-    Pair<Integer, Integer> pair;
-    try {
-      pair = objectMapper.readValue(message, Pair.class);
+    private double getAmount(
+            ReturnItemDto returnItemDto,
+            Map<String, String> map,
+            Return returnEntity,
+            double amount,
+            List<ReturnItem> returnItems) {
 
-      Optional<Return> returnEntity = returnRepository.findById(pair.getSecond());
+        if (Integer.parseInt(map.get("quantity")) >= returnItemDto.getQuantity()) {
 
-      if (returnEntity.isPresent()) {
-        returnEntity.get().setReturnStatus(ReturnStatus.REFUNDED);
-        returnEntity.get().setTrackingCode(getTrackingCode(pair.getSecond()));
-        returnRepository.save(returnEntity.get());
-      } else throw new ResourceNotFoundException("Return entry not found");
-    } catch (JsonProcessingException e) {
-      throw new RuntimeException(e);
+            ReturnItem returnItem = returnItemMapper.toEntity(returnItemDto);
+            returnItem.setReturnEntity(returnEntity);
+            returnItem.setOrderUnitPrice(Double.parseDouble(map.get("unitPrice")));
+            returnItem.setUnitWeight(Double.parseDouble(map.get("unitWeight")));
+            amount = amount + (returnItem.getOrderUnitPrice() * returnItemDto.getQuantity());
+            returnItems.add(returnItemRepository.save(returnItem));
+        } else {
+            throw new RuntimeException("Quantity to return is higher than quantity from the order");
+        }
+        return amount;
     }
-  }
 
-  /**
-   * Connect to dummy ctt to get the tracking code.
-   *
-   * @param returnId the return identifier.
-   * @return the tracking code.
-   */
-  private String getTrackingCode(int returnId) {
+    /**
+     * Update the {@link ReturnStatus} to REFUNDED and add the tracking code.
+     *
+     * @param message the message from payment service.
+     */
+    private void updateReturnAfterRefund(String message) {
+        Map<Integer, Integer> map;
+        try {
+            map = objectMapper.readValue(message, Map.class);
 
-    CircuitBreaker circuitBreaker = circuitBreakerFactory.create(CB);
+            Optional<Return> returnEntity = returnRepository.findById(map.get(RETURN_ID));
 
-    return circuitBreaker.run(
-        () ->
-            restTemplate.getForObject(
-                DUMMY_CTT_URL + "return-tracking-code?return_id=" + returnId, String.class),
-        throwable -> {
-          LOGGER.log(Level.WARN, "Error connecting to dummy ctt.", throwable);
-          return null;
-        });
-  }
+            if (returnEntity.isPresent()) {
+                returnEntity.get().setReturnStatus(ReturnStatus.REFUNDED);
+                returnEntity.get().setTrackingCode(getTrackingCode(map.get(RETURN_ID)));
+                returnRepository.save(returnEntity.get());
+            } else throw new ResourceNotFoundException("Return entry not found");
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-  private Map<String, String> getPaymentDetails(int orderId) {
-    CircuitBreaker circuitBreaker = circuitBreakerFactory.create(CB);
+    /**
+     * Connect to dummy ctt to get the tracking code.
+     *
+     * @param returnId the return identifier.
+     * @return the tracking code.
+     */
+    private String getTrackingCode(int returnId) {
 
-    return circuitBreaker.run(
-        () -> restTemplate.getForObject(PAYMENTS_URL + orderId, Map.class),
-        throwable -> {
-          LOGGER.log(Level.WARN, "Error connecting to Payment Service.", throwable);
-          return null;
-        });
-  }
+        CircuitBreaker circuitBreaker = circuitBreakerFactory.create(CB);
+
+        return circuitBreaker.run(
+                () ->
+                        restTemplate.getForObject(
+                                DUMMY_CTT_URL + "return-tracking-code?return_id=" + returnId, String.class),
+                throwable -> {
+                    LOGGER.log(Level.WARN, "Error connecting to dummy ctt.", throwable);
+                    return null;
+                });
+    }
+
+    private Map<String, String> getPaymentDetails(int orderId) {
+        CircuitBreaker circuitBreaker = circuitBreakerFactory.create(CB);
+
+        return circuitBreaker.run(
+                () -> restTemplate.getForObject(PAYMENTS_URL + orderId, Map.class),
+                throwable -> {
+                    LOGGER.log(Level.WARN, "Error connecting to Payment Service.", throwable);
+                    return null;
+                });
+    }
 }
